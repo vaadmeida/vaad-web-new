@@ -1,3 +1,4 @@
+// app/signup/page.tsx (updated main page)
 "use client";
 
 import { useState } from "react";
@@ -7,29 +8,33 @@ import Image from "next/image";
 import Input from "@/app/components/Input";
 import PasswordInput from "@/app/components/PasswordInput";
 import Button from "@/app/components/Button";
+import TermsCheckbox from "@/app/components/TermsCheckbox";
 import Link from "next/link";
-import { LoginFormData, loginSchema } from "@/app/schemas/login.schema";
+import { registerSchema, type RegisterFormData } from "@/app/schemas/auth.schema";
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      terms: false,
+    },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsSubmitting(true);
     try {
-      // Handle login logic here
-      console.log("Login data:", data);
+      // Handle registration logic here
+      console.log("Form data:", data);
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Registration failed:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -80,25 +85,34 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
-      {/* Left Side - Login Form */}
+      {/* Left Side - Sign Up Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-between items-center px-6 sm:px-12 lg:px-24 xl:px-32 py-8 lg:py-12">
         {/* Logo */}
         <div className="mb-8 lg:mb-0">
           <Image src="/vaad.svg" alt="VAAD Media" width={120} height={120} />
         </div>
 
-        {/* Login Form */}
+        {/* Sign Up Form */}
         <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full lg:mx-0">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-[#0D0A19] mb-2">
-              Welcome back!
+            <h1 className="text-2xl font-bold text-[#0D0A19] mb-2 mt-5">
+              Get Started with VAAD Media
             </h1>
             <p className="text-sm text-[#9A9EA7] font-medium">
-              Log in to continue book billboards
+              Create an account to start booking billboards.
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            {/* Name Field */}
+            <Input
+              label="Full Name"
+              type="text"
+              placeholder="Enter your name"
+              error={errors.name?.message}
+              {...register('name')}
+            />
+
             {/* Email Field */}
             <Input
               label="Email"
@@ -106,6 +120,15 @@ export default function LoginPage() {
               placeholder="Enter your email"
               error={errors.email?.message}
               {...register('email')}
+            />
+            
+            {/* Phone Field */}
+            <Input
+              label="Phone Number"
+              type="tel"
+              placeholder="Enter your phone number"
+              error={errors.phone?.message}
+              {...register('phone')}
             />
 
             {/* Password Field */}
@@ -116,43 +139,52 @@ export default function LoginPage() {
               {...register('password')}
             />
 
-            {/* Login Button */}
+            {/* Confirm Password Field */}
+            <PasswordInput
+              label="Confirm Password"
+              placeholder="Re-type your password"
+              error={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
+            />
+
+            {/* Terms Checkbox */}
+            <TermsCheckbox 
+              register={register} 
+              error={errors.terms?.message}
+            />
+
+            {/* Sign Up Button */}
             <Button 
               type="submit" 
               fullWidth 
               size="lg"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Logging in..." : "Login"}
+              {isSubmitting ? "Creating account..." : "Sign Up"}
             </Button>
           </form>
 
           {/* Links */}
-          <div className="mt-6 text-center space-y-2">
-            <Link
-              href="/forgot-password"
-              className="block text-sm text-[#9A9EA7] hover:text-gray-700 transition-colors font-medium"
-            >
-              Forgot your password?
-            </Link>
+          <div className="mt-6 mb-12 text-center space-y-2">
+            <p className="text-sm text-[#9A9EA7] font-medium">By registering, you’ll receive essential notifications and updates from VAAD Media.</p>
+            {/* <p className="text-sm text-[#9A9EA7] font-medium">
+              Already have an account?{" "}
+              <Link
+                href="/login"
+                className="text-[#0177AB] hover:text-[#007a9e] font-medium transition-colors"
+              >
+                Sign In
+              </Link>
+            </p>
             <p className="text-sm text-[#9A9EA7] font-medium">
               Need help?{" "}
               <Link
-                href="/contact"
-                className="text-primary hover:text-[#007a9e] font-medium transition-colors"
+                href="#"
+                className="text-[#0177AB] hover:text-[#007a9e] font-medium transition-colors"
               >
                 Contact Support
               </Link>
-            </p>
-            <p className="text-sm text-[#9A9EA7] font-medium">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/signup"
-                className="text-[#0177AB] hover:text-[#007a9e] font-medium transition-colors"
-              >
-                Sign up
-              </Link>
-            </p>
+            </p> */}
           </div>
         </div>
 
@@ -196,7 +228,7 @@ export default function LoginPage() {
       <div className="hidden lg:block lg:w-1/2 relative bg-gray-100">
         <div className="absolute inset-0">
           <img
-            src="/images/vaad-login-banner.svg"
+            src="/images/vaad-signup-banner.svg"
             alt="Billboard on highway"
             className="w-full h-full object-cover"
           />
