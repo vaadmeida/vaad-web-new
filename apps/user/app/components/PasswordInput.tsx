@@ -1,4 +1,3 @@
-// app/components/PasswordInput.tsx
 'use client';
 
 import { useState } from 'react';

@@ -1,4 +1,3 @@
-// app/signup/page.tsx (updated main page)
 "use client";
 
 import { useState } from "react";
