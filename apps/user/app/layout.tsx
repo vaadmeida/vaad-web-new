@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./contexts/auth-context";
 import { ToastProvider } from "./contexts/toast-context";
+import ScrollProgress from "./components/ui/scroll-progress";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -119,7 +120,10 @@ export default function RootLayout({
     <html lang="en" dir="ltr">
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <ScrollProgress />
+            {children}
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

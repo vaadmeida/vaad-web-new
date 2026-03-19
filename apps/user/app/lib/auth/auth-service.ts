@@ -15,6 +15,8 @@ export interface Profile {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  // Allow any additional keys
+  [key: string]: any;
 }
 
 export interface AuthResponse {
