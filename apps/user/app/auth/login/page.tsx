@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -9,31 +10,40 @@ import PasswordInput from "@/app/components/PasswordInput";
 import Button from "@/app/components/Button";
 import Link from "next/link";
 import { LoginFormData, loginSchema } from "@/app/schemas/login.schema";
+import { useAuthContext } from "@/app/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/app/contexts/toast-context";
 
 export default function LoginPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { login, isLoading } = useAuthContext();
+  const { showToast } = useToast();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setIsSubmitting(true);
-    try {
-      // Handle login logic here
-      console.log("Login data:", data);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error("Login failed:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  try {
+    await login({ email: data.email, password: data.password });
+    showToast({
+      type: "success",
+      message: "Login successful! Welcome back.",
+      duration: 3000,
+    });
+    // Redirect happens in the auth hook
+  } catch (error: any) {
+    showToast({
+      type: "error",
+      message: error.message || "Invalid email or password",
+      duration: 4000,
+    });
+  }
+};
 
   // Navigation data
   const navigationLinks = [
@@ -98,6 +108,12 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {/* {submitError && (
+          <Alert variant="error" onClose={() => setSubmitError(null)}>
+            {submitError}
+          </Alert>
+        )} */}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Email Field */}
             <Input
@@ -105,7 +121,8 @@ export default function LoginPage() {
               type="email"
               placeholder="Enter your email"
               error={errors.email?.message}
-              {...register('email')}
+              disabled={isSubmitting || isLoading}
+              {...register("email")}
             />
 
             {/* Password Field */}
@@ -113,16 +130,18 @@ export default function LoginPage() {
               label="Password"
               placeholder="Enter your password"
               error={errors.password?.message}
-              {...register('password')}
+              disabled={isSubmitting || isLoading}
+              {...register("password")}
             />
 
+            {/* Error Message */}
+            {submitError && (
+              <div className="text-sm text-[#E8505B] text-center bg-red-50 p-3 rounded-md">
+                {submitError}
+              </div>
+            )}
             {/* Login Button */}
-            <Button 
-              type="submit" 
-              fullWidth 
-              size="lg"
-              disabled={isSubmitting}
-            >
+            <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
               {isSubmitting ? "Logging in..." : "Login"}
             </Button>
           </form>
@@ -130,7 +149,7 @@ export default function LoginPage() {
           {/* Links */}
           <div className="mt-6 text-center space-y-2">
             <Link
-              href="/forgot-password"
+              href="/auth/forgot-password"
               className="block text-sm text-[#9A9EA7] hover:text-gray-700 transition-colors font-medium"
             >
               Forgot your password?
