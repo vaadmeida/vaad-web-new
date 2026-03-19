@@ -2,6 +2,7 @@
 
 import BillboardSection from "./components/Home/BillboardSection";
 import Hero from "./components/Home/Hero";
+import LedBillboardSection from "./components/Home/LedBillboard";
 import StatsSection from "./components/Home/stats-section";
 import Navbar from "./components/layout/Navbar";
 import TopBar from "./components/layout/TopBar";
@@ -14,6 +15,7 @@ export default function HomePage() {
       <Hero />
       <StatsSection />
       <BillboardSection />
+      <LedBillboardSection />
     </div>
   );
 }
