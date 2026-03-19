@@ -1,9 +1,11 @@
 "use client";
 
+import AirportSection from "./components/Home/Airport";
 import BillboardSection from "./components/Home/BillboardSection";
 import Hero from "./components/Home/Hero";
 import LamppostSection from "./components/Home/Lamppost";
 import LedBillboardSection from "./components/Home/LedBillboard";
+import RetailStoreSection from "./components/Home/RetailStore";
 import StatsSection from "./components/Home/stats-section";
 import Navbar from "./components/layout/Navbar";
 import TopBar from "./components/layout/TopBar";
@@ -18,6 +20,8 @@ export default function HomePage() {
       <BillboardSection />
       <LedBillboardSection />
       <LamppostSection />
+      <AirportSection />
+      <RetailStoreSection />
     </div>
   );
 }
