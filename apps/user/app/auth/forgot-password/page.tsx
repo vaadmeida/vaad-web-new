@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -8,32 +9,43 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Input from "@/app/components/Input";
 import Button from "@/app/components/Button";
-import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/app/schemas/forgot-password.schema";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormData,
+} from "@/app/schemas/forgot-password.schema";
+import { useAuthContext } from "@/app/contexts/auth-context";
+import { useToast } from "@/app/contexts/toast-context";
 
 export default function ForgotPasswordPage() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { forgotPassword, isLoading } = useAuthContext();
+  const { showToast } = useToast();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
   });
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
-    setIsSubmitting(true);
     try {
-      // Handle forgot password logic here
-      console.log("Forgot password email:", data.email);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await forgotPassword({ email: data.email });
       setIsSubmitted(true);
-    } catch (error) {
-      console.error("Failed to send reset link:", error);
-    } finally {
-      setIsSubmitting(false);
+      showToast({
+        type: "success",
+        message: "Reset link sent! Check your email.",
+        duration: 3000,
+      });
+    } catch (error: any) {
+      showToast({
+        type: "error",
+        message:
+          error.message || "Failed to send reset link. Please try again.",
+        duration: 4000,
+      });
     }
   };
 
@@ -102,7 +114,8 @@ export default function ForgotPasswordPage() {
               Forgot your password?
             </h1>
             <p className="text-sm text-[#9A9EA7] font-medium">
-              Don&apos;t worry, we got you! Input your email to receive the reset password link.
+              Don&apos;t worry, we got you! Input your email to receive the
+              reset password link.
             </p>
           </div>
 
@@ -114,16 +127,11 @@ export default function ForgotPasswordPage() {
                 type="email"
                 placeholder="Enter your email"
                 error={errors.email?.message}
-                {...register('email')}
+                {...register("email")}
               />
 
               {/* Send Button */}
-              <Button 
-                type="submit" 
-                fullWidth 
-                size="lg"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" fullWidth size="lg" disabled={isSubmitting}>
                 {isSubmitting ? "Sending..." : "Send"}
               </Button>
             </form>

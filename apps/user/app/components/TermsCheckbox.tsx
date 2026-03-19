@@ -36,7 +36,7 @@ export default function TermsCheckbox({ register, error }: TermsCheckboxProps) {
       label={termsLabel}
       error={error}
       color="#E8505B"
-      {...register('terms')}
+      {...register('termsAndCondition')}
     />
   );
 }

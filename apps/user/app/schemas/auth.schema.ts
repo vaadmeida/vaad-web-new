@@ -5,9 +5,9 @@ const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
 export const registerSchema = z
   .object({
-    name: z.string().min(1, 'Full name is required').min(2, 'Name must be at least 2 characters'),
+    fullName: z.string().min(1, 'Full name is required').min(2, 'Name must be at least 2 characters'),
     email: z.string().min(1, 'Email is required').email('Invalid email address'),
-    phone: z
+    phoneNumber: z
       .string()
       .min(1, 'Phone number is required')
       .regex(phoneRegex, 'Please enter a valid phone number'),
@@ -19,7 +19,7 @@ export const registerSchema = z
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/[0-9]/, 'Password must contain at least one number'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
-    terms: z.boolean().refine(val => val === true, {
+    termsAndCondition: z.boolean().refine(val => val === true, {
       message: 'You must agree to the Terms of Service and Privacy Policy',
     }),
   })
