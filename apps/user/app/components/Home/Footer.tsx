@@ -38,7 +38,7 @@ export default function Footer() {
   const isHome = pathname === "/";
 
   return (
-    <footer className="bg-[#fffcfc] px-18 pt-18 pb-14">
+    <footer className="bg-linear-to-r from-white to-[#F6F6F630] px-18 pt-18 pb-14">
       <motion.div
         variants={container}
         initial="hidden"

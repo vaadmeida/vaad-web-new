@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 export default function SplashScreen() {
   return (
@@ -17,16 +18,21 @@ export default function SplashScreen() {
         className="flex flex-col items-center gap-4"
       >
         {/* Logo */}
-        <div className="text-2xl font-semibold tracking-wide text-gray-900">
-          VAAD
-        </div>
+        <Image
+          src="/vaad.svg"
+          alt="VAAD Media"
+          width={50}
+          height={32}
+          className="w-auto"
+          priority
+        />
 
         {/* Loader */}
         <div className="flex gap-1">
           {[0, 1, 2].map((i) => (
             <motion.span
               key={i}
-              className="w-2 h-2 bg-gray-900 rounded-full"
+              className="w-2 h-2 bg-[#0177AB] rounded-full"
               animate={{ y: [0, -6, 0] }}
               transition={{
                 duration: 0.6,

@@ -67,6 +67,7 @@ export default function Navbar() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { user, isAuthenticated, logout } = useAuthContext();
   const { showToast } = useToast();
+  const isHomePage = pathname === '/';
 
   // Close profile menu when clicking outside
   useEffect(() => {
@@ -111,12 +112,18 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="w-full bg-white shadow-sm px-4 sm:px-6 lg:px-18 py-4">
+    <nav className={`
+      w-full px-4 sm:px-6 lg:px-18 py-4 transition-all duration-300
+      ${!isHomePage 
+        ? 'bg-transparent shadow-none' 
+        : 'bg-white shadow-sm'
+      }
+    `}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/vaad.svg"
+            src={isHomePage ? "/vaad.svg" : "/vaad-white.svg"}
             alt="VAAD Media"
             width={60}
             height={32}
@@ -126,13 +133,13 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden md:flex gap-8 text-gray-600 font-medium">
+        <div className={`hidden md:flex gap-8 ${isHomePage ? 'text-gray-600' : 'text-white'} font-medium`}>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`transition-colors font-normal hover:text-[#0177AB] ${
-                isActiveLink(link.href) ? "text-[#0177AB]" : "text-[#222831]"
+              className={`transition-colors font-normal ${isHomePage ? 'hover:text-[#0177AB]' : 'hover:text-white'} ${
+                isActiveLink(link.href) ? "text-[#0177AB]" : `${isHomePage ? 'text-[#222831]' : 'text-white'}`
               }`}
             >
               {link.name}

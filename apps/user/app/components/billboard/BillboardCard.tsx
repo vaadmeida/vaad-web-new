@@ -38,7 +38,7 @@ export default function BillboardCard({
   const discount = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
   return (
-    <div className="group bg-white rounded-[7.75px] overflow-hidden transition-shadow duration-300">
+    <div className="group bg-transparent rounded-t-[7.75px] border-b border-[#C1C4D6] overflow-hidden transition-shadow duration-300">
       {/* Image Container */}
       <div className="relative h-48 w-full overflow-hidden rounded-[7.75px]">
         <img
