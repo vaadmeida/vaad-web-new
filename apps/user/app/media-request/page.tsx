@@ -46,7 +46,7 @@ const budgetRanges = [
   "$50,000+",
 ];
 
-export default function PartnerWithUsPage() {
+export default function MediaRequestPage() {
   const [formData, setFormData] = useState<FormData>({
     name: "",
     email: "",
