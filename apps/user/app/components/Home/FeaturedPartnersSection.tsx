@@ -8,25 +8,25 @@ type Partner = {
 };
 
 const partners: Partner[] = [
-  { name: "Maggi Nigeria", logo: "/logos/partners/mtn.svg" },
-  { name: "Cadbury Nigeria", logo: "/logos/partners/mtn.svg" },
-  { name: "CocaCola", logo: "/logos/partners/mtn.svg" },
-  { name: "Nestle Africa", logo: "/logos/partners/mtn.svg" },
+  { name: "Maggi Nigeria", logo: "/logos/partners/maggi.svg" },
+  { name: "Cadbury Nigeria", logo: "/logos/partners/cardbury.svg" },
+  { name: "CocaCola", logo: "/logos/partners/cola.svg" },
+  { name: "Nestle Africa", logo: "/logos/partners/nestle.svg" },
   { name: "MTN Nigeria", logo: "/logos/partners/mtn.svg" },
-  { name: "CWAY Beverage", logo: "/logos/partners/mtn.svg" },
-  { name: "Wakanow Bookings", logo: "/logos/partners/mtn.svg" },
-  { name: "Chivita Nigeria", logo: "/logos/partners/mtn.svg" },
-  { name: "Kuda Bank", logo: "/logos/partners/mtn.svg" },
-  { name: "GLO Global", logo: "/logos/partners/mtn.svg" },
-  { name: "Omo Detergent", logo: "/logos/partners/mtn.svg" },
-  { name: "Ribena Drink", logo: "/logos/partners/mtn.svg" },
-  { name: "Opay Microfinance", logo: "/logos/partners/mtn.svg" },
-  { name: "Cowbell Milk", logo: "/logos/partners/mtn.svg" },
+  { name: "CWAY Beverage", logo: "/logos/partners/cway.svg" },
+  { name: "Wakanow Bookings", logo: "/logos/partners/wakanow.svg" },
+  { name: "Chivita Nigeria", logo: "/logos/partners/chivita.svg" },
+  { name: "Kuda Bank", logo: "/logos/partners/kuda.svg" },
+  { name: "GLO Global", logo: "/logos/partners/glo.svg" },
+  { name: "Omo Detergent", logo: "/logos/partners/omo.svg" },
+  { name: "Ribena Drink", logo: "/logos/partners/ribena.svg" },
+  { name: "Opay Microfinance", logo: "/logos/partners/opay.svg" },
+  { name: "Cowbell Milk", logo: "/logos/partners/cowbell.svg" },
 ];
 
 export default function FeaturedPartnersSection() {
   return (
-    <section className="bg-[#FEEEEF] p-18">
+    <section className="bg-[#fff8f8] p-18">
       <div className="max-w-6xl mx-auto px-4">
         
         {/* Header */}
@@ -49,8 +49,8 @@ export default function FeaturedPartnersSection() {
                 <Image
                   src={partner.logo}
                   alt={partner.name}
-                  width={48}
-                  height={48}
+                  width={55}
+                  height={55}
                   className="object-contain"
                 />
               </div>

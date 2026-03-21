@@ -4,22 +4,22 @@ import DealCard from "../Card/DealCard";
 const deals = [
   {
     title: "Lamppost Advertising",
-    image: "/images/transit.jpg",
+    image: "/images/hd-1.jpg",
     available: 2980,
   },
   {
     title: "Bus Shelter Advertising",
-    image: "/images/transit.jpg",
+    image: "/images/hd-2.jpg",
     available: 1090,
   },
   {
     title: "Large Format Print",
-    image: "/images/transit.jpg",
+    image: "/images/hd-3.jpg",
     available: 289,
   },
   {
     title: "Large Format",
-    image: "/images/transit.jpg",
+    image: "/images/hd-4.jpg",
     available: 10980,
   },
 ];
