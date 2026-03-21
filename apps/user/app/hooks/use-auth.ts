@@ -21,20 +21,82 @@ export function useAuth() {
   const router = useRouter();
 
   // =============================
-  // 🔄 LOAD USER
+  // 🔄 LOAD USER FROM STORAGE
   // =============================
   const loadUser = useCallback(async () => {
-    if (!TokenService.isAuthenticated()) {
-      setIsLoading(false);
-      return;
-    }
+    setIsLoading(true);
 
     try {
-      const userData = await authService.getCurrentUser();
-      setUser(userData);
+      // Check if we have valid tokens
+      const hasTokens = TokenService.isAuthenticated();
+      const storedUser = localStorage.getItem("vaad_user");
+
+      if (hasTokens && storedUser) {
+        // Restore user from localStorage
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+
+        // Check if token is expired by decoding JWT
+        const accessToken = TokenService.getAccessToken();
+        if (accessToken) {
+          try {
+            // Decode JWT to check expiration
+            const payload = JSON.parse(atob(accessToken.split(".")[1]));
+            const isExpired = payload.exp && payload.exp * 1000 < Date.now();
+
+            if (isExpired) {
+              // Token expired, try to refresh
+              console.log("Token expired, attempting refresh...");
+              const refreshToken = TokenService.getRefreshToken();
+              const userEmail = TokenService.getUserEmail();
+
+              if (refreshToken && userEmail) {
+                try {
+                  const tokens = await authService.generateTokens({
+                    email: userEmail,
+                    token: refreshToken,
+                  });
+
+                  TokenService.setTokens({
+                    access: tokens.accessToken || tokens.access,
+                    refresh: tokens.refreshToken || tokens.refresh,
+                  });
+
+                  // Keep user data, token refreshed successfully
+                  console.log("Token refreshed successfully");
+                } catch (refreshErr) {
+                  console.error("Token refresh failed:", refreshErr);
+                  // Refresh failed, clear everything
+                  TokenService.clearTokens();
+                  localStorage.removeItem("vaad_user");
+                  setUser(null);
+                }
+              } else {
+                // No refresh token or email, clear everything
+                TokenService.clearTokens();
+                localStorage.removeItem("vaad_user");
+                setUser(null);
+              }
+            }
+          } catch (decodeErr) {
+            // Invalid token format, clear everything
+            console.error("Invalid token format:", decodeErr);
+            TokenService.clearTokens();
+            localStorage.removeItem("vaad_user");
+            setUser(null);
+          }
+        }
+      } else if (hasTokens && !storedUser) {
+        // We have tokens but no user data - clear tokens
+        TokenService.clearTokens();
+        setUser(null);
+      } else {
+        setUser(null);
+      }
     } catch (err) {
       console.error("Failed to load user:", err);
       TokenService.clearTokens();
+      localStorage.removeItem("vaad_user");
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -60,7 +122,6 @@ export function useAuth() {
     try {
       const response = await authService.login({ email, password });
 
-      // Direct access based on your known response structure
       const { accessToken, refreshToken } = response.token;
 
       // Set the tokens
@@ -68,6 +129,9 @@ export function useAuth() {
         access: accessToken,
         refresh: refreshToken,
       });
+
+      // Store email for token refresh
+      TokenService.setUserEmail(email);
 
       // Store user profile
       setUser(response.profile);
@@ -91,22 +155,21 @@ export function useAuth() {
     setError(null);
 
     try {
-      // Step 1: Signup
       const signUpRes = await authService.signUp(data);
 
-      // Step 2: Generate tokens using the verification token
       const tokens = await authService.generateTokens({
         email: data.email,
         token: signUpRes.token,
       });
 
-      // Step 3: Save tokens (handle different token structures)
       TokenService.setTokens({
         access: tokens.accessToken || tokens.access,
         refresh: tokens.refreshToken || tokens.refresh,
       });
 
-      // Step 4: Set user
+      // Store email for token refresh
+      TokenService.setUserEmail(data.email);
+
       setUser(signUpRes.profile);
       localStorage.setItem("vaad_user", JSON.stringify(signUpRes.profile));
 
