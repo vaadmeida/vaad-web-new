@@ -126,11 +126,11 @@ export default function MediaRequestPage() {
                 Billboard Offers.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-white/80">
-                <Link href="/" className="hover:text-white transition-colors">
+                <Link href="/media-request" className="hover:text-white transition-colors">
                   Home
                 </Link>
                 <span>&gt;</span>
-                <span className="text-white">Partner With Us</span>
+                <span className="text-white">Media Request</span>
               </div>
             </div>
           </div>
