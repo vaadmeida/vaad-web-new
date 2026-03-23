@@ -21,7 +21,7 @@ interface BillboardCardProps {
 
 // Static placeholder
 const PLACEHOLDER_IMAGE =
-  "https://images.unsplash.com/photo-1612332883331-e8ea07a15f14?q=80&w=774&auto=format&fit=crop";
+  "https://www.piedmontplastics.com/img/asset/cGFnZV9idWlsZGVyL3ZpbnlsLWJpbGJvYXJkLWJhbm5lci1waWVkbW9udC1wbGFzdGljcy5qcGc/vinyl-bilboard-banner-piedmont-plastics.jpg?w=1024&h=576&fit=crop&q=85&s=1ffca8530d333ac95c8a9f544b95a0f3";
 
 // INSANE HEART ANIMATION VARIANTS - Ultimate Premium
 const heartVariants: Variants = {

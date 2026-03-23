@@ -9,6 +9,8 @@ import Navbar from "../components/layout/Navbar";
 import Image from "next/image";
 import Footer from "../components/Home/Footer";
 import SimilarMedia from "../components/SimilarMedia";
+import { useMediaRequest } from "@/app/hooks/useMediaRequest";
+import Select from "../components/SelectInput";
 
 interface FormData {
   name: string;
@@ -17,34 +19,56 @@ interface FormData {
   companyName: string;
   location: string;
   budget: string;
-  preferredTime: string;
+  preferredTimeToCall: string;
   interest: string;
 }
 
 // Options for dropdowns
 const timeOptions = [
-  "Morning (9 AM - 12 PM)",
-  "Afternoon (12 PM - 5 PM)",
-  "Evening (5 PM - 8 PM)",
-  "Any time",
+  { label: "Morning (9 AM - 12 PM)", value: "Morning (9 AM - 12 PM)" },
+  { label: "Afternoon (12 PM - 5 PM)", value: "Afternoon (12 PM - 5 PM)" },
+  { label: "Evening (5 PM - 8 PM)", value: "Evening (5 PM - 8 PM)" },
+  { label: "Any time", value: "Any time" },
 ];
 
 const interestOptions = [
-  "Billboard Advertising",
-  "Digital Marketing",
-  "Social Media Management",
-  "Brand Strategy",
-  "Media Planning",
-  "Other",
+  { label: "Billboard Advertising", value: "Billboard Advertising" },
+  { label: "Digital Marketing", value: "Digital Marketing" },
+  { label: "Social Media Management", value: "Social Media Management" },
+  { label: "Brand Strategy", value: "Brand Strategy" },
+  { label: "Media Planning", value: "Media Planning" },
+  { label: "Other", value: "Other" },
 ];
 
 const budgetRanges = [
-  "$1,000 - $5,000",
-  "$5,000 - $10,000",
-  "$10,000 - $25,000",
-  "$25,000 - $50,000",
-  "$50,000+",
+  { label: "$1,000 - $5,000", value: "$1,000 - $5,000" },
+  { label: "$5,000 - $10,000", value: "$5,000 - $10,000" },
+  { label: "$10,000 - $25,000", value: "$10,000 - $25,000" },
+  { label: "$25,000 - $50,000", value: "$25,000 - $50,000" },
+  { label: "$50,000+", value: "$50,000+" },
 ];
+
+const locations = [
+  { label: "Lagos", value: "Lagos" },
+  { label: "Abuja", value: "Abuja" },
+  { label: "Port Harcourt", value: "Port Harcourt" },
+  { label: "Ibadan", value: "Ibadan" },
+  { label: "Kano", value: "Kano" },
+  { label: "Enugu", value: "Enugu" },
+  { label: "Other", value: "Other" },
+];
+
+// Map budget string to numeric value
+const getBudgetValue = (budgetString: string): number | undefined => {
+  const budgetMap: Record<string, number> = {
+    "$1,000 - $5,000": 5000,
+    "$5,000 - $10,000": 10000,
+    "$10,000 - $25,000": 25000,
+    "$25,000 - $50,000": 50000,
+    "$50,000+": 50000,
+  };
+  return budgetMap[budgetString];
+};
 
 export default function MediaRequestPage() {
   const [formData, setFormData] = useState<FormData>({
@@ -54,12 +78,11 @@ export default function MediaRequestPage() {
     companyName: "",
     location: "",
     budget: "",
-    preferredTime: "",
+    preferredTimeToCall: "",
     interest: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const { submitRequest, isLoading, error, isSuccess } = useMediaRequest();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -70,26 +93,33 @@ export default function MediaRequestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    
+    // Prepare payload matching the API schema
+    const payload = {
+      name: formData.name,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      companyName: formData.companyName || undefined,
+      location: formData.location || undefined,
+      budget: getBudgetValue(formData.budget),
+      preferredTimeToCall: formData.preferredTimeToCall || undefined,
+      interest: formData.interest || undefined,
+    };
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setIsSubmitted(true);
-      setFormData({
-        name: "",
-        email: "",
-        phoneNumber: "",
-        companyName: "",
-        location: "",
-        budget: "",
-        preferredTime: "",
-        interest: "",
-      });
-    } catch (error) {
-      console.error("Submission error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    await submitRequest(payload);
+  };
+
+  const handleReset = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phoneNumber: "",
+      companyName: "",
+      location: "",
+      budget: "",
+      preferredTimeToCall: "",
+      interest: "",
+    });
   };
 
   return (
@@ -126,7 +156,7 @@ export default function MediaRequestPage() {
                 Billboard Offers.
               </p>
               <div className="flex items-center justify-center gap-2 text-sm text-white/80">
-                <Link href="/media-request" className="hover:text-white transition-colors">
+                <Link href="/" className="hover:text-white transition-colors">
                   Home
                 </Link>
                 <span>&gt;</span>
@@ -152,8 +182,15 @@ export default function MediaRequestPage() {
                 </p>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="max-w-[706.98px] mx-auto mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm text-center">{error}</p>
+                </div>
+              )}
+
               {/* Form Section */}
-              {!isSubmitted ? (
+              {!isSuccess ? (
                 <form
                   onSubmit={handleSubmit}
                   className="w-full max-w-[706.98px] mx-auto"
@@ -198,40 +235,40 @@ export default function MediaRequestPage() {
                       onChange={handleChange}
                     />
 
-                    <Input
+                    <Select
                       label="Location"
                       name="location"
-                      type="text"
-                      placeholder="Enter your city/area"
                       value={formData.location}
                       onChange={handleChange}
+                      options={locations}
+                      placeholder="Select your city/area"
                     />
 
-                    <Input
+                    <Select
                       label="Budget Range"
-                      name="budgetRange"
-                      type="text"
-                      placeholder=""
+                      name="budget"
                       value={formData.budget}
                       onChange={handleChange}
+                      options={budgetRanges}
+                      placeholder="Select budget range"
                     />
 
-                    <Input
+                    <Select
                       label="Preferred Time To Call"
-                      name="time"
-                      type="text"
-                      placeholder=""
-                      value={formData.preferredTime}
+                      name="preferredTimeToCall"
+                      value={formData.preferredTimeToCall}
                       onChange={handleChange}
+                      options={timeOptions}
+                      placeholder="Select preferred time"
                     />
 
-                    <Input
+                    <Select
                       label="I am interested in"
                       name="interest"
-                      type="text"
-                      placeholder=""
                       value={formData.interest}
                       onChange={handleChange}
+                      options={interestOptions}
+                      placeholder="Select your interest"
                     />
                   </div>
 
@@ -241,10 +278,10 @@ export default function MediaRequestPage() {
                       variant="primary"
                       fullWidth={false}
                       size="lg"
-                      disabled={isSubmitting}
-                      className="bg-[#0177AB] hover:bg-[#006d91] text-white font-semibold  flex justify-center items-center py-[19.64px] px-[29.46px] w-95 mx-auto rounded-[10px] transition-colors"
+                      disabled={isLoading}
+                      className="bg-[#0177AB] hover:bg-[#006d91] text-white font-semibold flex justify-center items-center py-[19.64px] px-[29.46px] w-95 mx-auto rounded-[10px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isSubmitting ? (
+                      {isLoading ? (
                         <span className="flex items-center justify-center gap-2">
                           <svg
                             className="animate-spin h-5 w-5"
@@ -275,7 +312,7 @@ export default function MediaRequestPage() {
                 </form>
               ) : (
                 // Success Message
-                <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center">
+                <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12 text-center max-w-[706.98px] mx-auto">
                   <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg
                       className="w-8 h-8 text-green-600"
@@ -296,10 +333,10 @@ export default function MediaRequestPage() {
                   </h3>
                   <p className="text-gray-600 mb-6 max-w-md mx-auto">
                     Thank you for sharing your brief. Please expect a follow-up
-                    call from a customer service representative.
+                    call from a customer service representative within 24 hours.
                   </p>
                   <Button
-                    onClick={() => setIsSubmitted(false)}
+                    onClick={handleReset}
                     variant="primary"
                     className="bg-[#0088b5] hover:bg-[#006d91]"
                   >
