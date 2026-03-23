@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/lib/services/billboard-service.ts
 import { apiClient } from "@/app/lib/api/client";
 
 export interface Billboard {
