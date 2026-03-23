@@ -1,111 +1,95 @@
-// app/components/sections/BillboardSection.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
 import BillboardCard from "@/app/components/billboard/BillboardCard";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { useBillboards } from "@/app/hooks/useBillboard";
+import EmptyState from "./EmptyState/EmptyState";
 
-// Sample data - replace with actual data from your API
-const BILLBOARDS = [
-  {
-    id: "1",
-    title: "Static Billboards",
-    category: "Static Billboards",
-    description: "Tall, single-column boards designed for maximum distance visibility on highways and busy intersections.",
-    location: "Arochukwu",
-    state: "Abia",
-    price: 780,
-    originalPrice: 980,
-    availableIn: 12,
-    rating: 4.9,
-    reviewCount: 280,
-    imageUrl: "https://www.risingabovethenoise.com/wp-content/uploads/2025/05/Chew-Chew-Billboard-2025-scaled.jpg",
-  },
-  {
-    id: "2",
-    title: "LED Billboards",
-    category: "LED Billboards",
-    description: "Massive ads that dominate building facades — ideal for premium brands and impactful urban storytelling.",
-    location: "Jimeta",
-    state: "Adamawa",
-    price: 780,
-    originalPrice: 980,
-    availableIn: 41,
-    rating: 4.9,
-    reviewCount: 280,
-    imageUrl: "https://www.risingabovethenoise.com/wp-content/uploads/2025/05/Chew-Chew-Billboard-2025-scaled.jpg",
-  },
-  {
-    id: "3",
-    title: "Billboard",
-    category: "Billboard",
-    description: "Street-level banners that line major roads, perfect for localized visibility and city-wide brand awareness.",
-    location: "Ikot Ekpene",
-    state: "Akwa Ibom",
-    price: 620,
-    originalPrice: 980,
-    availableIn: 8,
-    rating: 4.7,
-    reviewCount: 340,
-    imageUrl: "https://www.risingabovethenoise.com/wp-content/uploads/2025/05/Chew-Chew-Billboard-2025-scaled.jpg",
-  },
-  {
-    id: "4",
-    title: "Digital Billboards",
-    category: "Digital Billboards",
-    description: "High-impact digital displays with rotating ads for maximum exposure in prime locations.",
-    location: "Victoria Island",
-    state: "Lagos",
-    price: 1200,
-    originalPrice: 1500,
-    availableIn: 5,
-    rating: 4.8,
-    reviewCount: 420,
-    imageUrl: "https://www.risingabovethenoise.com/wp-content/uploads/2025/05/Chew-Chew-Billboard-2025-scaled.jpg",
-  },
-  {
-    id: "5",
-    title: "Gantry Signs",
-    category: "Gantry Signs",
-    description: "Large format signs spanning across highways, perfect for major brand campaigns.",
-    location: "Central Area",
-    state: "Abuja",
-    price: 890,
-    originalPrice: 1100,
-    availableIn: 15,
-    rating: 4.6,
-    reviewCount: 195,
-    imageUrl: "https://www.risingabovethenoise.com/wp-content/uploads/2025/05/Chew-Chew-Billboard-2025-scaled.jpg",
-  },
-  {
-    id: "6",
-    title: "Bridge Panels",
-    category: "Bridge Panels",
-    description: "High-visibility panels on pedestrian bridges targeting both foot and vehicular traffic.",
-    location: "Ikeja",
-    state: "Lagos",
-    price: 550,
-    originalPrice: 750,
-    availableIn: 3,
-    rating: 4.5,
-    reviewCount: 167,
-    imageUrl: "https://www.risingabovethenoise.com/wp-content/uploads/2025/05/Chew-Chew-Billboard-2025-scaled.jpg",
-  },
-];
-
-interface BillboardSectionProps {
+interface RetailStoreSectionProps {
   title?: string;
   subtitle?: string;
   showViewAll?: boolean;
   limit?: number;
 }
 
-export default function RetailStoreSection({ 
-  title = "Retail Store Advertising", 
+export default function RetailStoreSection({
+  title = "Retail Store Advertising",
   subtitle = "From idea to installation - we make outdoor advertising easy, measurable, and unforgettable.",
   showViewAll = false,
-  limit = 3 
-}: BillboardSectionProps) {
-  
-  const displayedBillboards = BILLBOARDS.slice(0, limit);
+  limit = 3,
+}: RetailStoreSectionProps) {
+  const { billboards, loading, error, refetch } = useBillboards({
+    mediaType: "Retail Store",
+  });
+
+  // Slice for display
+  const displayedBillboards = billboards.slice(0, limit);
+  const hasMore = billboards.length > limit;
+
+  // Loading skeleton
+  if (loading) {
+    return (
+      <section className="p-18 bg-white">
+        <div className="mx-auto">
+          {/* Section Header */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#0D0A19] mb-3">
+                {title}
+              </h2>
+              <p className="text-[#333333] max-w-[500px] font-normal text-[17.44px]">
+                {subtitle}
+              </p>
+            </div>
+
+            {showViewAll && (
+              <Link
+                href="/billboards"
+                className="inline-flex underline underline-offset-4 items-center gap-2 text-[#0D0A19] hover:text-[#0177AB] font-medium text-[17.44px] mt-4 md:mt-0 group"
+              >
+                <span>Explore All</span>
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(limit)].map((_, index) => (
+              <div key={index} className="animate-pulse">
+                <div className="bg-gray-200 rounded-t-[7.75px] h-48 w-full"></div>
+                <div className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <section className="p-18 bg-white">
+        <div className="mx-auto text-center py-12">
+          <h2 className="text-2xl font-bold text-[#0D0A19] mb-2">{title}</h2>
+          <p className="text-red-500 mb-4">{error}</p>
+          <button
+            onClick={refetch}
+            className="px-4 py-2 bg-[#0177AB] text-white rounded-lg hover:bg-[#006d91] transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="p-18 bg-white">
@@ -120,7 +104,7 @@ export default function RetailStoreSection({
               {subtitle}
             </p>
           </div>
-          
+
           {showViewAll && (
             <Link
               href="/billboards"
@@ -132,24 +116,40 @@ export default function RetailStoreSection({
           )}
         </div>
 
-        {/* Billboard Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedBillboards.map((billboard) => (
-            <BillboardCard
-              key={billboard.id}
-              {...billboard}
-            />
-          ))}
-        </div>
+        {billboards.length > 0 && (
+          <p className="text-sm text-gray-500 mb-4">
+            Showing {displayedBillboards.length} of {billboards.length} retail
+            store advertisements
+            {hasMore && " (more available)"}
+          </p>
+        )}
+
+        {displayedBillboards.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedBillboards.map((billboard) => (
+              <BillboardCard
+                key={billboard._id}
+                billboard={billboard}
+                onBookmark={() => console.log("Bookmark:", billboard._id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No retail store advertisements available"
+            description="We're currently updating our inventory. Check back soon for exciting new advertising opportunities."
+            onRefresh={refetch}
+          />
+        )}
 
         {/* View More on Mobile (if needed) */}
-        {showViewAll && (
+        {hasMore && showViewAll && (
           <div className="mt-8 text-center md:hidden">
             <Link
               href="/billboards"
-              className="inline-flex items-center justify-center gap-2 text-[#0088b5] font-medium"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F5F9FC] text-[#0177AB] font-medium rounded-lg hover:bg-[#0177AB] hover:text-white transition-colors"
             >
-              View All Billboards
+              View All {billboards.length} Retail Store Ads
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

@@ -213,7 +213,7 @@ export default function DigitalMarketingPage() {
         </div>
 
         {/* Hero Section */}
-        <section className="relative bg-linear-to-r from-[#0088b5] to-[#006d91] text-white pt-24 pb-16">
+        <section data-theme="dark" className="relative bg-linear-to-r from-[#0088b5] to-[#006d91] text-white pt-24 pb-16">
           {/* Background GIF */}
           <div className="absolute inset-0 z-0">
             <Image
@@ -251,7 +251,7 @@ export default function DigitalMarketingPage() {
           </div>
         </section>
 
-        <section className="py-20 px-24">
+        <section data-theme="light" className="py-20 px-24">
           <div className="max-w-6xl mx-auto grid lg:grid-cols-[1fr_360px] gap-8">
             {renderForm()}
 

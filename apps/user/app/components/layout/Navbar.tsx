@@ -68,6 +68,32 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuthContext();
   const { showToast } = useToast();
   const isHomePage = pathname === '/';
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+  const sections = document.querySelectorAll("[data-theme]");
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const newTheme = entry.target.getAttribute("data-theme") as "light" | "dark";
+          setTheme(newTheme);
+        }
+      });
+    },
+    {
+      root: null,
+      threshold: 0.6, // adjust sensitivity
+    }
+  );
+
+  sections.forEach((section) => observer.observe(section));
+
+  return () => {
+    sections.forEach((section) => observer.unobserve(section));
+  };
+}, []);
 
   // Close profile menu when clicking outside
   useEffect(() => {
@@ -112,18 +138,15 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`
-      w-full px-4 sm:px-6 lg:px-18 py-4 transition-all duration-300
-      ${!isHomePage 
-        ? 'bg-transparent shadow-none' 
-        : 'bg-white shadow-sm'
-      }
-    `}>
+   <nav className={`
+  w-full px-4 sm:px-6 lg:px-18 py-4 transition-all duration-300
+  ${theme === "light" ? "bg-white shadow-sm" : "bg-transparent"}
+`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src={isHomePage ? "/vaad.svg" : "/vaad-white.svg"}
+            src={theme === "light" ? "/vaad.svg" : "/vaad-white.svg"}
             alt="VAAD Media"
             width={60}
             height={32}
@@ -133,13 +156,15 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <div className={`hidden md:flex gap-8 ${isHomePage ? 'text-gray-600' : 'text-white'} font-medium`}>
+        <div className={`hidden md:flex gap-8 ${
+  theme === "light" ? "text-gray-800" : "text-white"
+}`}>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`transition-colors font-normal ${isHomePage ? 'hover:text-[#0177AB]' : 'hover:text-white'} ${
-                isActiveLink(link.href) ? "text-[#0177AB]" : `${isHomePage ? 'text-[#222831]' : 'text-white'}`
+              className={`transition-colors font-normal ${theme === "light" ? 'hover:text-[#0177AB]' : 'hover:text-white'} ${
+                isActiveLink(link.href) ? "text-[#0177AB]" : `${theme === "light" ? 'text-[#222831]' : 'text-white'}`
               }`}
             >
               {link.name}
