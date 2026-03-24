@@ -7,7 +7,7 @@ import Image from "next/image";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/Home/Footer";
 import SimilarMedia from "../components/SimilarMedia";
-import { useContact } from "@/app/hooks/useContact";
+import { useContact } from "../hooks/useContact";
 
 interface FormData {
   name: string;
@@ -231,9 +231,9 @@ export default function ContactPage() {
                     {isLoading ? "Sending..." : "Send Message"}
                   </button>
 
-                  <p className="text-[11px] text-gray-400 mt-2">
-                    We'll get back to you within 24 hours.
-                  </p>
+                  {/* <p className="text-[11px] text-gray-400 mt-2">
+                    We&apos;ll get back to you within 24 hours.
+                  </p> */}
                 </form>
               ) : (
                 /* Success Message */
