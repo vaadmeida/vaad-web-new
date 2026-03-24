@@ -126,7 +126,6 @@ export default function LamppostSection({
               <BillboardCard
                 key={billboard._id}
                 billboard={billboard}
-                onBookmark={() => console.log("Bookmark:", billboard._id)}
               />
             ))}
           </div>

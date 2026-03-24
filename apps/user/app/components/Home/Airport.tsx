@@ -130,7 +130,6 @@ export default function AirportSection({
               <BillboardCard
                 key={billboard._id}
                 billboard={billboard}
-                onBookmark={() => console.log("Bookmark:", billboard._id)}
               />
             ))}
           </div>
