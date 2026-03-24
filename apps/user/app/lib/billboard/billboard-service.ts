@@ -119,11 +119,7 @@ export class BillboardService {
       ? `${this.baseUrl}/search?${queryString}`
       : `${this.baseUrl}/search`;
     
-    console.log("Calling API:", url); // Debug log
-    
     const response = await apiClient.get<SearchResponse>(url);
-    
-    console.log("API response:", response); // Debug log
     
     // Transform response to ensure data consistency
     const billboards = (response.data || response.foundItems || []) as Billboard[];
