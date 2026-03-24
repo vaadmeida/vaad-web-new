@@ -5,6 +5,7 @@ import { AuthProvider } from "./contexts/auth-context";
 import { ToastProvider } from "./contexts/toast-context";
 import ScrollProgress from "./components/ui/scroll-progress";
 import SplashProvider from "./components/SplashProvider";
+import { FavoriteProvider } from "./contexts/favorite-context";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -123,7 +124,9 @@ export default function RootLayout({
         <AuthProvider>
           <ToastProvider>
             <ScrollProgress />
-            <SplashProvider>{children}</SplashProvider>
+            <SplashProvider>
+              <FavoriteProvider>{children}</FavoriteProvider>
+            </SplashProvider>
           </ToastProvider>
         </AuthProvider>
       </body>
