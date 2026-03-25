@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
 
 /* Tell Tailwind what to scan */
 @source "../../../apps/**/*.{ts,tsx}";
