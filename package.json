@@ -21,9 +21,9 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@8.15.6",
   "engines": {
-    "node": "20.17.0"
+    "node": "20.10.0"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
