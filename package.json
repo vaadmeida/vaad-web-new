@@ -23,7 +23,7 @@
   },
   "packageManager": "pnpm@9.0.0",
   "engines": {
-    "node": ">=18"
+    "node": "20.11.0"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
