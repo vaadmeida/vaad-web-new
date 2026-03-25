@@ -1,6 +1,7 @@
 import MarkdownRenderer from "@/app/components/blog/MarkdownRenderer";
 import Sidebar from "@/app/components/blog/Sidebar";
 import { blogs } from "@/app/data/blogData";
+import NotFound from "@/app/not-found/page";
 import { motion } from "framer-motion";
 import { Metadata } from "next";
 import Image from "next/image";
@@ -28,7 +29,7 @@ export async function generateMetadata({
 export default function BlogDetail({ params }: { params: { slug: string } }) {
   const blog = blogs.find((b) => b.slug === params.slug);
 
-  if (!blog) return <div>Not found</div>;
+  if (!blog) return <NotFound />;
 
   return (
     <div className="bg-[#f5f7fa] py-16">
