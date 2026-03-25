@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
+import "@repo/ui/globals.css";
 import { AuthProvider } from "./contexts/auth-context";
 import { ToastProvider } from "./contexts/toast-context";
 import ScrollProgress from "./components/ui/scroll-progress";
