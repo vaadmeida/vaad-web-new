@@ -2,6 +2,7 @@
 
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import SectionHeader from "../SectionHeader";
 
 interface BillboardSectionProps {
   title?: string;
@@ -17,26 +18,13 @@ export default function BillboardPromoSection({
   limit = 3,
 }: BillboardSectionProps) {
   return (
-    <section className="w-full bg-white p-18">
-      {/* Section Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
-        <div>
-          <h2 className="text-3xl md:text-4xl font-bold text-[#0D0A19] mb-3">
-            {title}
-          </h2>
-          <p className="text-gray-600 max-w-2xl">{subtitle}</p>
-        </div>
-
-        {showViewAll && (
-          <Link
-            href="/billboards"
-            className="inline-flex underline underline-offset-4 items-center gap-2 text-[#0D0A19] hover:text-[#0177AB] font-medium text-[17.44px] mt-4 md:mt-0 group"
-          >
-            <span>Explore All</span>
-            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        )}
-      </div>
+    <section className="sm:p-18 px-5 py-14 bg-white">
+      <SectionHeader
+        title={title}
+        subtitle={subtitle}
+        showViewAll={showViewAll}
+      />
+      
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* LEFT LARGE CARD */}
         <div className="relative rounded-2xl overflow-hidden h-[789px] group">
@@ -70,7 +58,7 @@ export default function BillboardPromoSection({
         </div>
 
         {/* RIGHT GRID */}
-        <div className="grid grid-rows-2 gap-6 h-[789px]">
+        <div className="md:grid grid-rows-2 gap-6 h-197.25 hidden">
           {/* TOP RIGHT */}
           <div className="relative rounded-2xl overflow-hidden group">
             <img

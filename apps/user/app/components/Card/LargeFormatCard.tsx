@@ -35,7 +35,7 @@ const LargeFormatCard = ({
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-12">
-        <h2 className="text-white text-2xl md:text-[48px] font-semibold">
+        <h2 className="text-white text-[6vw] sm:text-[48px] font-semibold">
           {title}
         </h2>
 
@@ -46,7 +46,7 @@ const LargeFormatCard = ({
         )}
 
         {/* CTA */}
-        <button className="mt-6 inline-flex items-center gap-2 bg-[#FAFAFA] text-[#EB5757] text-[15.82px] font-semibold px-5 py-[11.87px] rounded-md w-fit hover:bg-gray-100 transition">
+        <button className="mt-6 inline-flex items-center gap-2 bg-[#FAFAFA] text-[#EB5757] sm:text-[15.82px] text-[3.5vw] font-semibold px-5 py-[11.87px] rounded-md w-fit hover:bg-gray-100 transition">
           BOOK NOW
           <ArrowRight size={16} />
         </button>
@@ -60,10 +60,10 @@ const LargeFormatCard = ({
             { label: "Seconds", value: "05" },
           ].map((item, i) => (
             <div key={i} className="text-left">
-              <p className="text-[32px] font-semibold tracking-wide">
+              <p className="sm:text-[32px] text-[6vw] font-semibold tracking-wide">
                 {item.value}
               </p>
-              <p className="text-base text-white mt-1">
+              <p className="sm:text-base text-[4vw] text-white mt-1">
                 {item.label}
               </p>
             </div>

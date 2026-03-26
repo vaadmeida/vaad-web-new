@@ -30,10 +30,10 @@ const HotDealsSection = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center max-w-xl mx-auto">
-          <h2 className="text-2xl md:text-3xl font-semibold text-gray-900">
+          <h2 className="text-[6vw] sm:text-3xl font-semibold text-gray-900">
             Hot Deals Section
           </h2>
-          <p className="text-gray-500 text-sm mt-3 leading-relaxed">
+          <p className="text-gray-500 sm:text-sm text-[3.5vw] mt-3 leading-relaxed">
             Choose from hundreds of billboard spots strategically placed for
             maximum visibility and impact.
           </p>

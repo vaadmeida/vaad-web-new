@@ -56,13 +56,13 @@ export default function Footer() {
 
   return (
     <>
-      <footer className="bg-linear-to-r from-white to-[#F6F6F630] px-18 pt-18 pb-14">
+      <footer className="bg-linear-to-r from-white to-[#F6F6F630] sm:px-18 pt-18 px-5 pb-14">
         <motion.div
           variants={container}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true }}
-          className="max-w-6xl mx-auto px-4"
+          className="sm:max-w-6xl mx-auto sm:px-4"
         >
           {/* Top Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 pb-16">

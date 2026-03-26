@@ -15,7 +15,7 @@ export default function EmptyState({
   showRefresh = true,
 }: EmptyStateProps) {
   return (
-    <div className="text-center py-16 bg-gradient-to-b from-gray-50/50 to-transparent rounded-2xl">
+    <div className="text-center px-7 py-16 bg-linear-to-b from-gray-50/50 to-transparent rounded-2xl">
       <div className="w-16 h-16 mx-auto mb-5 bg-[#0177AB]/10 rounded-2xl flex items-center justify-center">
         {icon || (
           <svg
@@ -33,11 +33,11 @@ export default function EmptyState({
           </svg>
         )}
       </div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-1">{title}</h3>
-      <p className="text-gray-400 text-sm mb-6">{description}</p>
+      <h3 className="sm:text-lg text-[4.5vw] font-semibold text-gray-800 mb-1">{title}</h3>
+      <p className="text-gray-400 sm:text-sm text-[3vw] mb-6">{description}</p>
       <button
         onClick={onRefresh}
-        className="inline-flex items-center gap-2 text-sm text-[#0177AB] font-medium hover:text-[#006d91] transition-colors group"
+        className="inline-flex items-center gap-2 sm:text-sm text-[3vw] text-[#0177AB] font-medium hover:text-[#006d91] transition-colors group"
       >
         <svg
           className="w-4 h-4 group-hover:rotate-180 transition-transform duration-300"
