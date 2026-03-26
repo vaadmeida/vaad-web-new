@@ -4,8 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { Search, Loader2 } from "lucide-react";
 import BillboardCard from "../billboard/BillboardCard";
-import { Billboard, billboardService, SearchParams } from "@/app/lib/billboard/billboard-service";
+import {
+  Billboard,
+  billboardService,
+  SearchParams,
+} from "@/app/lib/billboard/billboard-service";
 import { useAssets } from "@/app/hooks/useAssets";
+import SearchBox from "../SearchBox";
 
 interface Filters {
   serviceType: string;
@@ -15,7 +20,7 @@ interface Filters {
 
 export default function Hero() {
   const { assets, locations, isLoading: assetsLoading } = useAssets();
-  
+
   const [filters, setFilters] = useState<Filters>({
     serviceType: "Outdoor Advertising",
     location: "Lagos",
@@ -36,13 +41,13 @@ export default function Hero() {
   // Update filters when assets are loaded
   useEffect(() => {
     if (assets.services.length > 0 && !filters.serviceType) {
-      setFilters(prev => ({ ...prev, serviceType: assets.services[0] }));
+      setFilters((prev) => ({ ...prev, serviceType: assets.services[0] }));
     }
     if (assets.mediaType.length > 0 && !filters.mediaType) {
-      setFilters(prev => ({ ...prev, mediaType: assets.mediaType[0] }));
+      setFilters((prev) => ({ ...prev, mediaType: assets.mediaType[0] }));
     }
     if (locations.length > 0 && !filters.location) {
-      setFilters(prev => ({ ...prev, location: locations[0] }));
+      setFilters((prev) => ({ ...prev, location: locations[0] }));
     }
   }, [assets, locations]);
 
@@ -55,48 +60,52 @@ export default function Hero() {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSearch = useCallback(async (page: number = 1) => {
-    if (!isMounted) return;
-    
-    setIsLoading(true);
-    setHasSearched(true);
+  const handleSearch = useCallback(
+    async (page: number = 1) => {
+      if (!isMounted) return;
 
-    const searchParams: SearchParams = {
-      serviceType: filters.serviceType,
-      location: filters.location,
-      mediaType: filters.mediaType,
-      limit: pagination.limit,
-      page: page,
-    };
+      setIsLoading(true);
+      setHasSearched(true);
 
-    try {
-      const response = await billboardService.searchBillboards(searchParams);
-      
-      const fetchedResults = response.foundItems || [];
-      setResults(fetchedResults);
-      
-      const totalCount = response?.count || 0;
-      const totalPagesValue = response.totalPages || Math.ceil(totalCount / pagination.limit);
-      
-      setPagination({
+      const searchParams: SearchParams = {
+        serviceType: filters.serviceType,
+        location: filters.location,
+        mediaType: filters.mediaType,
+        limit: pagination.limit,
         page: page,
-        limit: pagination.limit,
-        total: totalCount,
-        totalPages: totalPagesValue,
-      });
-    } catch (error) {
-      console.error("Search failed:", error);
-      setResults([]);
-      setPagination({
-        page: 1,
-        limit: pagination.limit,
-        total: 0,
-        totalPages: 0,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters, isMounted, pagination.limit]);
+      };
+
+      try {
+        const response = await billboardService.searchBillboards(searchParams);
+
+        const fetchedResults = response.foundItems || [];
+        setResults(fetchedResults);
+
+        const totalCount = response?.count || 0;
+        const totalPagesValue =
+          response.totalPages || Math.ceil(totalCount / pagination.limit);
+
+        setPagination({
+          page: page,
+          limit: pagination.limit,
+          total: totalCount,
+          totalPages: totalPagesValue,
+        });
+      } catch (error) {
+        console.error("Search failed:", error);
+        setResults([]);
+        setPagination({
+          page: 1,
+          limit: pagination.limit,
+          total: 0,
+          totalPages: 0,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [filters, isMounted, pagination.limit],
+  );
 
   // Auto-search on mount (client-side only)
   useEffect(() => {
@@ -129,12 +138,12 @@ export default function Hero() {
           <div className="relative z-10 pt-24 pb-16">
             <div className="container mx-auto px-4 sm:px-6 lg:px-18">
               <div className="max-w-3xl">
-                <h1 className="text-white text-5xl md:text-6xl lg:text-[72px] font-bold leading-tight suez-one">
+                <h1 className="text-white text-[2vw] sm:text-6xl font-bold leading-tight suez-one">
                   Find It, Book It,
                   <br />
                   Go Live!
                 </h1>
-                <p className="text-[#FAF5ED] text-lg mt-4 max-w-xl font-normal">
+                <p className="text-[#FAF5ED] sm:text-lg text-[3vw] mt-4 max-w-xl font-normal">
                   We connect brands to millions through high-impact billboards
                   across Nigeria
                 </p>
@@ -148,10 +157,10 @@ export default function Hero() {
   }
 
   return (
-    <div className="relative w-full min-h-screen bg-white">
-      <div className="relative min-h-screen flex flex-col">
+    <div className="relative w-full sm:min-h-screen bg-white">
+      <div className="relative sm:min-h-screen flex flex-col">
         {/* Background GIF */}
-        <div className="absolute inset-0 h-screen">
+        <div className="absolute inset-0 sm:h-screen">
           <Image
             src="/video/vaad-bg.gif"
             alt="VAAD Media Billboard"
@@ -164,114 +173,33 @@ export default function Hero() {
         </div>
 
         {/* Hero Content */}
-        <div className="relative z-10 pt-24 pb-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-18">
+        <div className="relative z-10 pt-24 sm:pb-16 pb-24">
+          <div className="container mx-auto px-5 sm:px-6 lg:px-18">
             <div className="max-w-3xl">
-              <h1 className="text-white text-5xl md:text-6xl lg:text-[72px] font-bold leading-tight suez-one">
+              <h1 className="text-white text-[11vw] sm:text-6xl font-bold leading-tight suez-one">
                 Find It, Book It,
                 <br />
                 Go Live!
               </h1>
-              <p className="text-[#FAF5ED] text-lg mt-4 max-w-xl font-normal">
+              <p className="text-[#FAF5ED] sm:text-lg text-[4vw] mt-4 max-w-xl font-normal">
                 We connect brands to millions through high-impact billboards
                 across Nigeria
               </p>
             </div>
-
-            {/* Search Box */}
-            <div className="mt-12 bg-white rounded-lg shadow-xl p-6 max-w-5xl">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Service Type */}
-                <div>
-                  <label className="block text-[17.04px] text-[#333333] mb-2">
-                    Select Service Type
-                  </label>
-                  <select
-                    className="w-full px-3 py-2.5 bg-[#F8FBFD] rounded-[4.56px] text-[13.25px] focus:outline-none focus:ring-2 focus:ring-[#0088b5]"
-                    value={filters.serviceType}
-                    onChange={(e) =>
-                      handleFilterChange("serviceType", e.target.value)
-                    }
-                  >
-                    {assetsLoading ? (
-                      <option>Loading...</option>
-                    ) : (
-                      assets.services.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                {/* Location */}
-                <div>
-                  <label className="block text-[17.04px] text-[#333333] mb-2">
-                    Location
-                  </label>
-                  <select
-                    className="w-full px-3 py-2.5 bg-[#F8FBFD] rounded-[4.56px] text-[13.25px] focus:outline-none focus:ring-2 focus:ring-[#0088b5]"
-                    value={filters.location}
-                    onChange={(e) =>
-                      handleFilterChange("location", e.target.value)
-                    }
-                  >
-                    {assetsLoading ? (
-                      <option>Loading...</option>
-                    ) : (
-                      locations.map((loc) => (
-                        <option key={loc} value={loc}>
-                          {loc}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                {/* Media Type */}
-                <div>
-                  <label className="block text-[17.04px] text-[#333333] mb-2">
-                    Media Type
-                  </label>
-                  <select
-                    className="w-full px-3 py-2.5 bg-[#F8FBFD] rounded-[4.56px] text-[13.25px] focus:outline-none focus:ring-2 focus:ring-[#0088b5]"
-                    value={filters.mediaType}
-                    onChange={(e) =>
-                      handleFilterChange("mediaType", e.target.value)
-                    }
-                  >
-                    {assetsLoading ? (
-                      <option>Loading...</option>
-                    ) : (
-                      assets.mediaType.map((type) => (
-                        <option key={type} value={type}>
-                          {type}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-
-                {/* Search Button */}
-                <div className="flex items-end">
-                  <button
-                    onClick={() => handleSearch(1)}
-                    disabled={isLoading}
-                    className="w-full bg-[#0177AB] hover:bg-[#007a9e] text-[14.58px] text-white font-bold py-[14.58px] px-[36.45px] rounded-[4.56px] transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Search className="w-4 h-4" />
-                    )}
-                    Search
-                  </button>
-                </div>
-              </div>
-            </div>
           </div>
+
+                      {/* Search Box */}
+            <SearchBox
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              handleSearch={handleSearch}
+              isLoading={isLoading}
+              assets={assets}
+              assetsLoading={assetsLoading}
+              locations={locations}
+            />
         </div>
+        
 
         {/* Search Results Section */}
         {/* <div className="relative z-10 bg-gray-50 py-12">

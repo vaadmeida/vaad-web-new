@@ -6,6 +6,7 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useBillboards } from "@/app/hooks/useBillboard";
 import EmptyState from "./EmptyState/EmptyState";
+import SectionHeader from "../SectionHeader";
 
 interface RetailStoreSectionProps {
   title?: string;
@@ -31,29 +32,14 @@ export default function RetailStoreSection({
   // Loading skeleton
   if (loading) {
     return (
-      <section className="p-18 bg-white">
+      <section className="bg-white py-20 px-6 md:px-18">
         <div className="mx-auto">
           {/* Section Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#0D0A19] mb-3">
-                {title}
-              </h2>
-              <p className="text-[#333333] max-w-[500px] font-normal text-[17.44px]">
-                {subtitle}
-              </p>
-            </div>
-
-            {showViewAll && (
-              <Link
-                href="/billboards"
-                className="inline-flex underline underline-offset-4 items-center gap-2 text-[#0D0A19] hover:text-[#0177AB] font-medium text-[17.44px] mt-4 md:mt-0 group"
-              >
-                <span>Explore All</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-            )}
-          </div>
+          <SectionHeader
+            title={title}
+            subtitle={subtitle}
+            showViewAll={showViewAll}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(limit)].map((_, index) => (
@@ -76,7 +62,7 @@ export default function RetailStoreSection({
   // Error state
   if (error) {
     return (
-      <section className="p-18 bg-white">
+      <section className="bg-white py-20 px-6 md:px-18">
         <div className="mx-auto text-center py-12">
           <h2 className="text-2xl font-bold text-[#0D0A19] mb-2">{title}</h2>
           <p className="text-red-500 mb-4">{error}</p>
@@ -92,29 +78,14 @@ export default function RetailStoreSection({
   }
 
   return (
-    <section className="p-18 bg-white">
+    <section className="bg-white py-20 px-6 md:px-18">
       <div className="mx-auto">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#0D0A19] mb-3">
-              {title}
-            </h2>
-            <p className="text-[#333333] max-w-[500px] font-normal text-[17.44px]">
-              {subtitle}
-            </p>
-          </div>
-
-          {showViewAll && (
-            <Link
-              href="/billboards"
-              className="inline-flex underline underline-offset-4 items-center gap-2 text-[#0D0A19] hover:text-[#0177AB] font-medium text-[17.44px] mt-4 md:mt-0 group"
-            >
-              <span>Explore All</span>
-              <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          )}
-        </div>
+        <SectionHeader
+          title={title}
+          subtitle={subtitle}
+          showViewAll={showViewAll}
+        />
 
         {billboards.length > 0 && (
           <p className="text-sm text-gray-500 mb-4">
@@ -127,15 +98,12 @@ export default function RetailStoreSection({
         {displayedBillboards.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedBillboards.map((billboard) => (
-              <BillboardCard
-                key={billboard._id}
-                billboard={billboard}
-              />
+              <BillboardCard key={billboard._id} billboard={billboard} />
             ))}
           </div>
         ) : (
           <EmptyState
-            title="No retail store advertisements available"
+            title="No advertisements available"
             description="We're currently updating our inventory. Check back soon for exciting new advertising opportunities."
             onRefresh={refetch}
           />

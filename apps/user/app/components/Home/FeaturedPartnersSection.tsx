@@ -26,15 +26,15 @@ const partners: Partner[] = [
 
 export default function FeaturedPartnersSection() {
   return (
-    <section className="bg-[#fff8f8] p-18">
+    <section className="bg-[#fff8f8] py-20 px-6 md:px-18">
       <div className="max-w-6xl mx-auto px-4">
         
         {/* Header */}
         <div className="text-center mb-14">
-          <h2 className="text-2xl md:text-[35px] font-semibold text-[#0D0A19]">
+          <h2 className="text-[6vw] sm:text-3xl font-semibold text-[#0D0A19]">
             Featured Partners
           </h2>
-          <p className="text-[#333333] mt-2 text-sm md:text-[17.93px] font-normal">
+          <p className="text-[#333333] mt-2 sm:text-sm text-[3.5vw] font-normal">
             Trusted by top brands in finance, FMCG, fashion, and telecom.
           </p>
         </div>

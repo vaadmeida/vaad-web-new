@@ -442,12 +442,12 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
           </div>
 
           {/* Title */}
-          <h3 className="text-[21.32px] font-semibold text-[#0177AB] mb-1 line-clamp-1">
+          <h3 className="sm:text-[21.32px] text-[6vw] font-semibold text-[#0177AB] mb-1 line-clamp-1">
             {displayTitle}
           </h3>
 
           {/* Description */}
-          <p className="text-[15.5px] text-[#333333] mb-4 font-normal line-clamp-2">
+          <p className="sm:text-[15.5px] text-[3.7vw] text-[#333333] mb-4 font-normal line-clamp-2">
             {description}
           </p>
 
@@ -455,20 +455,20 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
           <div className="flex items-start gap-2 mb-4">
             <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
             <div>
-              <p className="text-[13.57px] font-normal text-[#696F8C]">
+              <p className="sm:text-[13.57px] text-[3.5vw] font-normal text-[#696F8C]">
                 {displayLocation}, {fields.state || "Lagos"}
               </p>
             </div>
           </div>
 
-          <div className="flex gap-7 items-center">
+          <div className="flex justify-between gap-7 items-center">
             {/* Price */}
             <div className="flex items-baseline gap-2">
-              <span className="text-[31.01px] font-bold text-[#333333]">
+              <span className="sm:text-[31.01px] text-[6vw] font-bold text-[#333333]">
                 ₦{fields.rate?.toLocaleString("en-US") || "0"}
               </span>
               {originalPrice && (
-                <span className="text-[16.47px] text-[#696F8C] line-through font-medium">
+                <span className="sm:text-[16.47px] text-[4vw] text-[#696F8C] line-through font-medium">
                   ₦{originalPrice.toLocaleString("en-US")}
                 </span>
               )}
@@ -479,7 +479,7 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
                 e.stopPropagation();
                 handleViewDetails();
               }}
-              className="w-full block text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-[13.57px] hover:bg-[#0177AB] hover:text-white"
+              className="w-fit block text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 sm:text-[13.57px] text-[3vw] hover:bg-[#0177AB] hover:text-white"
             >
               Available in <span>{availableIn}</span> days
             </button>

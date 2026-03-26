@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function Testimonial() {
   return (
-    <section className="bg-[#F9F9FB] p-18">
+    <section className="bg-white py-20 px-6 md:px-18">
       <div className="max-w-3xl mx-auto text-center px-4">
         
         {/* Brand Logo */}
@@ -19,7 +19,7 @@ export default function Testimonial() {
         </div>
 
         {/* Quote */}
-        <p className="text-[#121127] text-sm md:text-[19.92px] leading-relaxed max-w-2xl mx-auto font-normal">
+        <p className="text-[#121127] text-[3.5vw] sm:text-[19.92px] leading-relaxed max-w-2xl mx-auto font-normal">
           “Professional team, fast response, and premium billboard locations.
           Everything went smoothly from booking to display.”
         </p>
@@ -33,7 +33,7 @@ export default function Testimonial() {
             height={55}
             className="rounded-full object-cover"
           />
-          <p className="text-[13.94px] font-semibold text-[#121127]">
+          <p className="sm:text-[13.94px] text-[3vw] font-semibold text-[#121127]">
             <span>
               Daniel Okon
             </span>{" "}

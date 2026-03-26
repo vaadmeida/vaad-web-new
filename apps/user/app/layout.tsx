@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Poppins } from "next/font/google";
 import "@repo/ui/globals.css";
 import { AuthProvider } from "./contexts/auth-context";
 import { ToastProvider } from "./contexts/toast-context";
@@ -7,10 +7,12 @@ import ScrollProgress from "./components/ui/scroll-progress";
 import SplashProvider from "./components/SplashProvider";
 import { FavoriteProvider } from "./contexts/favorite-context";
 
-const inter = Inter({
+const poppins = Poppins({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-poppins",
   display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
 });
 
 // 🌍 Base URL
@@ -60,7 +62,7 @@ export const metadata: Metadata = {
     locale: "en_NG",
     images: [
       {
-        url: `${baseUrl}/og-image.jpg`, // 🔥 Add this image
+        url: `${baseUrl}/og-image.jpg`,
         width: 1200,
         height: 630,
         alt: "VAAD Media Outdoor Advertising",
@@ -120,7 +122,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" dir="ltr">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${poppins.variable} font-sans antialiased`}>
         <AuthProvider>
           <ToastProvider>
             <ScrollProgress />

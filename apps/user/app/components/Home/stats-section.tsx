@@ -7,11 +7,11 @@ interface StatCardProps {
 
 function StatCard({ title, description }: StatCardProps) {
   return (
-    <div className="bg-white border border-[#C4C4C4] rounded-xl p-6 w-full max-w-66 transition">
-      <h3 className="text-[#0177AB] font-bold text-[24px]">
+    <div className="bg-white border border-[#c4c4c490] rounded-xl p-6 w-full sm:max-w-66 transition">
+      <h3 className="text-[#0177AB] font-bold sm:text-[24px] text-[6vw]">
         {title}
       </h3>
-      <p className="text-[#304659] text-base font-normal mt-2 leading-relaxed">
+      <p className="text-[#304659] sm:text-base text-[4vw] font-normal mt-2 leading-relaxed">
         {description}
       </p>
     </div>
@@ -43,14 +43,14 @@ export default function StatsSection() {
   ];
 
   return (
-    <section className="w-full bg-white py-18 px-18">
+    <section className="w-full bg-white sm:py-18 sm:px-18 px-5 py-18">
       <div className="max-w-7xl mx-auto">
         {/* Heading */}
-        <div className="w-[450px]">
-          <h2 className="text-[32px] font-semibold text-[#0D0A19]">
+        <div className="sm:w-112.5 w-full">
+          <h2 className="sm:text-[32px] text-[5.5vw] font-semibold text-[#0D0A19]">
             We Turn Traffic Into Attention.
           </h2>
-          <p className="text-[#333333] mt-2 text-base leading-relaxed font-normal">
+          <p className="text-[#333333] mt-2 sm:text-base text-[3.5vw] leading-relaxed font-normal">
             From static boards to digital screens, we give your business the visibility it deserves - everywhere your customers go.
           </p>
         </div>

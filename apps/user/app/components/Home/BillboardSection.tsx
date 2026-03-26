@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useBillboards } from "@/app/hooks/useBillboard";
 import EmptyState from "./EmptyState/EmptyState";
 import { useMemo } from "react";
+import SectionHeader from "../SectionHeader";
 
 interface BillboardSectionProps {
   title?: string;
@@ -72,7 +73,7 @@ export default function BillboardSection({
   }
 
   return (
-    <section className="p-18 bg-white">
+    <section className="sm:p-18 px-5 py-14 bg-white">
       <div className="mx-auto">
         <SectionHeader
           title={title}
@@ -81,14 +82,14 @@ export default function BillboardSection({
         />
 
         {billboards.length > 0 && (
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="sm:text-sm text-[3vw] text-gray-500 mb-4">
             Showing {displayedBillboards.length} of {billboards.length}{" "}
             {mediaTypeFilter.toLowerCase()}s{hasMore && " (more available)"}
           </p>
         )}
 
         {displayedBillboards.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-6 gap-8">
             {displayedBillboards.map((billboard) => (
              <BillboardCard
                 key={billboard._id}
@@ -111,36 +112,6 @@ export default function BillboardSection({
 }
 
 // Sub-components
-function SectionHeader({
-  title,
-  subtitle,
-  showViewAll,
-}: {
-  title: string;
-  subtitle: string;
-  showViewAll: boolean;
-}) {
-  return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
-      <div>
-        <h2 className="text-3xl md:text-4xl font-bold text-[#0D0A19] mb-3">
-          {title}
-        </h2>
-        <p className="text-gray-600 max-w-2xl">{subtitle}</p>
-      </div>
-
-      {showViewAll && (
-        <Link
-          href="/billboards"
-          className="inline-flex underline underline-offset-4 items-center gap-2 text-[#0D0A19] hover:text-[#0177AB] font-medium text-[17.44px] mt-4 md:mt-0 group"
-        >
-          <span>Explore All</span>
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </Link>
-      )}
-    </div>
-  );
-}
 
 function BillboardSkeletonGrid({ count }: { count: number }) {
   return (
@@ -165,7 +136,7 @@ function ViewAllButton({ count }: { count: number }) {
     <div className="mt-8 text-center md:hidden">
       <Link
         href="/billboards"
-        className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F5F9FC] text-[#0177AB] font-medium rounded-lg hover:bg-[#0177AB] hover:text-white transition-colors"
+        className="text-[3.5vw] sm:text-[16px] inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F5F9FC] text-[#0177AB] font-medium rounded-lg hover:bg-[#0177AB] hover:text-white transition-colors"
       >
         View All {count} Billboards
         <ChevronRight className="w-4 h-4" />

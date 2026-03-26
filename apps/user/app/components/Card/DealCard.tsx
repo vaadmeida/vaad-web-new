@@ -23,10 +23,10 @@ const DealCard = ({ title, image, available }: DealCardProps) => {
       {/* Content */}
       <div className="flex items-center justify-between mt-4">
         <div>
-          <h3 className="text-[18px] font-bold text-[#2A2F2F]">
+          <h3 className="sm:text-[18px] text-[5vw] font-bold text-[#2A2F2F]">
             {title}
           </h3>
-          <p className="text-[14px] text-[#7F7F7F] font-normal mt-1">
+          <p className="sm:text-[14px] text-[3.5vw] text-[#7F7F7F] font-normal mt-1">
             {available.toLocaleString()} available
           </p>
         </div>
