@@ -1,3 +1,4 @@
+// app/blog/page.tsx
 import Link from "next/link";
 import Image from "next/image";
 import Navbar from "../components/layout/Navbar";
@@ -5,30 +6,22 @@ import Footer from "../components/Home/Footer";
 import SimilarMedia from "../components/SimilarMedia";
 import BlogContent from "../components/blog/BlogContent";
 
-interface FormData {
-  name: string;
-  email: string;
-  phoneNumber: string;
-  message: string;
-}
-
 export const metadata = {
   title: "Blog | VAAD Media",
   description: "Latest insights on billboard advertising in Lagos.",
 };
 
 export default function BlogPage() {
-  
   return (
     <>
       <div className="min-h-screen bg-gray-50">
-        {/* Navbar - Fixed at top with high z-index */}
+        {/* Navbar */}
         <div className="fixed top-0 left-0 right-0 z-50">
           <Navbar />
         </div>
 
         {/* Hero Section */}
-        <section className="relative bg-linear-to-r from-[#0088b5] to-[#006d91] text-white pt-24 pb-16">
+        <section className="relative bg-gradient-to-r from-[#0088b5] to-[#006d91] text-white pt-24 pb-16">
           {/* Background GIF */}
           <div className="absolute inset-0 z-0">
             <Image
