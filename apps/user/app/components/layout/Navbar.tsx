@@ -243,7 +243,7 @@ export default function Navbar() {
           {/* Header */}
           <div className="bg-gradient-to-br from-[#0088b5] to-[#006d91] pt-8 pb-6 px-5 sticky top-0 z-10">
             <div className="flex items-center justify-between mb-6">
-              <Image src="/vaad-white.svg" alt="VAAD Media" width={55} height={30} />
+              <Image src="/vaad-white-full.svg" alt="VAAD Media" width={90} height={30} />
               <button
                 onClick={toggleMobileMenu}
                 className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -300,14 +300,14 @@ export default function Navbar() {
               {/* Quick Actions */}
               <div className="px-3 py-2 border-t border-gray-100">
                 <p className="text-xs text-gray-400 px-4 py-2 uppercase tracking-wider">Quick Actions</p>
-                <Link
+                {/* <Link
                   href="/profile"
                   onClick={toggleMobileMenu}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors duration-200"
                 >
                   <User size={18} className="text-gray-500" />
                   <span>Your Profile</span>
-                </Link>
+                </Link> */}
                 <Link
                   href="/favorites"
                   onClick={toggleMobileMenu}
