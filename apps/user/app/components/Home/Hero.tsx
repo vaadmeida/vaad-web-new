@@ -174,8 +174,8 @@ export default function Hero() {
 
         {/* Hero Content */}
         <div className="relative z-10 pt-24 sm:pb-16 pb-24">
-          <div className="container mx-auto px-5 sm:px-6 lg:px-18">
-            <div className="max-w-3xl">
+          <div className="container mx-auto px-5 lg:px-18">
+            <div className="sm:max-w-3xl">
               <h1 className="text-white text-[11vw] sm:text-6xl font-bold leading-tight suez-one">
                 Find It, Book It,
                 <br />
@@ -186,20 +186,21 @@ export default function Hero() {
                 across Nigeria
               </p>
             </div>
+
+
+          {/* Search Box */}
+          <SearchBox
+            filters={filters}
+            handleFilterChange={handleFilterChange}
+            handleSearch={handleSearch}
+            isLoading={isLoading}
+            assets={assets}
+            assetsLoading={assetsLoading}
+            locations={locations}
+          />
           </div>
 
-                      {/* Search Box */}
-            <SearchBox
-              filters={filters}
-              handleFilterChange={handleFilterChange}
-              handleSearch={handleSearch}
-              isLoading={isLoading}
-              assets={assets}
-              assetsLoading={assetsLoading}
-              locations={locations}
-            />
         </div>
-        
 
         {/* Search Results Section */}
         {/* <div className="relative z-10 bg-gray-50 py-12">

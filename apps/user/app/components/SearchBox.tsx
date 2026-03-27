@@ -86,7 +86,7 @@ export default function SearchBox({
       {/* ---------------- MOBILE ---------------- */}
 
       {/* COLLAPSED BAR */}
-      <div className="md:hidden mt-6 px-4">
+      <div className="md:hidden mt-6">
         <button
           onClick={() => setOpen(true)}
           className="w-full bg-white rounded-2xl shadow-md px-4 py-4 flex items-center justify-between"
