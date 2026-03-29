@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
         message: 'Invalid or missing reset token. Please request a new password reset link.',
         duration: 4000,
       });
-      router.push('/forgot-password');
+      router.push('/auth/forgot-password');
     }
   }, [token, router, showToast]);
 
@@ -162,10 +162,10 @@ export default function ResetPasswordPage() {
           </Link>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-[#0D0A19] mb-2">
+            <h1 className="sm;text-2xl text-[6vw] font-bold text-[#0D0A19] mb-2">
               Create your new password
             </h1>
-            <p className="text-sm text-[#9A9EA7] font-medium">
+            <p className="sm:text-sm text-[3.5vw] text-[#9A9EA7] font-medium">
               Make sure to create new strong password for your account!
             </p>
           </div>
@@ -224,10 +224,10 @@ export default function ResetPasswordPage() {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                <img src='/illustrations/reset-password-illustration.svg' width={200} height={200} />
               </div>
-              <h2 className="text-xl font-semibold text-[#0D0A19]">
+              <h2 className="sm:text-xl text-[5.5vw] font-semibold text-[#0D0A19]">
                 Success create your new password!
               </h2>
-              <p className="text-sm text-[#9A9EA7] font-medium">
+              <p className="sm:text-sm text-[3.5vw] text-[#9A9EA7] font-medium">
                 Make sure to save your password in a safe place!
               </p>
               <Link href="/auth/login">
@@ -241,7 +241,7 @@ export default function ResetPasswordPage() {
       </div>
 
       {/* Footer */}
-      <footer className="flex items-center justify-between px-20 pb-8">
+      <footer className="flex sm:flex-row flex-col gap-8 items-center justify-between sm:px-20 pb-8">
         {/* Navigation Links */}
         <nav className="flex flex-wrap justify-center gap-4">
           {navigationLinks.map((link) => {

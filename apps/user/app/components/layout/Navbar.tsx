@@ -1,10 +1,10 @@
-// app/components/Navbar.tsx
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Menu, X, Bell, ShoppingCart, User, LogOut, Settings, 
   ChevronDown, Heart, Home, TrendingUp, 
@@ -37,12 +37,12 @@ const Avatar = ({ imageUrl, name }: { imageUrl?: string | null; name?: string })
 
   if (imageUrl && !imageError) {
     return (
-      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-200">
+      <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/40">
         <Image
           src={imageUrl}
           alt={name || "User avatar"}
-          width={40}
-          height={40}
+          width={36}
+          height={36}
           className="w-full h-full object-cover"
           onError={() => setImageError(true)}
         />
@@ -51,61 +51,36 @@ const Avatar = ({ imageUrl, name }: { imageUrl?: string | null; name?: string })
   }
 
   return (
-    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0088b5] to-[#005a7a] flex items-center justify-center text-white font-semibold text-sm border-2 border-gray-200">
-      {initials || <User size={20} />}
+    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0088b5] to-[#005a7a] flex items-center justify-center text-white font-semibold text-sm border-2 border-white/40">
+      {initials}
     </div>
   );
 };
 
-export default function Navbar() {
+interface NavbarProps {
+  transparent?: boolean;
+}
+
+export default function Navbar({ transparent = false }: NavbarProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
   const { user, isAuthenticated, logout } = useAuthContext();
   const { showToast } = useToast();
-  const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Theme detection
-  useEffect(() => {
-    const sections = document.querySelectorAll("[data-theme]");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const newTheme = entry.target.getAttribute("data-theme") as "light" | "dark";
-            setTheme(newTheme);
-          }
-        });
-      },
-      { root: null, threshold: 0.6 }
-    );
-    sections.forEach((section) => observer.observe(section));
-    return () => sections.forEach((section) => observer.unobserve(section));
-  }, []);
+  const isTransparent = transparent && !scrolled;
 
-  // Close profile menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  // Color helpers
+  const textColor = isTransparent ? "text-white" : "text-gray-900";
+  const mutedColor = isTransparent ? "text-white/70" : "text-gray-600";
+  const hoverColor = isTransparent ? "hover:text-white" : "hover:text-[#0177AB]";
+  const activeColor = isTransparent ? "text-white" : "text-[#0177AB]";
 
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isMobileMenuOpen]);
+  const isActiveLink = (href: string) => pathname === href;
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleProfileMenu = () => setIsProfileMenuOpen(!isProfileMenuOpen);
@@ -120,242 +95,287 @@ export default function Navbar() {
     }
   };
 
-  const isActiveLink = (href: string) => pathname === href;
+  // Scroll detection
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 90);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close profile menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Body scroll lock for mobile menu
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isMobileMenuOpen]);
 
   return (
     <>
-      <nav className={`
-        w-full px-4 sm:px-6 lg:px-18 py-4 transition-all duration-300
-        ${theme === "light" ? "bg-white shadow-sm" : "bg-transparent"}
-      `}>
+      <motion.nav
+        className={`
+          fixed top-0 left-0 right-0 z-50 w-full px-4 sm:px-6 lg:px-8 py-4 
+          transition-all duration-300
+          ${isTransparent 
+            ? "bg-transparent backdrop-blur-lg" 
+            : "bg-white/95 backdrop-blur-xl shadow-sm border-b border-gray-100"
+          }
+        `}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src={theme === "light" ? "/vaad.svg" : "/vaad-white.svg"}
+              src={isTransparent ? "/vaad-white.svg" : "/vaad.svg"}
               alt="VAAD Media"
-              width={60}
-              height={32}
-              className="w-auto"
+              width={150}
+              height={34}
+              className="transition-opacity duration-300"
               priority
             />
           </Link>
 
-          {/* Desktop Navigation Links */}
-          <div className={`hidden md:flex gap-8 ${theme === "light" ? "text-gray-800" : "text-white"}`}>
-            {NAV_LINKS.map((link) => (
-              <Link
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex gap-9 text-[15px] font-medium">
+            {NAV_LINKS.map((link, index) => (
+              <motion.div
                 key={link.href}
-                href={link.href}
-                className={`transition-colors font-normal ${theme === "light" ? 'hover:text-[#0177AB]' : 'hover:text-white'} ${
-                  isActiveLink(link.href) ? "text-[#0177AB]" : `${theme === "light" ? 'text-[#222831]' : 'text-white'}`
-                }`}
+                initial={{ opacity: 0.6 }}
+                animate={{ 
+                  opacity: 1,
+                  color: isTransparent 
+                    ? "#ffffff" 
+                    : isActiveLink(link.href) 
+                      ? "#0177AB" 
+                      : "#111827"
+                }}
+                transition={{ 
+                  duration: 0.4, 
+                  ease: "easeInOut",
+                  delay: index * 0.02 
+                }}
               >
-                {link.name}
-              </Link>
+                <Link
+                  href={link.href}
+                  className={`transition-colors ${hoverColor} ${
+                    isActiveLink(link.href) ? activeColor : ""
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              </motion.div>
             ))}
           </div>
 
-          {/* Desktop Auth/User Section */}
-          <div className="hidden md:flex items-center gap-4">
+          {/* Desktop Right Section */}
+          <div className="hidden md:flex items-center gap-6">
             {isAuthenticated ? (
               <>
-                <button className="relative p-2 text-gray-600 hover:text-[#0088b5] transition-colors">
-                  <Bell size={20} />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
-                <button className="relative p-2 text-gray-600 hover:text-[#0088b5] transition-colors">
-                  <ShoppingCart size={20} />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#0088b5] text-white text-xs rounded-full flex items-center justify-center">3</span>
-                </button>
+                <div className="relative">
+                  <button className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}>
+                    <Bell size={21} />
+                  </button>
+                  <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white ring-2 ring-white">
+                    3
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <button className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}>
+                    <ShoppingCart size={21} />
+                  </button>
+                  <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088b5] text-[10px] font-medium text-white ring-2 ring-white">
+                    3
+                  </span>
+                </div>
+
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={toggleProfileMenu}
-                    className="flex items-center gap-2 focus:outline-none hover:opacity-80 transition-opacity"
+                    className="flex items-center gap-2.5 focus:outline-none hover:opacity-90 transition-all"
                   >
                     <Avatar imageUrl={user?.avatar} name={user?.fullName || user?.name} />
-                    <ChevronDown size={16} className={`text-gray-600 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown 
+                      size={17} 
+                      className={`transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''} ${mutedColor}`} 
+                    />
                   </button>
-                  {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-2 z-50">
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {user?.fullName || user?.name || 'User'}
-                        </p>
-                        <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-                      </div>
-                      <Link href="/profile" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        <User size={16} /><span>Your Profile</span>
-                      </Link>
-                      <Link href="/settings" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                        <Settings size={16} /><span>Settings</span>
-                      </Link>
-                      <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
-                        <LogOut size={16} /><span>Logout</span>
-                      </button>
-                    </div>
-                  )}
+
+                  <AnimatePresence>
+                    {isProfileMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.95 }}
+                        transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+                        className="absolute right-0 mt-4 w-72 bg-white rounded-3xl shadow-2xl border border-gray-100 py-2 overflow-hidden"
+                      >
+                        <div className="px-6 py-5 border-b border-gray-100 bg-gray-50">
+                          <div className="flex items-center gap-4">
+                            <Avatar imageUrl={user?.avatar} name={user?.fullName || user?.name} />
+                            <div>
+                              <p className="font-semibold text-gray-900">
+                                {user?.fullName || user?.name || 'User'}
+                              </p>
+                              <p className="text-sm text-gray-500">{user?.email}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="py-3">
+                          <Link href="/profile" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all">
+                            <User size={20} className="text-gray-400" /> Your Profile
+                          </Link>
+                          <Link href="/settings" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all">
+                            <Settings size={20} className="text-gray-400" /> Settings
+                          </Link>
+                          <Link href="/favorites" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all">
+                            <Heart size={20} className="text-gray-400" /> Favorites
+                          </Link>
+                        </div>
+
+                        <div className="h-px bg-gray-100 mx-6 my-2" />
+
+                        <button 
+                          onClick={() => { handleLogout(); setIsProfileMenuOpen(false); }}
+                          className="flex items-center gap-4 px-6 py-4 text-red-600 hover:bg-red-50 rounded-2xl mx-2 w-full text-left"
+                        >
+                          <LogOut size={20} className="text-red-400" /> Sign Out
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </>
             ) : (
-              <>
-                <Link href="/auth/login" className="px-[38.5px] py-[15.4px] border border-[#0177AB] rounded-lg text-[#0177AB] hover:bg-gray-50 transition-colors text-[15.4px] font-semibold">
+              <div className="flex items-center gap-3">
+                <Link href="/auth/login" className="px-7 py-2.5 border border-[#0177AB] text-[#0177AB] hover:bg-gray-50 rounded-xl font-semibold text-sm transition-all">
                   Login
                 </Link>
-                <Link href="/auth/signup" className="px-[38.5px] py-[15.4px] bg-[#0088b5] text-white rounded-lg hover:bg-[#007a9e] transition-colors text-[15.4px] font-semibold">
+                <Link href="/auth/signup" className="px-7 py-2.5 bg-[#0088b5] hover:bg-[#007a9e] text-white rounded-xl font-semibold text-sm transition-all">
                   Sign Up
                 </Link>
-              </>
+              </div>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={toggleMobileMenu}
-            className="md:hidden p-2 text-gray-600 hover:text-[#0088b5] transition-colors relative z-50"
+            className={`md:hidden p-3 rounded-2xl transition-all ${mutedColor} hover:text-[#0088b5]`}
             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
           </button>
         </div>
-      </nav>
+      </motion.nav>
 
-      {/* Mobile Sidebar Menu */}
-      <div
-        className={`fixed inset-0 z-50 md:hidden transition-all duration-300 ease-out ${
-          isMobileMenuOpen ? "visible" : "invisible"
-        }`}
-      >
+      {/* ==================== FULL MOBILE SIDEBAR ==================== */}
+      <div className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${isMobileMenuOpen ? "visible" : "invisible"}`}>
         {/* Backdrop */}
-        <div
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-            isMobileMenuOpen ? "opacity-100" : "opacity-0"
-          }`}
+        <div 
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
           onClick={toggleMobileMenu}
         />
-        
+
         {/* Sidebar Panel */}
-        <div
-          className={`absolute right-0 top-0 bottom-0 w-[85%] max-w-[320px] bg-white shadow-2xl overflow-y-auto transition-transform duration-300 ease-out ${
-            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
+        <div 
+          className={`absolute right-0 top-0 bottom-0 w-[85%] max-w-[340px] bg-white shadow-2xl overflow-y-auto transition-transform duration-300 ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}
         >
-          {/* Header */}
-          <div className="bg-gradient-to-br from-[#0088b5] to-[#006d91] pt-8 pb-6 px-5 sticky top-0 z-10">
-            <div className="flex items-center justify-between mb-6">
-              <Image src="/vaad-white-full.svg" alt="VAAD Media" width={90} height={30} />
-              <button
-                onClick={toggleMobileMenu}
-                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+          {/* Blue Header */}
+          <div className="bg-gradient-to-br from-[#0088b5] to-[#006d91] pt-10 pb-8 px-6 sticky top-0 z-10">
+            <div className="flex items-center justify-between mb-8">
+              <Image src="/vaad-white-full.svg" alt="VAAD Media" width={120} height={38} />
+              <button 
+                onClick={toggleMobileMenu} 
+                className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
               >
-                <X size={20} className="text-white" />
+                <X size={24} className="text-white" />
               </button>
             </div>
-            
-            {/* User Info if authenticated */}
+
             {isAuthenticated && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <Avatar imageUrl={user?.avatar} name={user?.fullName || user?.name} />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-white truncate">
-                    {user?.fullName || user?.name || 'User'}
-                  </p>
-                  <p className="text-xs text-white/80 truncate">{user?.email}</p>
+                <div className="text-white">
+                  <p className="font-semibold">{user?.fullName || user?.name}</p>
+                  <p className="text-sm text-white/70">{user?.email}</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Navigation Links */}
-          <div className="py-2 px-3">
+          <div className="px-5 py-6 space-y-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={toggleMobileMenu}
-                className={`
-                  flex items-center justify-between px-4 py-3 my-1 rounded-xl transition-colors duration-200
-                  ${isActiveLink(link.href)
-                    ? "bg-[#0088b5]/10 text-[#0088b5]"
+                className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${
+                  isActiveLink(link.href) 
+                    ? "bg-[#0088b5]/10 text-[#0088b5]" 
                     : "text-gray-700 hover:bg-gray-100"
-                  }
-                `}
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <span className={isActiveLink(link.href) ? "text-[#0088b5]" : "text-gray-500"}>
-                    {link.icon}
-                  </span>
-                  <span className="font-medium">{link.name}</span>
-                </div>
-                {isActiveLink(link.href) && (
-                  <ChevronRight size={16} className="text-[#0088b5]" />
-                )}
+                <span className={isActiveLink(link.href) ? "text-[#0088b5]" : "text-gray-500"}>
+                  {link.icon}
+                </span>
+                <span className="font-medium">{link.name}</span>
+                {isActiveLink(link.href) && <ChevronRight size={18} className="ml-auto text-[#0088b5]" />}
               </Link>
             ))}
           </div>
 
-          {/* Auth Section */}
+          {/* Bottom Section */}
           {isAuthenticated ? (
-            <>
-              {/* Quick Actions */}
-              <div className="px-3 py-2 border-t border-gray-100">
-                <p className="text-xs text-gray-400 px-4 py-2 uppercase tracking-wider">Quick Actions</p>
-                {/* <Link
-                  href="/profile"
-                  onClick={toggleMobileMenu}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <User size={18} className="text-gray-500" />
-                  <span>Your Profile</span>
-                </Link> */}
-                <Link
-                  href="/favorites"
-                  onClick={toggleMobileMenu}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                >
-                  <Heart size={18} className="text-gray-500" />
-                  <span>Favorites</span>
-                </Link>
-              </div>
+            <div className="px-5 pt-4 border-t border-gray-100">
+              <Link
+                href="/favorites"
+                onClick={toggleMobileMenu}
+                className="flex items-center gap-4 px-5 py-4 rounded-2xl text-gray-700 hover:bg-gray-100"
+              >
+                <Heart size={20} className="text-gray-500" />
+                <span>Favorites</span>
+              </Link>
 
-              {/* Logout Button */}
-              <div className="p-4 mt-2 border-t border-gray-100 pb-8">
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    toggleMobileMenu();
-                  }}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors duration-200"
-                >
-                  <LogOut size={18} />
-                  Logout
-                </button>
-              </div>
-            </>
+              <button
+                onClick={() => { handleLogout(); toggleMobileMenu(); }}
+                className="flex items-center gap-4 w-full px-5 py-4 mt-6 text-red-600 hover:bg-red-50 rounded-2xl"
+              >
+                <LogOut size={20} />
+                <span>Logout</span>
+              </button>
+            </div>
           ) : (
-            /* Auth Buttons for non-authenticated users */
-            <div className="p-4 mt-4 border-t border-gray-100 pb-8">
+            <div className="p-6 border-t border-gray-100 space-y-3">
               <Link
                 href="/auth/login"
                 onClick={toggleMobileMenu}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-3 rounded-xl border-2 border-[#0177AB] text-[#0177AB] font-semibold hover:bg-[#0177AB] hover:text-white transition-all duration-200"
+                className="block w-full py-4 text-center border-2 border-[#0177AB] text-[#0177AB] font-semibold rounded-2xl hover:bg-[#0177AB] hover:text-white transition-all"
               >
-                <LogIn size={18} />
                 Login
               </Link>
               <Link
                 href="/auth/signup"
                 onClick={toggleMobileMenu}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#0088b5] text-white font-semibold hover:bg-[#006d91] transition-all duration-200"
+                className="block w-full py-4 text-center bg-[#0088b5] text-white font-semibold rounded-2xl hover:bg-[#007a9e] transition-all"
               >
-                <UserPlus size={18} />
                 Sign Up
               </Link>
             </div>
           )}
-          
-          {/* Extra padding at bottom for safe area */}
-          <div className="h-4" />
         </div>
       </div>
     </>

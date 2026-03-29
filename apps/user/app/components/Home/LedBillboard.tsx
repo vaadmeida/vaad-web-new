@@ -32,7 +32,7 @@ export default function LedBillboardSection({
   // Loading skeleton
   if (loading) {
     return (
-      <section className="p-18 bg-white">
+      <section className="sm:p-18 px-5 py-14 bg-white">
         <div className="mx-auto">
           {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">

@@ -41,7 +41,7 @@ export default function BillboardSection({
   // Loading skeleton
   if (loading) {
     return (
-      <section className="p-18 bg-white">
+      <section x>
         <div className="mx-auto">
           <SectionHeader
             title={title}

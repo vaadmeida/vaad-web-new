@@ -110,10 +110,10 @@ export default function ForgotPasswordPage() {
         {/* Forgot Password Form Container */}
         <div className="w-full max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-[#0D0A19] mb-2">
+            <h1 className="sm:text-2xl text-[6vw] font-bold text-[#0D0A19] mb-2">
               Forgot your password?
             </h1>
-            <p className="text-sm text-[#9A9EA7] font-medium">
+            <p className="sm:text-sm text-[3.5vw] text-[#9A9EA7] font-medium">
               Don&apos;t worry, we got you! Input your email to receive the
               reset password link.
             </p>
@@ -173,7 +173,7 @@ export default function ForgotPasswordPage() {
       </div>
 
       {/* Footer */}
-      <footer className="flex items-center justify-between px-20 pb-8">
+      <footer className="flex sm:flex-row flex-col gap-8 items-center justify-between sm:px-20 pb-8">
         {/* Navigation Links */}
         <nav className="flex flex-wrap justify-center gap-4">
           {navigationLinks.map((link) => {
