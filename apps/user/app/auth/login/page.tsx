@@ -100,10 +100,10 @@ export default function LoginPage() {
         {/* Login Form */}
         <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full lg:mx-0">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-[#0D0A19] mb-2">
+            <h1 className="sm:text-2xl text-[6vw] font-bold text-[#0D0A19] mb-2">
               Welcome back!
             </h1>
-            <p className="text-sm text-[#9A9EA7] font-medium">
+            <p className="sm:text-sm text-[3.5vw] text-[#9A9EA7] font-medium">
               Log in to continue book billboards
             </p>
           </div>
@@ -150,11 +150,11 @@ export default function LoginPage() {
           <div className="mt-6 text-center space-y-2">
             <Link
               href="/auth/forgot-password"
-              className="block text-sm text-[#9A9EA7] hover:text-gray-700 transition-colors font-medium"
+              className="block sm:text-sm text-[3.5vw] text-[#9A9EA7] hover:text-gray-700 transition-colors font-medium"
             >
               Forgot your password?
             </Link>
-            <p className="text-sm text-[#9A9EA7] font-medium">
+            {/* <p className="text-sm text-[#9A9EA7] font-medium">
               Need help?{" "}
               <Link
                 href="/contact"
@@ -162,8 +162,8 @@ export default function LoginPage() {
               >
                 Contact Support
               </Link>
-            </p>
-            <p className="text-sm text-[#9A9EA7] font-medium">
+            </p> */}
+            <p className="sm:text-sm text-[3.5vw] text-[#9A9EA7] font-medium">
               Don&apos;t have an account?{" "}
               <Link
                 href="/auth/signup"

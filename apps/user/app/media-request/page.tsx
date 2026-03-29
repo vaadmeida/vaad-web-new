@@ -126,7 +126,7 @@ export default function MediaRequestPage() {
       <div className="min-h-screen bg-gray-50">
         {/* Navbar - Fixed at top with high z-index */}
         <div className="fixed top-0 left-0 right-0 z-50">
-          <Navbar />
+          <Navbar transparent />
         </div>
 
         {/* Hero Section */}
@@ -147,14 +147,14 @@ export default function MediaRequestPage() {
           {/* Hero Content */}
           <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 pt-16">
             <div className="max-w-3xl mx-auto text-center flex flex-col items-center">
-              <h1 className="text-3xl md:text-[68.36px] font-bold mb-4">
+              <h1 className="text-[6.5vw] sm:text-[68.36px] font-bold mb-4">
                 Request a Media Plan
               </h1>
-              <p className="text-lg md:text-[15.19px] font-semibold text-white mb-8 max-w-100 text-center">
+              <p className="text-[3.5vw] sm:text-[15.19px] font-semibold text-white mb-8 max-w-100 text-center">
                 Get your Billboard Ad delivered in 24hrs and Get Discounted
                 Billboard Offers.
               </p>
-              <div className="flex items-center justify-center gap-2 text-sm text-white/80">
+              <div className="flex items-center justify-center gap-2 sm:text-sm text-[3vw] text-white/80">
                 <Link href="/" className="hover:text-white transition-colors">
                   Home
                 </Link>
@@ -167,14 +167,14 @@ export default function MediaRequestPage() {
 
         {/* Main Content */}
         <section className="py-12 lg:py-16">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto">
+          <div className="container mx-auto px-5 sm:px-6 lg:px-8">
+            <div className="sm:max-w-4xl mx-auto">
               {/* Header Section */}
               <div className="text-center mb-10">
-                <h2 className="text-2xl md:text-[29.46px] font-semibold text-[#1A1A21] mb-4">
+                <h2 className="text-[5vw] sm:text-[29.46px] font-semibold text-[#1A1A21] mb-4">
                   Request a media plan
                 </h2>
-                <p className="text-[#8C94A6] text-[19.64px] font-normal max-w-2xl mx-auto">
+                <p className="text-[#8C94A6] sm:text-[19.64px] text-[3.5vw] font-normal sm:max-w-2xl mx-auto px-5 sm:px-0">
                   Speak with our OOH Media Experts for personalized,
                   step-by-step guidance to ensure you secure the perfect
                   strategic
@@ -192,7 +192,7 @@ export default function MediaRequestPage() {
               {!isSuccess ? (
                 <form
                   onSubmit={handleSubmit}
-                  className="w-full max-w-[706.98px] mx-auto"
+                  className="w-full sm:max-w-[706.98px] max-w-full mx-auto"
                 >
                   <div className="grid grid-cols-1 gap-6 justify-center items-center">
                     <Input

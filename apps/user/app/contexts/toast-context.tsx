@@ -7,7 +7,7 @@ import {
   AlertCircle, 
   Info, 
   AlertTriangle, 
-  X
+  X 
 } from 'lucide-react';
 
 interface Toast {
@@ -39,153 +39,138 @@ const toastIcons = {
   success: CheckCircle,
   error: AlertCircle,
   info: Info,
-  warning: AlertTriangle
+  warning: AlertTriangle,
 };
 
-const toastColors = {
-  success: {
-    bg: 'bg-green-50 dark:bg-green-900/20',
-    border: 'border-green-200 dark:border-green-800',
-    icon: 'text-green-600 dark:text-green-400',
-    title: 'text-green-800 dark:text-green-300',
-    message: 'text-green-700 dark:text-green-400'
-  },
-  error: {
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-red-200 dark:border-red-800',
-    icon: 'text-red-600 dark:text-red-400',
-    title: 'text-red-800 dark:text-red-300',
-    message: 'text-red-700 dark:text-red-400'
-  },
-  info: {
-    bg: 'bg-blue-50 dark:bg-blue-900/20',
-    border: 'border-blue-200 dark:border-blue-800',
-    icon: 'text-blue-600 dark:text-blue-400',
-    title: 'text-blue-800 dark:text-blue-300',
-    message: 'text-blue-700 dark:text-blue-400'
-  },
-  warning: {
-    bg: 'bg-yellow-50 dark:bg-yellow-900/20',
-    border: 'border-yellow-200 dark:border-yellow-800',
-    icon: 'text-yellow-600 dark:text-yellow-400',
-    title: 'text-yellow-800 dark:text-yellow-300',
-    message: 'text-yellow-700 dark:text-yellow-400'
-  }
+const toastStyles = {
+  success: { bg: 'bg-white dark:bg-neutral-900', border: 'border-green-500/30', icon: 'text-green-500', title: 'text-green-700 dark:text-green-400', message: 'text-neutral-600 dark:text-neutral-300', progress: 'bg-green-500' },
+  error:   { bg: 'bg-white dark:bg-neutral-900', border: 'border-red-500/30',   icon: 'text-red-500',   title: 'text-red-700 dark:text-red-400',   message: 'text-neutral-600 dark:text-neutral-300', progress: 'bg-red-500' },
+  info:    { bg: 'bg-white dark:bg-neutral-900', border: 'border-blue-500/30',  icon: 'text-blue-500',  title: 'text-blue-700 dark:text-blue-400',  message: 'text-neutral-600 dark:text-neutral-300', progress: 'bg-blue-500' },
+  warning: { bg: 'bg-white dark:bg-neutral-900', border: 'border-amber-500/30', icon: 'text-amber-500', title: 'text-amber-700 dark:text-amber-400', message: 'text-neutral-600 dark:text-neutral-300', progress: 'bg-amber-500' },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  // Define getDefaultTitle first (before it's used)
   const getDefaultTitle = useCallback((type: string): string => {
     switch (type) {
       case 'success': return 'Success';
       case 'error': return 'Error';
       case 'warning': return 'Warning';
-      case 'info': return 'Information';
+      case 'info': return 'Info';
       default: return 'Notification';
     }
   }, []);
 
-  // Define dismissToast second (before it's used in showToast)
   const dismissToast = useCallback((id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id));
+    setToasts((prev) => prev.filter((toast) => toast.id !== id));
   }, []);
 
-  // Now define showToast which uses both getDefaultTitle and dismissToast
-  const showToast = useCallback((toast: Omit<Toast, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    const duration = toast.duration || 5000;
+  const showToast = useCallback((toastInput: Omit<Toast, 'id'>) => {
+    const id = Math.random().toString(36).substring(2, 11);
+    const duration = toastInput.duration ?? 5000;
 
-    const newToast = {
-      ...toast,
+    const newToast: Toast = {
+      ...toastInput,
       id,
-      title: toast.title || getDefaultTitle(toast.type)
+      title: toastInput.title || getDefaultTitle(toastInput.type),
     };
 
-    setToasts(prev => [...prev, newToast]);
+    setToasts((prev) => [newToast, ...prev]); // Newest on top
 
-    // Auto dismiss after duration
     if (duration > 0) {
-      setTimeout(() => {
-        dismissToast(id);
-      }, duration);
+      setTimeout(() => dismissToast(id), duration);
     }
 
     return id;
   }, [getDefaultTitle, dismissToast]);
 
-  // Define remaining functions
-  const success = useCallback((message: string, title?: string, duration?: number) => {
-    return showToast({ type: 'success', message, title, duration });
-  }, [showToast]);
+  const success = useCallback((message: string, title?: string, duration?: number) =>
+    showToast({ type: 'success', message, title, duration }), [showToast]);
 
-  const error = useCallback((message: string, title?: string, duration?: number) => {
-    return showToast({ type: 'error', message, title, duration });
-  }, [showToast]);
+  const error = useCallback((message: string, title?: string, duration?: number) =>
+    showToast({ type: 'error', message, title, duration }), [showToast]);
 
-  const info = useCallback((message: string, title?: string, duration?: number) => {
-    return showToast({ type: 'info', message, title, duration });
-  }, [showToast]);
+  const info = useCallback((message: string, title?: string, duration?: number) =>
+    showToast({ type: 'info', message, title, duration }), [showToast]);
 
-  const warning = useCallback((message: string, title?: string, duration?: number) => {
-    return showToast({ type: 'warning', message, title, duration });
-  }, [showToast]);
+  const warning = useCallback((message: string, title?: string, duration?: number) =>
+    showToast({ type: 'warning', message, title, duration }), [showToast]);
 
-  const dismissAllToasts = useCallback(() => {
-    setToasts([]);
-  }, []);
+  const dismissAllToasts = useCallback(() => setToasts([]), []);
 
   return (
     <ToastContext.Provider value={{
-      toasts,
-      showToast,
-      success,
-      error,
-      info,
-      warning,
-      dismissToast,
-      dismissAllToasts
+      toasts, showToast, success, error, info, warning, dismissToast, dismissAllToasts,
     }}>
       {children}
-      
+
       {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-50 space-y-3 w-full max-w-sm pointer-events-none">
-        <AnimatePresence>
+      <div className="fixed top-4 left-4 right-4 md:left-auto md:right-6 z-[100] flex flex-col items-stretch md:items-end pointer-events-none md:max-w-md space-y-3">
+        <AnimatePresence initial={false}>
           {toasts.map((toast) => {
             const Icon = toastIcons[toast.type];
-            const colors = toastColors[toast.type];
+            const style = toastStyles[toast.type];
 
             return (
               <motion.div
                 key={toast.id}
-                initial={{ opacity: 0, x: 50, scale: 0.8 }}
+                drag="x"                    // Enable horizontal swipe
+                dragConstraints={{ left: -200, right: 200 }}
+                dragElastic={0.2}           // Nice bouncy feel while dragging
+                onDragEnd={(_, info) => {
+                  const offset = info.offset.x;
+                  const velocity = info.velocity.x;
+
+                  // Dismiss if swiped far enough or with enough velocity
+                  if (Math.abs(offset) > 120 || Math.abs(velocity) > 500) {
+                    dismissToast(toast.id);
+                  }
+                }}
+                initial={{ opacity: 0, x: 80, scale: 0.96 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 50, scale: 0.8 }}
-                transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                className={`${colors.bg} ${colors.border} border rounded-xl shadow-lg overflow-hidden pointer-events-auto`}
+                exit={{ opacity: 0, x: 100, scale: 0.95, transition: { duration: 0.2 } }}
+                transition={{
+                  type: "tween",
+                  duration: 0.28,
+                  ease: [0.32, 0.72, 0, 1],
+                }}
+                whileDrag={{ 
+                  scale: 0.97, 
+                  opacity: 0.95 
+                }}
+                className={`
+                  ${style.bg} ${style.border} border 
+                  w-full md:w-auto min-w-[280px]
+                  rounded-2xl shadow-xl shadow-black/10 dark:shadow-black/40 
+                  overflow-hidden pointer-events-auto backdrop-blur-xl
+                `}
               >
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
+                <div className="p-5">
+                  <div className="flex items-start gap-4">
                     {/* Icon */}
-                    <div className="flex-shrink-0">
-                      <Icon className={`w-5 h-5 ${colors.icon}`} />
+                    <div className="flex-shrink-0 mt-0.5">
+                      <Icon className={`w-5 h-5 ${style.icon}`} />
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-semibold ${colors.title}`}>
-                        {toast.title}
-                      </p>
-                      <p className={`text-sm mt-0.5 ${colors.message}`}>
+                    <div className="flex-1 min-w-0 pr-1">
+                      {toast.title && (
+                        <p className={`font-semibold text-[15px] leading-tight ${style.title}`}>
+                          {toast.title}
+                        </p>
+                      )}
+                      <p className={`text-[14.5px] mt-1 leading-snug ${style.message}`}>
                         {toast.message}
                       </p>
-                      
-                      {/* Action Button */}
+
                       {toast.action && (
                         <button
-                          onClick={toast.action.onClick}
-                          className={`mt-2 text-sm font-medium ${colors.icon} hover:underline`}
+                          onClick={() => {
+                            toast.action?.onClick();
+                            dismissToast(toast.id);
+                          }}
+                          className={`mt-3 text-sm font-medium ${style.icon} hover:underline focus:outline-none`}
                         >
                           {toast.action.label}
                         </button>
@@ -195,22 +180,23 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                     {/* Close Button */}
                     <button
                       onClick={() => dismissToast(toast.id)}
-                      className={`flex-shrink-0 ${colors.message} hover:${colors.icon} transition-colors`}
+                      className="flex-shrink-0 p-1.5 -mr-1 -mt-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                      aria-label="Dismiss"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-
-                  {/* Progress Bar (for auto-dismiss) */}
-                  {toast.duration && toast.duration > 0 && (
-                    <motion.div
-                      initial={{ width: '100%' }}
-                      animate={{ width: '0%' }}
-                      transition={{ duration: toast.duration / 1000, ease: 'linear' }}
-                      className={`h-1 mt-2 rounded-full ${colors.icon} opacity-50`}
-                    />
-                  )}
                 </div>
+
+                {/* Progress Bar */}
+                {toast.duration && toast.duration > 0 && (
+                  <motion.div
+                    initial={{ width: "100%" }}
+                    animate={{ width: "0%" }}
+                    transition={{ duration: toast.duration / 1000, ease: "linear" }}
+                    className={`h-0.5 ${style.progress}`}
+                  />
+                )}
               </motion.div>
             );
           })}

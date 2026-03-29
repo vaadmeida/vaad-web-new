@@ -40,7 +40,9 @@ export default function Footer() {
   const isHome = pathname === "/";
   const [email, setEmail] = useState("");
   const [isNewsletterModalOpen, setIsNewsletterModalOpen] = useState(false);
-  const [newsletterMode, setNewsletterMode] = useState<"subscribe" | "unsubscribe">("subscribe");
+  const [newsletterMode, setNewsletterMode] = useState<
+    "subscribe" | "unsubscribe"
+  >("subscribe");
 
   const handleSubscribeClick = () => {
     if (email) {
@@ -128,23 +130,23 @@ export default function Footer() {
                 </div>
               ) : (
                 <>
-                  <p className="text-[16px] font-normal text-[#344054] mb-6 max-w-xs">
-                    Be the first to receive all the recent updates, articles, and
-                    valuable materials.
+                  <p className="sm:text-[16px] text-[3.5vw] font-normal text-[#344054] mb-6 sm:max-w-xs">
+                    Be the first to receive all the recent updates, articles,
+                    and valuable materials.
                   </p>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 min-w-full">
                     <input
                       type="email"
                       placeholder="Email address"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="border border-[#D0D5DD] rounded-md p-4 text-sm w-full max-w-50 focus:outline-none focus:ring-2 focus:ring-[#2A7AB0] transition"
+                      className="border border-[#D0D5DD] rounded-md p-4 text-sm w-full sm:max-w-50 focus:outline-none focus:ring-2 focus:ring-[#2A7AB0] transition"
                     />
                     <motion.button
                       onClick={handleSubscribeClick}
                       whileTap={{ scale: 0.96 }}
                       whileHover={{ scale: 1.03 }}
-                      className="bg-[#0177AB] hover:bg-[#256a96] text-white p-4 rounded-md text-[16px] font-semibold transition"
+                      className="bg-[#0177AB] hover:bg-[#256a96] text-white p-4 rounded-md sm:text-[16px] text-[3.5vw] w-full font-semibold transition"
                     >
                       Subscribe
                     </motion.button>
@@ -196,23 +198,33 @@ export default function Footer() {
           <motion.div variants={fadeUp} className="border-t border-gray-200" />
 
           {/* Bottom */}
+          {/* Bottom Section */}
           <motion.div
             variants={fadeUp}
-            className="flex flex-col md:flex-row items-center justify-between py-6 text-[14px] font-medium text-[#667185] gap-4"
+            className="pt-8 mt-8"
           >
-            <div className="flex items-center gap-6 flex-wrap">
-              {footerBottomLinks.map((link) => (
-                <Link
-                  key={link.label}
-                  href={link.href || "#"}
-                  className="hover:text-gray-800 transition"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-sm">
+              {/* Bottom Links - Responsive */}
+              <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-3 text-[#667185] text-[3vw] sm:text-[14px] font-medium">
+                {footerBottomLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    href={link.href || "#"}
+                    className="hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
 
-            <p className="text-[#98A2B3]">© 2023 Rayna. All rights reserved.</p>
+              {/* Copyright - Professional & Responsive */}
+              <div className="text-center md:text-right text-[#98A2B3] text-[13px]">
+                <p>
+                  © {new Date().getFullYear()} Vaad Media LTD. All rights
+                  reserved.
+                </p>
+              </div>
+            </div>
           </motion.div>
         </motion.div>
       </footer>

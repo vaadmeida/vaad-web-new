@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { Search, Loader2 } from "lucide-react";
-import BillboardCard from "../billboard/BillboardCard";
 import {
   Billboard,
   billboardService,
