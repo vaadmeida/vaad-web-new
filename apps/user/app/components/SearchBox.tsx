@@ -1,8 +1,34 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
+
+interface Filters {
+  mediaType: string;
+  productType: string;
+  location: string;
+}
+
+interface AssetsData {
+  services: string[];
+  mediaAndProductsTypes: Record<string, string[]>;
+  orientation: string[];
+  printProductType: string[];
+  landmarks: string[];
+  statesAndCites: Record<string, string[]>;
+  targetAudience: string[];
+}
+
+interface SearchBoxProps {
+  filters: Filters;
+  handleFilterChange: (key: keyof Filters, value: string) => void;
+  handleSearch: (page?: number) => void;
+  isLoading: boolean;
+  assets: AssetsData;
+  assetsLoading: boolean;
+  locations: string[];
+}
 
 export default function SearchBox({
   filters,
@@ -12,55 +38,115 @@ export default function SearchBox({
   assets,
   assetsLoading,
   locations,
-}: any) {
+}: SearchBoxProps) {
   const [open, setOpen] = useState(false);
 
-  const summary = `${filters.serviceType || "Service"}, ${
-    filters.location || "Location"
-  }, ${filters.mediaType || "Media"}`;
+  // Get available media types from mediaAndProductsTypes
+  const mediaTypes = useMemo(() => {
+    return Object.keys(assets?.mediaAndProductsTypes || {});
+  }, [assets]);
+
+  // Get available product types based on selected media type
+  const availableProductTypes = useMemo(() => {
+    if (!filters.mediaType || !assets?.mediaAndProductsTypes) return [];
+    return assets.mediaAndProductsTypes[filters.mediaType] || [];
+  }, [filters.mediaType, assets]);
+
+  // Handle media type change - also updates product type to first available
+  const handleMediaTypeChange = (value: string) => {
+    handleFilterChange("mediaType", value);
+    // Set product type to first available for this media type
+    const productTypes = assets?.mediaAndProductsTypes?.[value] || [];
+    if (productTypes.length > 0) {
+      handleFilterChange("productType", productTypes[0]);
+    } else {
+      handleFilterChange("productType", "");
+    }
+  };
+
+  // Summary text for mobile collapsed view
+  const summary = `${filters.mediaType || "Media"}, ${
+    filters.productType || "Product"
+  }, ${filters.location || "Location"}`;
+
+  // Desktop field configuration - reordered: Media Type, Product Type, Location
+  const desktopFields = [
+    {
+      label: "Media Type",
+      value: filters.mediaType,
+      key: "mediaType" as const,
+      options: mediaTypes,
+      onChange: handleMediaTypeChange,
+    },
+    {
+      label: "Product Type",
+      value: filters.productType,
+      key: "productType" as const,
+      options: availableProductTypes,
+      onChange: (value: string) => handleFilterChange("productType", value),
+      disabled: !filters.mediaType || availableProductTypes.length === 0,
+    },
+    {
+      label: "Location",
+      value: filters.location,
+      key: "location" as const,
+      options: locations,
+      onChange: (value: string) => handleFilterChange("location", value),
+    },
+  ];
+
+  // Mobile field configuration - same order
+  const mobileFields = [
+    {
+      label: "Media Type",
+      value: filters.mediaType,
+      key: "mediaType" as const,
+      options: mediaTypes,
+      onChange: handleMediaTypeChange,
+    },
+    {
+      label: "Product Type",
+      value: filters.productType,
+      key: "productType" as const,
+      options: availableProductTypes,
+      onChange: (value: string) => handleFilterChange("productType", value),
+      disabled: !filters.mediaType || availableProductTypes.length === 0,
+    },
+    {
+      label: "Location",
+      value: filters.location,
+      key: "location" as const,
+      options: locations,
+      onChange: (value: string) => handleFilterChange("location", value),
+    },
+  ];
 
   return (
     <>
       {/* ---------------- DESKTOP ---------------- */}
       <div className="hidden md:block mt-12 bg-white rounded-2xl shadow-lg p-6 w-full">
         <div className="grid grid-cols-4 gap-4">
-          {/* Selects */}
-          {[
-            {
-              label: "Service Type",
-              value: filters.serviceType,
-              key: "serviceType",
-              options: assets.services,
-            },
-            {
-              label: "Location",
-              value: filters.location,
-              key: "location",
-              options: locations,
-            },
-            {
-              label: "Media Type",
-              value: filters.mediaType,
-              key: "mediaType",
-              options: assets.mediaType,
-            },
-          ].map((item) => (
+          {/* Selects - Reordered: Media Type, Product Type, Location */}
+          {desktopFields.map((item) => (
             <div key={item.key}>
               <label className="text-sm text-gray-600 mb-2 block">
                 {item.label}
               </label>
               <select
                 value={item.value}
-                onChange={(e) =>
-                  handleFilterChange(item.key, e.target.value)
-                }
-                className="w-full px-3 py-3 bg-gray-50 rounded-lg text-sm focus:ring-2 focus:ring-[#0088b5]"
+                onChange={(e) => item.onChange(e.target.value)}
+                disabled={assetsLoading || item.disabled}
+                className="w-full px-3 py-3 bg-gray-50 rounded-lg text-sm focus:ring-2 focus:ring-[#0088b5] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {assetsLoading ? (
                   <option>Loading...</option>
+                ) : item.options.length === 0 ? (
+                  <option>No options</option>
                 ) : (
                   item.options.map((opt: string) => (
-                    <option key={opt}>{opt}</option>
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
                   ))
                 )}
               </select>
@@ -70,7 +156,8 @@ export default function SearchBox({
           {/* Button */}
           <button
             onClick={() => handleSearch(1)}
-            className="bg-[#0088b5] text-white rounded-xl flex items-center justify-center gap-2 font-semibold hover:scale-[1.02] transition"
+            disabled={isLoading}
+            className="bg-[#0088b5] text-white rounded-xl flex items-center justify-center gap-2 font-semibold hover:scale-[1.02] transition disabled:opacity-60"
           >
             {isLoading ? (
               <Loader2 className="animate-spin" />
@@ -113,43 +200,27 @@ export default function SearchBox({
               <button onClick={() => setOpen(false)}>Close</button>
             </div>
 
-            {/* Fields */}
-            {[
-              {
-                label: "Service Type",
-                value: filters.serviceType,
-                key: "serviceType",
-                options: assets.services,
-              },
-              {
-                label: "Location",
-                value: filters.location,
-                key: "location",
-                options: locations,
-              },
-              {
-                label: "Media Type",
-                value: filters.mediaType,
-                key: "mediaType",
-                options: assets.mediaType,
-              },
-            ].map((item) => (
+            {/* Fields - Reordered: Media Type, Product Type, Location */}
+            {mobileFields.map((item) => (
               <div key={item.key}>
                 <label className="text-sm text-gray-600 mb-2 block">
                   {item.label}
                 </label>
                 <select
                   value={item.value}
-                  onChange={(e) =>
-                    handleFilterChange(item.key, e.target.value)
-                  }
-                  className="w-full px-4 py-4 bg-gray-50 rounded-xl text-sm focus:ring-2 focus:ring-[#0088b5]"
+                  onChange={(e) => item.onChange(e.target.value)}
+                  disabled={assetsLoading || item.disabled}
+                  className="w-full px-4 py-4 bg-gray-50 rounded-xl text-sm focus:ring-2 focus:ring-[#0088b5] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {assetsLoading ? (
                     <option>Loading...</option>
+                  ) : item.options.length === 0 ? (
+                    <option>No options</option>
                   ) : (
                     item.options.map((opt: string) => (
-                      <option key={opt}>{opt}</option>
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
                     ))
                   )}
                 </select>
@@ -162,7 +233,8 @@ export default function SearchBox({
                 handleSearch(1);
                 setOpen(false);
               }}
-              className="w-full bg-[#0088b5] text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2"
+              disabled={isLoading}
+              className="w-full bg-[#0088b5] text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {isLoading ? (
                 <Loader2 className="animate-spin" />
