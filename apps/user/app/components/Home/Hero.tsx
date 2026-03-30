@@ -16,11 +16,6 @@ interface Filters {
   location: string;
 }
 
-// Updated interface for the new API structure
-interface MediaTypeData {
-  [mediaType: string]: string[]; // product types array
-}
-
 export default function Hero() {
   const { assets, locations, isLoading: assetsLoading } = useAssets();
 
@@ -43,12 +38,12 @@ export default function Hero() {
 
   // Initialize filters when assets load
   useEffect(() => {
-    if (!assetsLoading && assets.mediaTypeData) {
-      const mediaTypes = Object.keys(assets.mediaTypeData);
+    if (!assetsLoading && assets.mediaAndProductsTypes) {
+      const mediaTypes = Object.keys(assets.mediaAndProductsTypes);
 
       if (mediaTypes.length > 0 && !filters.mediaType) {
         const firstMediaType = mediaTypes[0];
-        const productTypesForMedia = assets.mediaTypeData[firstMediaType] || [];
+        const productTypesForMedia = assets.mediaAndProductsTypes[firstMediaType] || [];
 
         setFilters({
           mediaType: firstMediaType,
@@ -77,7 +72,7 @@ export default function Hero() {
 
       const searchParams: SearchParams = {
         mediaType: filters.mediaType,
-        serviceType: filters.productType, // API still expects serviceType
+        serviceType: filters.productType,
         location: filters.location,
         limit: pagination.limit,
         page: page,

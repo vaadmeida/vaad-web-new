@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
 
 interface Filters {
@@ -11,8 +11,13 @@ interface Filters {
 }
 
 interface AssetsData {
-  mediaTypeData: Record<string, string[]>;
+  services: string[];
+  mediaAndProductsTypes: Record<string, string[]>;
+  orientation: string[];
+  printProductType: string[];
+  landmarks: string[];
   statesAndCites: Record<string, string[]>;
+  targetAudience: string[];
 }
 
 interface SearchBoxProps {
@@ -36,25 +41,26 @@ export default function SearchBox({
 }: SearchBoxProps) {
   const [open, setOpen] = useState(false);
 
-  // Get available media types from the new structure
+  // Get available media types from mediaAndProductsTypes
   const mediaTypes = useMemo(() => {
-    return Object.keys(assets?.mediaTypeData || {});
+    return Object.keys(assets?.mediaAndProductsTypes || {});
   }, [assets]);
 
   // Get available product types based on selected media type
   const availableProductTypes = useMemo(() => {
-    if (!filters.mediaType || !assets?.mediaTypeData) return [];
-    return assets.mediaTypeData[filters.mediaType] || [];
+    if (!filters.mediaType || !assets?.mediaAndProductsTypes) return [];
+    return assets.mediaAndProductsTypes[filters.mediaType] || [];
   }, [filters.mediaType, assets]);
 
   // Handle media type change - also updates product type to first available
   const handleMediaTypeChange = (value: string) => {
     handleFilterChange("mediaType", value);
-    // Product type will be updated by the parent component's useEffect
-    // But we can also set it here for immediate feedback
-    const productTypes = assets?.mediaTypeData?.[value] || [];
+    // Set product type to first available for this media type
+    const productTypes = assets?.mediaAndProductsTypes?.[value] || [];
     if (productTypes.length > 0) {
       handleFilterChange("productType", productTypes[0]);
+    } else {
+      handleFilterChange("productType", "");
     }
   };
 

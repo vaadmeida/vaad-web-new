@@ -3,20 +3,26 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "@/app/lib/api/client";
 
-// New interface: Media Type -> Product Types mapping
-interface MediaTypeData {
-  [mediaType: string]: string[];
-}
-
+// Interface matching the actual API response
 interface AssetsData {
-  mediaTypeData: MediaTypeData; // Changed from flat arrays to nested structure
+  services: string[];
+  mediaAndProductsTypes: Record<string, string[]>;
+  orientation: string[];
+  printProductType: string[];
+  landmarks: string[];
   statesAndCites: Record<string, string[]>;
+  targetAudience: string[];
 }
 
 export function useAssets() {
   const [assets, setAssets] = useState<AssetsData>({
-    mediaTypeData: {},
+    services: [],
+    mediaAndProductsTypes: {},
+    orientation: [],
+    printProductType: [],
+    landmarks: [],
     statesAndCites: {},
+    targetAudience: [],
   });
   const [locations, setLocations] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,9 +35,14 @@ export function useAssets() {
     try {
       const response = await apiClient.get<any>("/billboards/assets");
       
-      // New API structure: mediaType is now an object with nested product types
-      const mediaTypeData: MediaTypeData = response.mediaType || {};
+      // Extract data from response - using actual API structure
+      const services = response.services || [];
+      const mediaAndProductsTypes = response.mediaAndProductsTypes || {};
+      const orientation = response.orientation || [];
+      const printProductType = response.printProductType || [];
+      const landmarks = response.landmarks || [];
       const statesAndCites = response.statesAndCites || {};
+      const targetAudience = response.targetAudience || [];
       
       // Flatten all cities from statesAndCites for location dropdown
       const allLocations: string[] = [];
@@ -41,7 +52,15 @@ export function useAssets() {
         }
       });
       
-      setAssets({ mediaTypeData, statesAndCites });
+      setAssets({ 
+        services, 
+        mediaAndProductsTypes, 
+        orientation, 
+        printProductType, 
+        landmarks, 
+        statesAndCites, 
+        targetAudience 
+      });
       setLocations(allLocations);
     } catch (err) {
       console.error("Failed to fetch assets:", err);
@@ -49,20 +68,22 @@ export function useAssets() {
       
       // Fallback to default values if API fails
       setAssets({
-        mediaTypeData: {
-          "LED Billboard": ["Premium LED", "Standard LED", "Digital Display"],
-          "Static Billboard": ["Large Format", "Medium Format", "Street Furniture"],
-          "Digital Screen": ["Shopping Mall", "Transit", "Street"],
-          "Gantry": ["Highway Gantry", "Bridge Gantry"],
-          "Wall Wrap": ["Building Wrap", "Construction Hoarding"],
+        services: ["Outdoor Advertising", "Indoor Advertising", "Digital Signage"],
+        mediaAndProductsTypes: {
+          "Static Billboard": ["48 Sheet", "98 Sheet", "Unipole", "Gantry"],
+          "LED Billboard": ["LED Billboard", "Gantry LED", "Mobile LED Billboard"],
+          "Transit Advertising": ["BRT", "Mini Bus branding", "Tricycle branding"],
         },
+        orientation: ["landscape", "portrait"],
+        printProductType: [],
+        landmarks: [],
         statesAndCites: {
-          "Lagos": ["Lagos Island", "Ikeja", "Lekki", "Victoria Island", "Yaba"],
-          "Abuja": ["Central Business District", "Wuse", "Maitama", "Garki"],
-          "Port Harcourt": ["Old GRA", "Trans Amadi", "Rumukrushi"],
+          "Lagos": ["Ikeja", "Surulere", "Lekki", "Victoria Island"],
+          "Abuja": ["Garki", "Wuse", "Maitama"],
         },
+        targetAudience: [],
       });
-      setLocations(["Lagos Island", "Ikeja", "Lekki", "Victoria Island", "Central Business District", "Wuse"]);
+      setLocations(["Ikeja", "Surulere", "Lekki", "Garki", "Wuse"]);
     } finally {
       setIsLoading(false);
     }
@@ -74,13 +95,13 @@ export function useAssets() {
 
   // Helper to get all media types
   const getMediaTypes = useCallback(() => {
-    return Object.keys(assets.mediaTypeData);
-  }, [assets.mediaTypeData]);
+    return Object.keys(assets.mediaAndProductsTypes);
+  }, [assets.mediaAndProductsTypes]);
 
   // Helper to get product types for a specific media type
   const getProductTypesForMedia = useCallback((mediaType: string) => {
-    return assets.mediaTypeData[mediaType] || [];
-  }, [assets.mediaTypeData]);
+    return assets.mediaAndProductsTypes[mediaType] || [];
+  }, [assets.mediaAndProductsTypes]);
 
   return {
     assets,
