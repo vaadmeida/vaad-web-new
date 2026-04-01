@@ -151,38 +151,20 @@ export function useAuth() {
   // 📝 SIGN UP + AUTO LOGIN FLOW
   // =============================
   const signUp = async (data: SignUpRequest) => {
-    setIsLoading(true);
-    setError(null);
+  setIsLoading(true);
+  setError(null);
 
-    try {
-      const signUpRes = await authService.signUp(data);
+  try {
+    const signUpRes = await authService.signUp(data);
 
-      const tokens = await authService.generateTokens({
-        email: data.email,
-        token: signUpRes.token,
-      });
-
-      TokenService.setTokens({
-        access: tokens.accessToken || tokens.access,
-        refresh: tokens.refreshToken || tokens.refresh,
-      });
-
-      // Store email for token refresh
-      TokenService.setUserEmail(data.email);
-
-      setUser(signUpRes.profile);
-      localStorage.setItem("vaad_user", JSON.stringify(signUpRes.profile));
-
-      router.push("/auth/login");
-
-      return signUpRes;
-    } catch (err: any) {
-      setError(err.message || "Sign up failed");
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    return signUpRes;
+  } catch (err: any) {
+    setError(err.message || "Sign up failed");
+    throw err;
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // =============================
   // 📧 FORGOT PASSWORD
