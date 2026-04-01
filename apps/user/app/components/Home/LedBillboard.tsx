@@ -7,12 +7,84 @@ import Link from "next/link";
 import { useBillboards } from "@/app/hooks/useBillboard";
 import EmptyState from "./EmptyState/EmptyState";
 import SectionHeader from "../SectionHeader";
+import { motion } from "framer-motion";
 
 interface LedBillboardSectionProps {
   title?: string;
   subtitle?: string;
   showViewAll?: boolean;
   limit?: number;
+}
+
+// Shimmer animation styles
+const shimmerStyles = `
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
+`;
+
+function BillboardSkeletonCard() {
+  return (
+    <div className="animate-pulse">
+      {/* Image skeleton with shimmer */}
+      <div className="relative h-48 w-full overflow-hidden rounded-t-[7.75px] bg-gray-200">
+        <div 
+          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer" 
+          style={{ backgroundSize: '200% 100%' }} 
+        />
+      </div>
+      
+      {/* Content skeleton */}
+      <div className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 bg-gray-200 rounded-full" />
+          <div className="h-4 bg-gray-200 rounded w-12" />
+          <div className="h-3 bg-gray-200 rounded w-16" />
+        </div>
+        
+        <div className="h-6 bg-gray-200 rounded w-3/4" />
+        
+        <div className="h-4 bg-gray-200 rounded w-full" />
+        <div className="h-4 bg-gray-200 rounded w-2/3" />
+        
+        <div className="flex items-start gap-2">
+          <div className="h-4 w-4 bg-gray-200 rounded-full shrink-0" />
+          <div className="h-4 bg-gray-200 rounded w-4/5" />
+        </div>
+        
+        <div className="flex justify-between items-center gap-3 pt-2">
+          <div className="h-8 bg-gray-200 rounded w-1/3" />
+          <div className="h-10 bg-gray-200 rounded w-2/5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BillboardSkeletonGrid({ count }: { count: number }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      {[...Array(count)].map((_, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1, duration: 0.4 }}
+        >
+          <BillboardSkeletonCard />
+        </motion.div>
+      ))}
+    </motion.div>
+  );
 }
 
 export default function LedBillboardSection({
@@ -22,19 +94,18 @@ export default function LedBillboardSection({
   limit = 4,
 }: LedBillboardSectionProps) {
   const { billboards, loading, error, refetch } = useBillboards({
-    mediaType: "Led Billboard",
+    mediaType: "LED Billboard",
   });
 
-  // Slice for display
   const displayedBillboards = billboards.slice(0, limit);
-  const hasMore = billboards.length > limit;
+  const hasMore = billboards.length > 3;   // ← Changed to > 3 as requested
 
   // Loading skeleton
   if (loading) {
     return (
       <section className="sm:p-18 px-5 py-14 bg-white">
+        <style>{shimmerStyles}</style>
         <div className="mx-auto">
-          {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold text-[#0D0A19] mb-3">
@@ -43,6 +114,7 @@ export default function LedBillboardSection({
               <p className="text-gray-600 max-w-2xl">{subtitle}</p>
             </div>
 
+            {/* Show View All in loading state only if showViewAll is true */}
             {showViewAll && (
               <Link
                 href="/billboards"
@@ -54,19 +126,7 @@ export default function LedBillboardSection({
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(limit)].map((_, index) => (
-              <div key={index} className="animate-pulse">
-                <div className="bg-gray-200 rounded-t-[7.75px] h-48 w-full"></div>
-                <div className="p-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <BillboardSkeletonGrid count={limit} />
         </div>
       </section>
     );
@@ -96,13 +156,12 @@ export default function LedBillboardSection({
         <SectionHeader
           title={title}
           subtitle={subtitle}
-          showViewAll={showViewAll}
+          showViewAll={showViewAll && hasMore}   // ← Key change: only show if hasMore
         />
 
         {billboards.length > 0 && (
-          <p className="text-sm text-gray-500 mb-4">
-            Showing {displayedBillboards.length} of {billboards.length} LED
-            billboards
+          <p className="text-sm text-gray-500 mb-6">
+            Showing {displayedBillboards.length} of {billboards.length} LED billboards
             {hasMore && " (more available)"}
           </p>
         )}
@@ -121,15 +180,15 @@ export default function LedBillboardSection({
           />
         )}
 
-        {/* View More on Mobile (if needed) */}
+        {/* Mobile "View All" button - only show if more than 3 items */}
         {hasMore && showViewAll && (
-          <div className="mt-8 text-center md:hidden">
+          <div className="mt-10 text-center md:hidden">
             <Link
               href="/billboards"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F5F9FC] text-[#0177AB] font-medium rounded-lg hover:bg-[#0177AB] hover:text-white transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#F5F9FC] hover:bg-[#0177AB] text-[#0177AB] hover:text-white font-medium rounded-xl transition-all duration-200 shadow-sm"
             >
-              View All {billboards.length} LED Billboards
-              <ChevronRight className="w-4 h-4" />
+              Explore All {billboards.length} LED Billboards
+              <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
         )}

@@ -10,12 +10,18 @@ interface UseBillboardsOptions {
   autoFetch?: boolean;
 }
 
+interface LandingPageResponse {
+  landingPageBillboards: Record<string, Billboard[]>;
+}
+
 interface UseBillboardsReturn {
   billboards: Billboard[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
   setBillboards: React.Dispatch<React.SetStateAction<Billboard[]>>;
+  // Optional: expose grouped data if needed
+  groupedBillboards: Record<string, Billboard[]>;
 }
 
 export function useBillboards(
@@ -24,6 +30,7 @@ export function useBillboards(
   const { mediaType, autoFetch = true } = options;
 
   const [billboards, setBillboards] = useState<Billboard[]>([]);
+  const [groupedBillboards, setGroupedBillboards] = useState<Record<string, Billboard[]>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isMounted = useRef(true);
@@ -47,21 +54,39 @@ export function useBillboards(
       // Only update if component is still mounted
       if (!isMounted.current) return;
 
-      const allBillboards =
-        (response as any).foundItems ||
-        response.data ||
-        (Array.isArray(response) ? response : []);
+      // Handle new landingPageBillboards structure
+      const landingPageData = (response as any).landingPageBillboards as Record<string, Billboard[]>;
+      
+      if (landingPageData && typeof landingPageData === 'object') {
+        // Store grouped data
+        setGroupedBillboards(landingPageData);
 
-      if (!Array.isArray(allBillboards)) {
-        throw new Error("Invalid response format from API");
+        // Flatten all billboards or filter by media type
+        let allBillboards: Billboard[] = [];
+        
+        if (mediaType && landingPageData[mediaType]) {
+          // Return only specific media type
+          allBillboards = landingPageData[mediaType];
+        } else {
+          // Flatten all media types into single array
+          allBillboards = Object.values(landingPageData).flat();
+        }
+
+        setBillboards(allBillboards);
+      } else {
+        // Fallback to old structure for backward compatibility
+        const fallbackBillboards =
+          (response as any).foundItems ||
+          response.data ||
+          (Array.isArray(response) ? response : []);
+
+        if (!Array.isArray(fallbackBillboards)) {
+          throw new Error("Invalid response format from API");
+        }
+
+        setBillboards(fallbackBillboards);
+        setGroupedBillboards({});
       }
-
-      // Filter by media type if specified
-      const filteredBillboards = mediaType
-        ? allBillboards.filter((b: Billboard) => b.mediaType === mediaType)
-        : allBillboards;
-
-      setBillboards(filteredBillboards);
     } catch (err: any) {
       // Ignore abort errors
       if (err.name === "AbortError") return;
@@ -72,6 +97,7 @@ export function useBillboards(
           err instanceof Error ? err.message : "Failed to load billboards",
         );
         setBillboards([]);
+        setGroupedBillboards({});
       }
     } finally {
       if (isMounted.current) {
@@ -102,5 +128,6 @@ export function useBillboards(
     error,
     refetch: fetchBillboards,
     setBillboards,
+    groupedBillboards,
   };
 }

@@ -171,10 +171,10 @@ export default function Hero() {
   }
 
   return (
-    <div className="relative w-full sm:min-h-screen bg-white">
-      <div className="relative sm:min-h-screen flex flex-col">
+    <div className="relative w-full bg-white">
+      <div className="relative flex flex-col sm:pb-16 pb-0">
         {/* Background GIF */}
-        <div className="absolute inset-0 sm:h-screen">
+        <div className="absolute inset-0">
           <Image
             src="/video/vaad-bg.gif"
             alt="VAAD Media Billboard"

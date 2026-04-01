@@ -7,12 +7,89 @@ import Link from "next/link";
 import { useBillboards } from "@/app/hooks/useBillboard";
 import EmptyState from "./EmptyState/EmptyState";
 import SectionHeader from "../SectionHeader";
+import { motion } from "framer-motion";
 
 interface RetailStoreSectionProps {
   title?: string;
   subtitle?: string;
   showViewAll?: boolean;
   limit?: number;
+}
+
+// Shimmer animation styles
+const shimmerStyles = `
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    animation: shimmer 1.5s infinite;
+  }
+`;
+
+function BillboardSkeletonCard() {
+  return (
+    <div className="animate-pulse">
+      {/* Image skeleton with shimmer */}
+      <div className="relative h-48 w-full overflow-hidden rounded-t-[7.75px] bg-gray-200">
+        <div 
+          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer" 
+          style={{ backgroundSize: '200% 100%' }} 
+        />
+      </div>
+      
+      {/* Content skeleton */}
+      <div className="p-4 space-y-3">
+        {/* Rating skeleton */}
+        <div className="flex items-center gap-2">
+          <div className="h-4 w-4 bg-gray-200 rounded-full" />
+          <div className="h-4 bg-gray-200 rounded w-12" />
+          <div className="h-3 bg-gray-200 rounded w-16" />
+        </div>
+        
+        {/* Title skeleton */}
+        <div className="h-6 bg-gray-200 rounded w-3/4" />
+        
+        {/* Description skeleton */}
+        <div className="h-4 bg-gray-200 rounded w-full" />
+        <div className="h-4 bg-gray-200 rounded w-2/3" />
+        
+        {/* Location skeleton */}
+        <div className="flex items-start gap-2">
+          <div className="h-4 w-4 bg-gray-200 rounded-full shrink-0" />
+          <div className="h-4 bg-gray-200 rounded w-4/5" />
+        </div>
+        
+        {/* Price and button skeleton */}
+        <div className="flex justify-between items-center gap-3 pt-2">
+          <div className="h-8 bg-gray-200 rounded w-1/3" />
+          <div className="h-10 bg-gray-200 rounded w-2/5" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BillboardSkeletonGrid({ count }: { count: number }) {
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+    >
+      {[...Array(count)].map((_, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.1, duration: 0.4 }}
+        >
+          <BillboardSkeletonCard />
+        </motion.div>
+      ))}
+    </motion.div>
+  );
 }
 
 export default function RetailStoreSection({
@@ -25,35 +102,23 @@ export default function RetailStoreSection({
     mediaType: "Retail Store",
   });
 
-  // Slice for display
   const displayedBillboards = billboards.slice(0, limit);
-  const hasMore = billboards.length > limit;
 
-  // Loading skeleton
+  // Updated: Show "Explore All" only if more than 3 billboards
+  const hasMore = billboards.length > 3;
+
+  // Loading skeleton with shimmer animation
   if (loading) {
     return (
       <section className="bg-white py-20 px-6 md:px-18">
+        <style>{shimmerStyles}</style>
         <div className="mx-auto">
-          {/* Section Header */}
           <SectionHeader
             title={title}
             subtitle={subtitle}
             showViewAll={showViewAll}
           />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(limit)].map((_, index) => (
-              <div key={index} className="animate-pulse">
-                <div className="bg-gray-200 rounded-t-[7.75px] h-48 w-full"></div>
-                <div className="p-4">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-                  <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <BillboardSkeletonGrid count={limit} />
         </div>
       </section>
     );
@@ -80,17 +145,15 @@ export default function RetailStoreSection({
   return (
     <section className="bg-white py-20 px-6 md:px-18">
       <div className="mx-auto">
-        {/* Section Header */}
         <SectionHeader
           title={title}
           subtitle={subtitle}
-          showViewAll={showViewAll}
+          showViewAll={showViewAll && hasMore}   // Only show if > 3 and allowed
         />
 
         {billboards.length > 0 && (
-          <p className="text-sm text-gray-500 mb-4">
-            Showing {displayedBillboards.length} of {billboards.length} retail
-            store advertisements
+          <p className="text-sm text-gray-500 mb-6">
+            Showing {displayedBillboards.length} of {billboards.length} retail store advertisements
             {hasMore && " (more available)"}
           </p>
         )}
@@ -109,15 +172,15 @@ export default function RetailStoreSection({
           />
         )}
 
-        {/* View More on Mobile (if needed) */}
+        {/* Mobile "Explore All" button - only shown when more than 3 and showViewAll is true */}
         {hasMore && showViewAll && (
-          <div className="mt-8 text-center md:hidden">
+          <div className="mt-10 text-center md:hidden">
             <Link
               href="/billboards"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#F5F9FC] text-[#0177AB] font-medium rounded-lg hover:bg-[#0177AB] hover:text-white transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#F5F9FC] hover:bg-[#0177AB] text-[#0177AB] hover:text-white font-medium rounded-xl transition-all duration-200 shadow-sm"
             >
-              View All {billboards.length} Retail Store Ads
-              <ChevronRight className="w-4 h-4" />
+              Explore All {billboards.length} Retail Store Ads
+              <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
         )}
