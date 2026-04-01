@@ -1,10 +1,7 @@
-/* 2. Then import custom fonts */
-@import url('https://fonts.googleapis.com/css2?family=Suez+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Suez+One&display=swap ');
 
-/* 1. Import Tailwind first */
 @import "tailwindcss";
 
-/* Tell Tailwind what to scan */
 @source "../../../apps/**/*.{ts,tsx}";
 @source "../../../components/**/*.{ts,tsx}";
 @source "../**/*.{ts,tsx}";
@@ -28,8 +25,27 @@ html {
   scroll-behavior: smooth;
 }
 
-body {
+/* =============================
+   🎯 GLOBAL LAYOUT (Max Width for Large Screens)
+============================= */
+html, body {
   overscroll-behavior-y: none;
+}
+
+body {
+  max-width: 1440px;
+  margin: 0 auto; /* Centers the body when screen is wider than 1440px */
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Alternative: Use a wrapper class for content constraint */
+.page-wrapper {
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
 }
 
 /* =============================
