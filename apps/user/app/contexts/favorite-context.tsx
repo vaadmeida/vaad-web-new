@@ -9,7 +9,7 @@ import {
   useContext,
   useMemo,
 } from "react";
-import { billboardService, Billboard } from "@/app/lib/billboard/billboard-service";
+import { billboardService } from "@/app/lib/billboard/billboard-service";
 import { useAuthContext } from "@/app/contexts/auth-context";
 
 // ==========================================
@@ -26,7 +26,6 @@ interface PendingOperation {
   timestamp: number;
 }
 
-// COMPLETE interface - all properties explicitly typed
 interface FavoriteContextType {
   favorites: FavoriteState;
   isLoading: boolean;
@@ -34,7 +33,7 @@ interface FavoriteContextType {
   toggleFavorite: (billboardId: string) => Promise<boolean>;
   isFavorite: (billboardId: string) => boolean;
   getFavoriteCount: () => number;
-  syncWithServer: () => Promise<void>;
+  syncWithServer: () => Promise<void>; // kept for API compatibility (does nothing now)
 }
 
 // ==========================================
@@ -86,14 +85,12 @@ const storage = {
 // ==========================================
 
 export function FavoriteProvider({ children }: { children: React.ReactNode }) {
-  // State
   const [favorites, setFavorites] = useState<FavoriteState>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   
   const { isAuthenticated } = useAuthContext();
   
-  // Refs
   const pendingOps = useRef<Map<string, PendingOperation>>(new Map());
   const mounted = useRef(true);
   const isSyncing = useRef(false);
@@ -109,26 +106,20 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ==========================================
-  // HYDRATION: Load from localStorage FIRST
+  // HYDRATION: Load from localStorage
   // ==========================================
 
   useEffect(() => {
-    // Step 1: Instant load from localStorage
+    // Load instantly from localStorage
     const cached = storage.get();
     if (Object.keys(cached).length > 0) {
       setFavorites(cached);
     }
     setIsHydrated(true);
+    setIsLoading(false); // No server sync anymore
+  }, []);
 
-    // Step 2: Background sync with server
-    if (isAuthenticated) {
-      syncWithServer();
-    } else {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated]);
-
-  // Persist to localStorage on every change
+  // Persist to localStorage whenever favorites change
   useEffect(() => {
     if (isHydrated) {
       storage.set(favorites);
@@ -136,84 +127,37 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
   }, [favorites, isHydrated]);
 
   // ==========================================
-  // SERVER SYNC
-  // ==========================================
-
-  const syncWithServer = useCallback(async () => {
-    if (!isAuthenticated || isSyncing.current) return;
-    
-    isSyncing.current = true;
-    setIsLoading(true);
-
-    try {
-      const serverFavorites = await billboardService.getFavorites();
-      
-      const serverMap: FavoriteState = {};
-      serverFavorites.forEach((item: Billboard) => {
-        if (item?._id) serverMap[item._id] = true;
-      });
-
-      if (mounted.current) {
-        setFavorites((current) => {
-          // Don't overwrite pending operations
-          const pendingIds = Array.from(pendingOps.current.keys());
-          const merged = { ...serverMap };
-          
-          pendingIds.forEach((id) => {
-            if (current[id] !== undefined) {
-              merged[id] = current[id];
-            }
-          });
-
-          return merged;
-        });
-      }
-    } catch (error) {
-      console.error("Failed to sync favorites:", error);
-      // Keep localStorage version on error
-    } finally {
-      if (mounted.current) {
-        setIsLoading(false);
-        isSyncing.current = false;
-      }
-    }
-  }, [isAuthenticated]);
-
-  // ==========================================
-  // TOGGLE (Optimistic)
+  // TOGGLE FAVORITE (Optimistic Update)
   // ==========================================
 
   const toggleFavorite = useCallback(
     async (billboardId: string): Promise<boolean> => {
       if (!billboardId || !isAuthenticated) return false;
 
-      // Debounce check
       const now = Date.now();
       const existingOp = pendingOps.current.get(billboardId);
+
+      // Debounce
       if (existingOp && (now - existingOp.timestamp) < DEBOUNCE_MS) {
-        console.log("Debounced");
         return false;
       }
 
-      // Check for pending request
+      // Return existing promise if already in flight
       if (existingOp) {
         return existingOp.promise;
       }
 
-      // Read current value
       const currentValue = favorites[billboardId] || false;
       const targetValue = !currentValue;
 
-      // Optimistic update
+      // Optimistic UI update
       setFavorites((prev) => ({
         ...prev,
         [billboardId]: targetValue,
       }));
 
-      // Create abort controller
       const abortController = new AbortController();
 
-      // Async operation
       const operationPromise = (async (): Promise<boolean> => {
         try {
           const result = await billboardService.toggleFavorite(billboardId);
@@ -228,7 +172,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
 
           return serverValue;
         } catch (error) {
-          // Rollback
+          // Rollback on error
           if (mounted.current) {
             setFavorites((prev) => ({
               ...prev,
@@ -237,9 +181,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
           }
           throw error;
         } finally {
-          setTimeout(() => {
-            pendingOps.current.delete(billboardId);
-          }, 0);
+          pendingOps.current.delete(billboardId);
         }
       })();
 
@@ -255,7 +197,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
   );
 
   // ==========================================
-  // DERIVED FUNCTIONS
+  // HELPER FUNCTIONS
   // ==========================================
 
   const isFavorite = useCallback(
@@ -267,6 +209,13 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
     () => Object.keys(favorites).length,
     [favorites]
   );
+
+  // Dummy sync function (kept for compatibility)
+  const syncWithServer = useCallback(async () => {
+    // No getFavorites endpoint exists, so we do nothing
+    // LocalStorage + toggle is the source of truth now
+    console.warn("syncWithServer: getFavorites endpoint not available. Using local state.");
+  }, []);
 
   // Cleanup stale operations
   useEffect(() => {
@@ -284,7 +233,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // ==========================================
-  // CONTEXT VALUE (EXPLICITLY TYPED)
+  // CONTEXT VALUE
   // ==========================================
 
   const contextValue: FavoriteContextType = useMemo(
@@ -308,7 +257,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
 }
 
 // ==========================================
-// HOOK (WITH PROPER TYPING)
+// HOOK
 // ==========================================
 
 export function useFavorite(): FavoriteContextType {
