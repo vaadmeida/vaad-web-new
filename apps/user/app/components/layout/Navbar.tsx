@@ -179,25 +179,25 @@ export default function Navbar({ transparent = false }: NavbarProps) {
           </div>
 
           {/* Desktop Right Section */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-4">
             {isAuthenticated ? (
               <>
                 <div className="relative">
                   <button className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}>
                     <Bell size={21} />
                   </button>
-                  <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white ring-2 ring-white">
-                    3
-                  </span>
+                  {/* <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white ring-2 ring-white">
+                    0
+                  </span> */}
                 </div>
 
                 <div className="relative">
                   <button className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}>
                     <ShoppingCart size={21} />
                   </button>
-                  <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088b5] text-[10px] font-medium text-white ring-2 ring-white">
+                  {/* <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088b5] text-[10px] font-medium text-white ring-2 ring-white">
                     3
-                  </span>
+                  </span> */}
                 </div>
 
                 <div className="relative" ref={profileMenuRef}>

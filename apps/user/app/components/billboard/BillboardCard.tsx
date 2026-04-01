@@ -491,29 +491,31 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
             </div>
           </div>
 
-          <div className="flex justify-between gap-7 items-center">
-            {/* Price */}
-            <div className="flex items-baseline gap-2">
-              <span className="sm:text-[31.01px] text-[6vw] font-bold text-[#333333]">
-                ₦{fields.rate?.toLocaleString("en-US") || "0"}
-              </span>
-              {originalPrice && (
-                <span className="sm:text-[16.47px] text-[4vw] text-[#696F8C] line-through font-medium">
-                  ₦{originalPrice.toLocaleString("en-US")}
-                </span>
-              )}
-            </div>
+         {/* Alternative: Stack vertically on very small screens, side-by-side on larger */}
+<div className="flex flex-col sm:flex-wrap gap-2 mt-auto">
+  {/* Price */}
+  <div className="flex items-baseline gap-2">
+    <span className="sm:text-[30.01px] text-[5vw] font-bold text-[#333333]">
+      ₦{fields.rate?.toLocaleString("en-US") || "0"}
+    </span>
+    {originalPrice && (
+      <span className="sm:text-[16.47px] text-[3vw] text-[#696F8C] line-through font-medium">
+        ₦{originalPrice.toLocaleString("en-US")}
+      </span>
+    )}
+  </div>
 
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleViewDetails();
-              }}
-              className="w-fit block text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 sm:text-[13.57px] text-[3vw] hover:bg-[#0177AB] hover:text-white"
-            >
-              Available in <span>{availableIn}</span> days
-            </button>
-          </div>
+  {/* Button - Full width on mobile, auto on desktop */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      handleViewDetails();
+    }}
+    className="w-full sm:w-auto text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 sm:text-[13.57px] text-[2.8vw] hover:bg-[#0177AB] hover:text-white whitespace-nowrap"
+  >
+    Available in <span>{availableIn}</span> days
+  </button>
+</div>
         </div>
       </div>
 

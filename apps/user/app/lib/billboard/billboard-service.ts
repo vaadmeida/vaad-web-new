@@ -224,16 +224,16 @@ export class BillboardService {
   }
 
   // Get user's favorite billboards
-  async getFavorites(): Promise<Billboard[]> {
-    const response = await apiClient.get<{ favorites: Billboard[] }>(`${this.baseUrl}/favorite`);
-    return response.favorites || [];
-  }
+  // async getFavorites(): Promise<Billboard[]> {
+  //   const response = await apiClient.get<{ favorites: Billboard[] }>(`${this.baseUrl}/favorite`);
+  //   return response.favorites || [];
+  // }
 
   // Check if a billboard is favorited
-  async isFavorite(billboardId: string): Promise<boolean> {
-    const favorites = await this.getFavorites();
-    return favorites.some(fav => fav._id === billboardId);
-  }
+  // async isFavorite(billboardId: string): Promise<boolean> {
+  //   const favorites = await this.getFavorites();
+  //   return favorites.some(fav => fav._id === billboardId);
+  // }
 
   
 }
