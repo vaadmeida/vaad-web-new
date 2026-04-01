@@ -19,9 +19,15 @@ interface BillboardCardProps {
   billboard?: Billboard;
 }
 
-// Static placeholder
-const PLACEHOLDER_IMAGE =
-  "https://www.piedmontplastics.com/img/asset/cGFnZV9idWlsZGVyL3ZpbnlsLWJpbGJvYXJkLWJhbm5lci1waWVkbW9udC1wbGFzdGljcy5qcGc/vinyl-bilboard-banner-piedmont-plastics.jpg?w=1024&h=576&fit=crop&q=85&s=1ffca8530d333ac95c8a9f544b95a0f3";
+// Multiple fallback images for reliability
+const FALLBACK_IMAGES = [
+  "https://images.unsplash.com/photo-1612332883331-e8ea07a15f14?q=80&w=774&auto=format&fit=crop",
+  "https://images.pexels.com/photos/2104763/pexels-photo-2104763.jpeg?auto=compress&cs=tinysrgb&w=800",
+  "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=774&auto=format&fit=crop",
+];
+
+// Static placeholder (base64 encoded SVG for instant display)
+const SVG_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%239ca3af' dy='.3em'%3EBillboard Image%3C/text%3E%3C/svg%3E";
 
 // INSANE HEART ANIMATION VARIANTS - Ultimate Premium
 const heartVariants: Variants = {
@@ -86,15 +92,6 @@ const heartVariants: Variants = {
       ease: [0.68, -0.55, 0.265, 1.55],
       times: [0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.72, 0.86, 1]
     }
-  },
-  infinitePulse: {
-    scale: [1, 1.2, 1, 1.2, 1],
-    transition: {
-      duration: 0.8,
-      repeat: Infinity,
-      repeatType: "reverse",
-      ease: "easeInOut"
-    }
   }
 };
 
@@ -144,15 +141,18 @@ const flashVariants: Variants = {
 export default function BillboardCard({ billboard }: BillboardCardProps) {
   // State
   const [imageError, setImageError] = useState(false);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [currentFallbackIndex, setCurrentFallbackIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [heartState, setHeartState] = useState<"idle" | "explode" | "shockwave" | "glitch" | "bounceCrazy" | "infinitePulse">("idle");
+  const [heartState, setHeartState] = useState<"idle" | "explode" | "shockwave" | "glitch" | "bounceCrazy">("idle");
   const [showParticles, setShowParticles] = useState(false);
   const [showRing, setShowRing] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
   const [particleColor, setParticleColor] = useState("#0088b5");
   
   const animationTimeoutRef = useRef<NodeJS.Timeout[]>([]);
+  const imgRef = useRef<HTMLImageElement | null>(null);
 
   const { isFavorite, toggleFavorite, isHydrated } = useFavorite();
 
@@ -208,13 +208,33 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
     return `${fields.mediaType || "Premium billboard"} located in ${fields.locationAddress || "Prime Location"}, ${fields.state || "Lagos"}. ${fields.height || 12}m x ${fields.width || 24}m ${fields.units || "meters"} format.`;
   }, [fields]);
 
-  const imageUrl = useMemo(() => {
-    if (imageError) return PLACEHOLDER_IMAGE;
+  // Progressive image loading with fallback chain
+  const getCurrentImageUrl = useMemo(() => {
+    if (imageError) {
+      return FALLBACK_IMAGES[currentFallbackIndex % FALLBACK_IMAGES.length];
+    }
     const photo = fields?.photos?.[0] || fields?.images?.[0];
-    return photo || PLACEHOLDER_IMAGE;
-  }, [fields?.photos, fields?.images, imageError]);
+    return photo || FALLBACK_IMAGES[0];
+  }, [fields?.photos, fields?.images, imageError, currentFallbackIndex]);
 
   const originalPrice = fields?.rate ? Math.round(fields.rate * 1.2) : undefined;
+
+  // Handle image load error with fallback chain
+  const handleImageError = useCallback(() => {
+    if (currentFallbackIndex < FALLBACK_IMAGES.length - 1) {
+      // Try next fallback image
+      setCurrentFallbackIndex(prev => prev + 1);
+      setImageLoading(true);
+    } else {
+      // All fallbacks failed, show SVG placeholder
+      setImageError(true);
+      setImageLoading(false);
+    }
+  }, [currentFallbackIndex]);
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoading(false);
+  }, []);
 
   // Random animation selector
   const getRandomAnimation = useCallback(() => {
@@ -312,16 +332,26 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
         onClick={handleViewDetails}
       >
         {/* Image Container */}
-        <div className="relative h-48 w-full overflow-hidden rounded-[7.75px]">
-          <Image
-            src={imageUrl}
+        <div className="relative h-48 w-full overflow-hidden rounded-[7.75px] bg-gray-100">
+          {/* Loading Skeleton */}
+          {imageLoading && !imageError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+              <div className="w-8 h-8 border-2 border-[#0088b5] border-t-transparent rounded-full animate-spin" />
+            </div>
+          )}
+          
+          {/* Image */}
+          <img
+            src={getCurrentImageUrl}
             alt={displayTitle}
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover group-hover:scale-105 transition-transform duration-500 rounded-[7.75px]"
-            onError={() => setImageError(true)}
-            unoptimized
-            priority={false}
+            className={`
+              w-full h-full object-cover transition-opacity duration-300
+              group-hover:scale-105 transition-transform duration-500
+              ${imageLoading ? "opacity-0" : "opacity-100"}
+            `}
+            onError={handleImageError}
+            onLoad={handleImageLoad}
+            loading="lazy"
           />
 
           {/* Category Badge */}

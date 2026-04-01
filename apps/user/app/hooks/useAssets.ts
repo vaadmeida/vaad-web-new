@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/hooks/useAssets.ts
 import { useState, useEffect, useCallback } from "react";
 import { apiClient } from "@/app/lib/api/client";
 
