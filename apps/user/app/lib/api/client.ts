@@ -170,9 +170,9 @@ export class ApiClient {
     TokenService.clearTokens();
 
     // Avoid SSR crash
-    if (typeof window !== "undefined") {
-      window.location.href = "/auth/login";
-    }
+    // if (typeof window !== "undefined") {
+    //   window.location.href = "/auth/login";
+    // }
   }
 
   // =============================
