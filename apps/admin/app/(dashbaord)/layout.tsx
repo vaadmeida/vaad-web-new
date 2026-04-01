@@ -1,12 +1,12 @@
 // apps/admin/app/(dashboard)/layout.tsx
 "use client";
 
-import { Sidebar } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Header from "../components/layout/Header";
 import { useAdmin, AdminProvider } from "../contexts/admin-context";
 import { useAuthContext } from "../contexts/auth-context";
+import Sidebar from "../components/layout/Sidebar";
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   const { isSidebarCollapsed, toggleSidebar } = useAdmin();
@@ -34,7 +34,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar 
+      <Sidebar
         isCollapsed={isSidebarCollapsed} 
         onToggle={toggleSidebar} 
       />
