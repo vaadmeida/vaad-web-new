@@ -6,6 +6,7 @@ export interface Tokens {
   refreshToken?: string;
   access?: string;
   refresh?: string;
+  [key: string]: any;
 }
 
 export class TokenService {
