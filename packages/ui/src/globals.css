@@ -104,3 +104,18 @@ body {
 .suez-one {
   font-family: 'Suez One', serif;
 }
+
+/* Remove scrollbar completely */
+.remove-scrollbar {
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE/Edge */
+  -ms-overflow-style: none;
+}
+
+/* Chrome, Safari, Opera */
+.remove-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
