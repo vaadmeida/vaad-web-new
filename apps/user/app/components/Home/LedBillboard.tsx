@@ -151,7 +151,7 @@ export default function LedBillboardSection({
   }
 
   return (
-    <section className="sm:p-18 px-5 py-14 bg-white">
+    <section className="sm:px-18 px-5 pt-14 bg-white">
       <div className="mx-auto">
         <SectionHeader
           title={title}

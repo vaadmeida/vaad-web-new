@@ -11,7 +11,7 @@ export default function SectionHeader({
   showViewAll: boolean;
 }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between mb-10">
+    <div className="flex flex-col md:flex-row md:items-end justify-between mb-4">
       <div>
         <h2 className="text-[6.5vw] sm:text-4xl font-bold text-[#0D0A19] mb-3">
           {title}
