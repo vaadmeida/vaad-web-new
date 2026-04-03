@@ -143,7 +143,7 @@ export default function RetailStoreSection({
   }
 
   return (
-    <section className="bg-white py-20 px-6 md:px-18">
+    <section className="bg-white pt-4 pb-20 px-6 md:px-18">
       <div className="mx-auto">
         <SectionHeader
           title={title}
