@@ -4,13 +4,15 @@ import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Billboard } from "@/app/types/billboard";
 import { useCartDrawer } from "@/app/hooks/useCartDrawer";
+import { useRouter } from "next/navigation";
 
 type Props = {
   billboard: Billboard;
 };
 
 export default function BillboardFullCard({ billboard }: Props) {
-    
+  const router = useRouter();
+  
   return (
     <div className="relative bg-white border border-[#F0EFFB] rounded-[9px] overflow-hidden flex flex-col md:flex-row transition-all duration-300 min-h-57.75">
       {/* Image - Full height on left */}
@@ -91,7 +93,10 @@ export default function BillboardFullCard({ billboard }: Props) {
 
         {/* Buttons */}
         <div className="flex items-center gap-3 mt-4">
-          <button className="px-4 py-2 text-sm border border-red-300 text-red-500 rounded-md hover:bg-red-50 transition">
+          <button
+            onClick={() => router.push(`/billboard/${billboard.id}`)}
+            className="px-4 py-2 text-sm border border-red-300 text-red-500 rounded-md hover:bg-red-50 transition"
+          >
             View Details
           </button>
 
