@@ -236,7 +236,7 @@ export function useAuth() {
 
       setUser(null);
 
-      router.push("/auth/login");
+      router.push("/admin/login");
     } catch (err: any) {
       setError(err.message || "Logout failed");
     } finally {
