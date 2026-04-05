@@ -20,8 +20,14 @@ export interface Profile {
 }
 
 export interface AuthResponse {
-  user: Profile;
-  tokens: Tokens;
+  status: string;
+  data: {
+    profile: Profile;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
+  };
 }
 
 export interface SignUpRequest {
@@ -33,8 +39,11 @@ export interface SignUpRequest {
 }
 
 export interface SignUpResponse {
-  profile: Profile;
-  token: string;
+  status: string;
+  data: {
+    profile: Profile;
+    token: string;
+  };
 }
 
 export interface LoginRequest {
@@ -43,20 +52,13 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  profile: {
-    _id: string;
-    email: string;
-    __v: number;
-    createdAt: string;
-    deletedAt: string | null;
-    fullName: string;
-    phoneNumber: string;
-    status: string;
-    updatedAt: string;
-  };
-  token: {
-    accessToken: string;
-    refreshToken: string;
+  status: string;
+  data: {
+    profile: Profile;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
   };
 }
 
@@ -65,7 +67,17 @@ export interface GenerateTokensRequest {
   token: string;
 }
 
-export interface GenerateTokensResponse extends Tokens {}
+export interface GenerateTokensResponse {
+  status?: string;
+  data?: {
+    accessToken?: string;
+    refreshToken?: string;
+  };
+  accessToken?: string;
+  refreshToken?: string;
+  access?: string;
+  refresh?: string;
+}
 
 export interface ForgotPasswordRequest {
   email: string;
@@ -94,14 +106,14 @@ export class AuthService {
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await apiClient.post<LoginResponse>("/auth/users/login", data);
     
-    // Store tokens and user info in cookies
-    if (response?.token) {
+    // Store tokens and user info in cookies using the new response structure
+    if (response?.data?.tokens) {
       cookieService.setAuthCookies(
         {
-          accessToken: response.token.accessToken,
-          refreshToken: response.token.refreshToken,
+          accessToken: response.data.tokens.accessToken,
+          refreshToken: response.data.tokens.refreshToken,
         },
-        response.profile,
+        response.data.profile,
         data.email
       );
     }
@@ -118,17 +130,16 @@ export class AuthService {
     const response = await apiClient.post<GenerateTokensResponse>("/auth/users/generate-tokens", data);
     
     // Update tokens in cookies
-    if (response) {
-      const accessToken = (response as any).accessToken || (response as any).access;
-      const refreshToken = (response as any).refreshToken || (response as any).refresh;
-      
-      if (accessToken && refreshToken) {
-        cookieService.setAuthCookies(
-          { accessToken, refreshToken },
-          {},
-          data.email
-        );
-      }
+    // Handle both possible response structures
+    const accessToken = response?.data?.accessToken || response?.accessToken || (response as any)?.access;
+    const refreshToken = response?.data?.refreshToken || response?.refreshToken || (response as any)?.refresh;
+    
+    if (accessToken && refreshToken) {
+      cookieService.setAuthCookies(
+        { accessToken, refreshToken },
+        {},
+        data.email
+      );
     }
     
     return response;
@@ -144,12 +155,12 @@ export class AuthService {
   // ------------------------------
   // 🔒 PASSWORD RESET
   // ------------------------------
-  async forgotPassword(data: ForgotPasswordRequest): Promise<any> {
-    return apiClient.post("/auth/users/forget-password", data);
+  async forgotPassword(data: ForgotPasswordRequest): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>("/auth/users/forget-password", data);
   }
 
-  async resetPassword(data: ResetPasswordRequest): Promise<any> {
-    return apiClient.post("/auth/users/reset-password", data);
+  async resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>("/auth/users/reset-password", data);
   }
 
   // ------------------------------
@@ -161,14 +172,17 @@ export class AuthService {
     if (userFromCookie) return userFromCookie;
     
     // If not in cookies, fetch from API
-    const user = await apiClient.get<Profile>("/auth/users/me");
+    const response = await apiClient.get<{ status: string; data: { profile: Profile } }>("/auth/users/me");
+    
+    // Handle response structure
+    const profile = response?.data?.profile || response as any;
     
     // Store in cookie for future use
-    if (user) {
-      cookieService.setCookie('user', JSON.stringify(user));
+    if (profile && profile._id) {
+      cookieService.setCookie('user', JSON.stringify(profile));
     }
     
-    return user;
+    return profile;
   }
 
   // ------------------------------

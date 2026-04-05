@@ -113,7 +113,9 @@ export function useAuth() {
     try {
       const response = await authService.login({ email, password });
 
-      const { accessToken, refreshToken } = response.token;
+      // Extract data from the new response structure
+      const { accessToken, refreshToken } = response.data.tokens;
+      const profile = response.data.profile;
 
       // Set the tokens in cookies
       TokenService.setTokens(
@@ -125,8 +127,8 @@ export function useAuth() {
       );
 
       // Store user profile in cookie
-      cookieService.setCookie('user', JSON.stringify(response.profile));
-      setUser(response.profile);
+      cookieService.setCookie('user', JSON.stringify(profile));
+      setUser(profile);
 
       router.push("/");
     } catch (err: any) {
