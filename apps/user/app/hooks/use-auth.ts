@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { authService } from "@/app/lib/auth/auth-service";
 import { TokenService } from "@/app/lib/auth/token-service";
+import { cookieService } from "@/app/lib/cookies/cookie-service";
 
 import type {
   Profile,
@@ -21,7 +22,7 @@ export function useAuth() {
   const router = useRouter();
 
   // =============================
-  // 🔄 LOAD USER FROM STORAGE
+  // 🔄 LOAD USER FROM COOKIES
   // =============================
   const loadUser = useCallback(async () => {
     setIsLoading(true);
@@ -29,74 +30,64 @@ export function useAuth() {
     try {
       // Check if we have valid tokens
       const hasTokens = TokenService.isAuthenticated();
-      const storedUser = localStorage.getItem("vaad_user");
+      const storedUser = cookieService.getUser<Profile>();
 
       if (hasTokens && storedUser) {
-        // Restore user from localStorage
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        // Restore user from cookie
+        setUser(storedUser);
 
         // Check if token is expired by decoding JWT
         const accessToken = TokenService.getAccessToken();
-        if (accessToken) {
-          try {
-            // Decode JWT to check expiration
-            const payload = JSON.parse(atob(accessToken.split(".")[1]));
-            const isExpired = payload.exp && payload.exp * 1000 < Date.now();
+        if (accessToken && TokenService.isTokenExpired(accessToken)) {
+          // Token expired, try to refresh
+          console.log("Token expired, attempting refresh...");
+          const refreshToken = TokenService.getRefreshToken();
+          const userEmail = TokenService.getUserEmail();
 
-            if (isExpired) {
-              // Token expired, try to refresh
-              console.log("Token expired, attempting refresh...");
-              const refreshToken = TokenService.getRefreshToken();
-              const userEmail = TokenService.getUserEmail();
+          if (refreshToken && userEmail) {
+            try {
+              const tokens = await authService.generateTokens({
+                email: userEmail,
+                token: refreshToken,
+              });
 
-              if (refreshToken && userEmail) {
-                try {
-                  const tokens = await authService.generateTokens({
-                    email: userEmail,
-                    token: refreshToken,
-                  });
+              TokenService.setTokens(
+                {
+                  access: tokens.accessToken || tokens.access,
+                  refresh: tokens.refreshToken || tokens.refresh,
+                },
+                userEmail
+              );
 
-                  TokenService.setTokens({
-                    access: tokens.accessToken || tokens.access,
-                    refresh: tokens.refreshToken || tokens.refresh,
-                  });
-
-                  // Keep user data, token refreshed successfully
-                  console.log("Token refreshed successfully");
-                } catch (refreshErr) {
-                  console.error("Token refresh failed:", refreshErr);
-                  // Refresh failed, clear everything
-                  TokenService.clearTokens();
-                  localStorage.removeItem("vaad_user");
-                  setUser(null);
-                }
-              } else {
-                // No refresh token or email, clear everything
-                TokenService.clearTokens();
-                localStorage.removeItem("vaad_user");
-                setUser(null);
-              }
+              console.log("Token refreshed successfully");
+            } catch (refreshErr) {
+              console.error("Token refresh failed:", refreshErr);
+              // Refresh failed, clear everything
+              TokenService.clearTokens();
+              setUser(null);
             }
-          } catch (decodeErr) {
-            // Invalid token format, clear everything
-            console.error("Invalid token format:", decodeErr);
+          } else {
+            // No refresh token or email, clear everything
             TokenService.clearTokens();
-            localStorage.removeItem("vaad_user");
             setUser(null);
           }
         }
       } else if (hasTokens && !storedUser) {
-        // We have tokens but no user data - clear tokens
-        TokenService.clearTokens();
-        setUser(null);
+        // We have tokens but no user data - fetch user
+        try {
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+          cookieService.setCookie('user', JSON.stringify(userData));
+        } catch {
+          TokenService.clearTokens();
+          setUser(null);
+        }
       } else {
         setUser(null);
       }
     } catch (err) {
       console.error("Failed to load user:", err);
       TokenService.clearTokens();
-      localStorage.removeItem("vaad_user");
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -124,18 +115,18 @@ export function useAuth() {
 
       const { accessToken, refreshToken } = response.token;
 
-      // Set the tokens
-      TokenService.setTokens({
-        access: accessToken,
-        refresh: refreshToken,
-      });
+      // Set the tokens in cookies
+      TokenService.setTokens(
+        {
+          access: accessToken,
+          refresh: refreshToken,
+        },
+        email
+      );
 
-      // Store email for token refresh
-      TokenService.setUserEmail(email);
-
-      // Store user profile
+      // Store user profile in cookie
+      cookieService.setCookie('user', JSON.stringify(response.profile));
       setUser(response.profile);
-      localStorage.setItem("vaad_user", JSON.stringify(response.profile));
 
       router.push("/");
     } catch (err: any) {
@@ -148,23 +139,22 @@ export function useAuth() {
   };
 
   // =============================
-  // 📝 SIGN UP + AUTO LOGIN FLOW
+  // 📝 SIGN UP
   // =============================
   const signUp = async (data: SignUpRequest) => {
-  setIsLoading(true);
-  setError(null);
+    setIsLoading(true);
+    setError(null);
 
-  try {
-    const signUpRes = await authService.signUp(data);
-
-    return signUpRes;
-  } catch (err: any) {
-    setError(err.message || "Sign up failed");
-    throw err;
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      const signUpRes = await authService.signUp(data);
+      return signUpRes;
+    } catch (err: any) {
+      setError(err.message || "Sign up failed");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // =============================
   // 📧 FORGOT PASSWORD
@@ -212,12 +202,7 @@ export function useAuth() {
 
     try {
       await authService.logout();
-
-      TokenService.clearTokens();
-      localStorage.removeItem("vaad_user");
-
       setUser(null);
-
       router.push("/auth/login");
     } catch (err: any) {
       setError(err.message || "Logout failed");

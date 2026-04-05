@@ -7,6 +7,7 @@ import axios, {
 } from "axios";
 import { env } from "@/app/config/env";
 import { TokenService } from "../auth/token-service";
+import { cookieService } from "../cookies/cookie-service";
 
 type FailedRequest = {
   resolve: (token: string) => void;
@@ -29,12 +30,16 @@ export class ApiClient {
       headers: {
         "Content-Type": "application/json",
       },
+      // ⚠️ Comment out or remove for now
+      // withCredentials: true,
     });
 
     // Separate client for refresh (NO interceptors)
     this.refreshClient = axios.create({
       baseURL: env.apiUrl,
       timeout: 30000,
+      // ⚠️ Comment out or remove for now
+      // withCredentials: true,
     });
 
     this.setupInterceptors();
@@ -143,12 +148,21 @@ export class ApiClient {
       throw new Error("No refresh token available");
     }
 
+    // Get user email from cookie or localStorage
+    const userEmail = cookieService.getUserEmail() || TokenService.getUserEmail();
+
     const { data } = await this.refreshClient.post(
       "/auth/users/generate-tokens",
-      { refreshToken },
+      { 
+        email: userEmail,
+        token: refreshToken 
+      },
     );
 
-    return data;
+    return {
+      access: data.accessToken || data.access,
+      refresh: data.refreshToken || data.refresh,
+    };
   }
 
   private processQueue(error: unknown, token: string | null) {
@@ -169,10 +183,12 @@ export class ApiClient {
   private handleAuthFailure() {
     TokenService.clearTokens();
 
-    // Avoid SSR crash
-    // if (typeof window !== "undefined") {
-    //   window.location.href = "/auth/login";
-    // }
+    // Redirect to login only on client side
+    if (typeof window !== "undefined") {
+      if (!window.location.pathname.includes('/auth/login')) {
+        window.location.href = "/auth/login";
+      }
+    }
   }
 
   // =============================

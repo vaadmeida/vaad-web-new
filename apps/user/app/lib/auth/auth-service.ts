@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient } from "@/app/lib/api/client";
 import { Tokens } from "./token-service";
+import { cookieService } from "@/app/lib/cookies/cookie-service";
 
 // ==============================
 // 📦 TYPES
@@ -15,7 +16,6 @@ export interface Profile {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  // Allow any additional keys
   [key: string]: any;
 }
 
@@ -85,14 +85,28 @@ export class AuthService {
   // 📝 SIGN UP
   // ------------------------------
   async signUp(data: SignUpRequest): Promise<SignUpResponse> {
-    return apiClient.post("/auth/users/sign-up", data);
+    return apiClient.post<SignUpResponse>("/auth/users/sign-up", data);
   }
 
   // ------------------------------
   // 🔑 LOGIN
   // ------------------------------
   async login(data: LoginRequest): Promise<LoginResponse> {
-    return apiClient.post("/auth/users/login", data);
+    const response = await apiClient.post<LoginResponse>("/auth/users/login", data);
+    
+    // Store tokens and user info in cookies
+    if (response?.token) {
+      cookieService.setAuthCookies(
+        {
+          accessToken: response.token.accessToken,
+          refreshToken: response.token.refreshToken,
+        },
+        response.profile,
+        data.email
+      );
+    }
+    
+    return response;
   }
 
   // ------------------------------
@@ -101,24 +115,40 @@ export class AuthService {
   async generateTokens(
     data: GenerateTokensRequest,
   ): Promise<GenerateTokensResponse> {
-    return apiClient.post("/auth/users/generate-tokens", data);
+    const response = await apiClient.post<GenerateTokensResponse>("/auth/users/generate-tokens", data);
+    
+    // Update tokens in cookies
+    if (response) {
+      const accessToken = (response as any).accessToken || (response as any).access;
+      const refreshToken = (response as any).refreshToken || (response as any).refresh;
+      
+      if (accessToken && refreshToken) {
+        cookieService.setAuthCookies(
+          { accessToken, refreshToken },
+          {},
+          data.email
+        );
+      }
+    }
+    
+    return response;
   }
 
   // ------------------------------
   // 📧 VERIFY EMAIL
   // ------------------------------
   async verifyEmail(token: string): Promise<{ message: string }> {
-    return apiClient.post("/auth/users/verify-email", { token });
+    return apiClient.post<{ message: string }>("/auth/users/verify-email", { token });
   }
 
   // ------------------------------
   // 🔒 PASSWORD RESET
   // ------------------------------
-  async forgotPassword(data: ForgotPasswordRequest) {
+  async forgotPassword(data: ForgotPasswordRequest): Promise<any> {
     return apiClient.post("/auth/users/forget-password", data);
   }
 
-  async resetPassword(data: ResetPasswordRequest) {
+  async resetPassword(data: ResetPasswordRequest): Promise<any> {
     return apiClient.post("/auth/users/reset-password", data);
   }
 
@@ -126,7 +156,19 @@ export class AuthService {
   // 👤 CURRENT USER
   // ------------------------------
   async getCurrentUser(): Promise<Profile> {
-    return apiClient.get("/auth/users/me");
+    // First try to get from cookies
+    const userFromCookie = cookieService.getUser<Profile>();
+    if (userFromCookie) return userFromCookie;
+    
+    // If not in cookies, fetch from API
+    const user = await apiClient.get<Profile>("/auth/users/me");
+    
+    // Store in cookie for future use
+    if (user) {
+      cookieService.setCookie('user', JSON.stringify(user));
+    }
+    
+    return user;
   }
 
   // ------------------------------
@@ -137,7 +179,8 @@ export class AuthService {
       // Optional: backend invalidation
       // await apiClient.post("/auth/users/logout");
     } finally {
-      // Keep side effects OUTSIDE ideally
+      // Clear all auth cookies
+      cookieService.clearAuthCookies();
     }
   }
 }
