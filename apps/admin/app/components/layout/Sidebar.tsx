@@ -54,8 +54,8 @@ export default function Sidebar() {
     icon: ClipboardList,
     label: "Boards",
     subItems: [
-      { label: "Board Review", href: "/dashboard/boards/review" },
-      { label: "Add New Board", href: "/dashboard/boards/add" },
+      { label: "Board Review", href: "/admin/boards/review" },
+      { label: "Add New Board", href: "/admin/boards/add" },
     ],
   };
 
@@ -87,7 +87,7 @@ export default function Sidebar() {
     {
       icon: LayoutDashboard,
       label: "Dashboard",
-      href: "/dashboard",
+      href: "/admin",
     },
     {
       icon: boardsMenu.icon,
@@ -98,62 +98,62 @@ export default function Sidebar() {
     {
       icon: Eye,
       label: "Watch",
-      href: "/dashboard/watch",
+      href: "/admin/watch",
     },
     {
       icon: Receipt,
       label: "Transactions",
-      href: "/dashboard/transactions",
+      href: "/admin/transactions",
     },
     {
       icon: Users,
       label: "Media Partners",
-      href: "/dashboard/media-partners",
+      href: "/admin/media-partners",
     },
     {
       icon: Repeat,
       label: "Referrals",
-      href: "/dashboard/referrals",
+      href: "/admin/referrals",
     },
     {
       icon: ShoppingCart,
       label: "Bookings and Orders",
-      href: "/dashboard/bookings",
+      href: "/admin/bookings",
     },
     {
       icon: BarChart3,
       label: "Campaign Report",
-      href: "/dashboard/campaign-report",
+      href: "/admin/campaign-report",
     },
     {
       icon: CreditCard,
       label: "Subscription",
-      href: "/dashboard/subscription",
+      href: "/admin/subscription",
     },
     {
       icon: FileText,
       label: "Application",
-      href: "/dashboard/application",
+      href: "/admin/application",
     },
     {
       icon: Tag,
       label: "Promo",
-      href: "/dashboard/promo",
+      href: "/admin/promo",
     },
     {
       icon: FileEdit,
       label: "Blog Post",
-      href: "/dashboard/blog",
+      href: "/admin/blog",
     },
     {
       icon: User,
       label: "Customers",
-      href: "/dashboard/customers",
+      href: "/admin/customers",
     },
     {
       icon: Bell,
       label: "Notifications",
-      href: "/dashboard/notifications",
+      href: "/admin/notifications",
     },
   ];
 
@@ -162,18 +162,18 @@ export default function Sidebar() {
     {
       icon: Settings,
       label: "Settings",
-      href: "/dashboard/settings",
+      href: "/admin/settings",
     },
     {
       icon: HelpCircle,
       label: "Help & Support",
-      href: "/dashboard/support",
+      href: "/admin/support",
     },
   ];
 
   // Check if a menu item is active
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
+    if (href === "/admin") {
       return pathname === href;
     }
     return pathname.startsWith(href);
