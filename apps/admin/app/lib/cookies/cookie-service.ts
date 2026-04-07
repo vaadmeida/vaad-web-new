@@ -1,5 +1,5 @@
 // app/lib/cookies/cookie-service.ts
-import { getCookie, setCookie, deleteCookie, hasCookie } from 'cookies-next';
+import { getCookie, setCookie, deleteCookie } from 'cookies-next';
 import { GetServerSidePropsContext } from 'next';
 
 export interface CookieOptions {
@@ -70,29 +70,11 @@ export class CookieService {
     });
   }
 
-  // Check if cookie exists - Fixed to handle Promise
-  static async hasCookie(
-    key: string,
-    context?: GetServerSidePropsContext
-  ): Promise<boolean> {
-    const result = hasCookie(key, context || {});
-    // hasCookie returns boolean | Promise<boolean>
-    // Await it to ensure we always get a boolean
-    return await result;
-  }
-
-  // Synchronous version for client-side only
-  static hasCookieSync(key: string): boolean {
-    if (typeof window === 'undefined') return false;
-    return document.cookie.split(';').some(cookie => 
-      cookie.trim().startsWith(`${encodeURIComponent(key)}=`)
-    );
-  }
-
   // Set authentication cookies
   static setAuthCookies(
     tokens: { accessToken: string; refreshToken: string },
-    user: object
+    user: object,
+    email: string
   ): void {
     this.setCookie('access_token', tokens.accessToken, {
       maxAge: 15 * 60, // 15 minutes
@@ -103,6 +85,9 @@ export class CookieService {
     this.setCookie('user', JSON.stringify(user), {
       maxAge: 7 * 24 * 60 * 60,
     });
+    this.setCookie('user_email', email, {
+      maxAge: 7 * 24 * 60 * 60,
+    });
   }
 
   // Clear authentication cookies
@@ -110,6 +95,7 @@ export class CookieService {
     this.deleteCookie('access_token');
     this.deleteCookie('refresh_token');
     this.deleteCookie('user');
+    this.deleteCookie('user_email');
   }
 
   // Get access token
@@ -127,14 +113,24 @@ export class CookieService {
     return this.getJsonCookie<T>('user', context);
   }
 
-  // Check if user is authenticated (synchronous for client-side)
+  // Get user email
+  static getUserEmail(context?: GetServerSidePropsContext): string | null {
+    return this.getCookie('user_email', context);
+  }
+
+  // Check if user is authenticated
   static isAuthenticated(context?: GetServerSidePropsContext): boolean {
-    if (context) {
-      // Server-side: use getCookie directly (synchronous)
-      return !!this.getAccessToken(context);
+    return !!this.getAccessToken(context);
+  }
+
+  // Decode JWT token to check expiration
+  static isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp && payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
     }
-    // Client-side: check cookie directly
-    return !!this.getAccessToken();
   }
 }
 

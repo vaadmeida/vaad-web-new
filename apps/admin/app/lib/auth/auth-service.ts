@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { apiClient } from "@/app/lib/api/client";
 import { Tokens } from "./token-service";
+import { cookieService } from "@/app/lib/cookies/cookie-service";
 
 // ==============================
 // 📦 TYPES
@@ -10,18 +11,23 @@ export interface Profile {
   _id: string;
   email: string;
   fullName: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  // Allow any additional keys
   [key: string]: any;
 }
 
 export interface AuthResponse {
-  user: Profile;
-  tokens: Tokens;
+  status: string;
+  data: {
+    profile: Profile;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
+  };
 }
 
 export interface SignUpRequest {
@@ -33,8 +39,11 @@ export interface SignUpRequest {
 }
 
 export interface SignUpResponse {
-  profile: Profile;
-  token: string;
+  status: string;
+  data: {
+    profile: Profile;
+    token: string;
+  };
 }
 
 export interface LoginRequest {
@@ -43,20 +52,13 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  profile: {
-    _id: string;
-    email: string;
-    __v: number;
-    createdAt: string;
-    deletedAt: string | null;
-    fullName: string;
-    phoneNumber: string;
-    status: string;
-    updatedAt: string;
-  };
-  token: {
-    accessToken: string;
-    refreshToken: string;
+  status: string;
+  data: {
+    profile: Profile;
+    tokens: {
+      accessToken: string;
+      refreshToken: string;
+    };
   };
 }
 
@@ -65,7 +67,17 @@ export interface GenerateTokensRequest {
   token: string;
 }
 
-export interface GenerateTokensResponse extends Tokens {}
+export interface GenerateTokensResponse {
+  status?: string;
+  data?: {
+    accessToken?: string;
+    refreshToken?: string;
+  };
+  accessToken?: string;
+  refreshToken?: string;
+  access?: string;
+  refresh?: string;
+}
 
 export interface ForgotPasswordRequest {
   email: string;
@@ -85,14 +97,28 @@ export class AuthService {
   // 📝 SIGN UP
   // ------------------------------
   async signUp(data: SignUpRequest): Promise<SignUpResponse> {
-    return apiClient.post("/auth/admins/sign-up", data);
+    return apiClient.post<SignUpResponse>("/auth/admins/sign-up", data);
   }
 
   // ------------------------------
   // 🔑 LOGIN
   // ------------------------------
   async login(data: LoginRequest): Promise<LoginResponse> {
-    return apiClient.post("/auth/admins/login", data);
+    const response = await apiClient.post<LoginResponse>("/auth/admins/login", data);
+    
+    // Store tokens and user info in cookies using the new response structure
+    if (response?.data?.tokens) {
+      cookieService.setAuthCookies(
+        {
+          accessToken: response.data.tokens.accessToken,
+          refreshToken: response.data.tokens.refreshToken,
+        },
+        response.data.profile,
+        data.email
+      );
+    }
+    
+    return response;
   }
 
   // ------------------------------
@@ -101,32 +127,62 @@ export class AuthService {
   async generateTokens(
     data: GenerateTokensRequest,
   ): Promise<GenerateTokensResponse> {
-    return apiClient.post("/auth/admins/generate-tokens", data);
+    const response = await apiClient.post<GenerateTokensResponse>("/auth/admins/generate-tokens", data);
+    
+    // Update tokens in cookies
+    // Handle both possible response structures
+    const accessToken = response?.data?.accessToken || response?.accessToken || (response as any)?.access;
+    const refreshToken = response?.data?.refreshToken || response?.refreshToken || (response as any)?.refresh;
+    
+    if (accessToken && refreshToken) {
+      cookieService.setAuthCookies(
+        { accessToken, refreshToken },
+        {},
+        data.email
+      );
+    }
+    
+    return response;
   }
 
   // ------------------------------
   // 📧 VERIFY EMAIL
   // ------------------------------
   async verifyEmail(token: string): Promise<{ message: string }> {
-    return apiClient.post("/auth/admins/verify-email", { token });
+    return apiClient.post<{ message: string }>("/auth/admins/verify-email", { token });
   }
 
   // ------------------------------
   // 🔒 PASSWORD RESET
   // ------------------------------
-  async forgotPassword(data: ForgotPasswordRequest) {
-    return apiClient.post("/auth/admins/forget-password", data);
+  async forgotPassword(data: ForgotPasswordRequest): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>("/auth/admins/forget-password", data);
   }
 
-  async resetPassword(data: ResetPasswordRequest) {
-    return apiClient.post("/auth/admins/reset-password", data);
+  async resetPassword(data: ResetPasswordRequest): Promise<{ message: string }> {
+    return apiClient.post<{ message: string }>("/auth/admins/reset-password", data);
   }
 
   // ------------------------------
   // 👤 CURRENT USER
   // ------------------------------
   async getCurrentUser(): Promise<Profile> {
-    return apiClient.get("/auth/admins/me");
+    // First try to get from cookies
+    const userFromCookie = cookieService.getUser<Profile>();
+    if (userFromCookie) return userFromCookie;
+    
+    // If not in cookies, fetch from API
+    const response = await apiClient.get<{ status: string; data: { profile: Profile } }>("/auth/admins/me");
+    
+    // Handle response structure
+    const profile = response?.data?.profile || response as any;
+    
+    // Store in cookie for future use
+    if (profile && profile._id) {
+      cookieService.setCookie('user', JSON.stringify(profile));
+    }
+    
+    return profile;
   }
 
   // ------------------------------
@@ -135,9 +191,10 @@ export class AuthService {
   async logout(): Promise<void> {
     try {
       // Optional: backend invalidation
-      // await apiClient.post("/auth/users/logout");
+      // await apiClient.post("/auth/admins/logout");
     } finally {
-      // Keep side effects OUTSIDE ideally
+      // Clear all auth cookies
+      cookieService.clearAuthCookies();
     }
   }
 }
