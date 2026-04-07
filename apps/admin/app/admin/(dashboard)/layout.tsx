@@ -1,8 +1,8 @@
 "use client";
 
-import Header from "../components/layout/Header";
-import { AdminProvider } from "../contexts/admin-context";
-import Sidebar from "../components/layout/Sidebar";
+import Header from "../../components/layout/Header";
+import { AdminProvider } from "../../contexts/admin-context";
+import Sidebar from "../../components/layout/Sidebar";
 
 function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
   return (
