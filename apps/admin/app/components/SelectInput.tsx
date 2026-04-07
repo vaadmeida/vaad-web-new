@@ -41,16 +41,20 @@ export default function Select({
       <div className="relative">
         <select
           id={selectId}
-          className={`appearance-none w-full px-4 py-4 font-medium text-sm text-[#0D0A19] bg-white border border-[#D9D9D9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0088b5] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed ${selectClassName}`}
+          className={`appearance-none w-full px-4 py-4 font-medium text-sm bg-white border border-[#D9D9D9] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0088b5] focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed ${selectClassName} ${
+            props.value === "" || props.value === undefined || !props.value
+              ? "text-gray-400"
+              : "text-[#0D0A19]"
+          }`}
           {...props}
         >
           {placeholder && (
-            <option value="" disabled>
+            <option value="" disabled className="text-gray-400">
               {placeholder}
             </option>
           )}
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} value={option.value} className="text-[#0D0A19]">
               {option.label}
             </option>
           ))}

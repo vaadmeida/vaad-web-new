@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label: string;
+  label?: string;
   error?: string;
   inputClassName?: string; // Add this prop for input-specific classes
 }
@@ -14,7 +14,7 @@ export default function Input({
   id,
   ...props 
 }: InputProps) {
-  const inputId = id || label.toLowerCase().replace(/\s+/g, '-');
+  const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
   
   return (
     <div className={className}>

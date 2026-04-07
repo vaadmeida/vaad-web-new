@@ -230,7 +230,7 @@ export default function ResetPasswordPage() {
               <p className="sm:text-sm text-[3.5vw] text-[#9A9EA7] font-medium">
                 Make sure to save your password in a safe place!
               </p>
-              <Link href="/auth/login">
+              <Link href="/admin/login">
                 <Button type="button" fullWidth size="lg">
                   Back to Login
                 </Button>

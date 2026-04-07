@@ -1,85 +1,72 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // app/lib/auth/token-service.ts
+import { cookieService } from '@/app/lib/cookies/cookie-service';
+import { GetServerSidePropsContext } from 'next';
+
 export interface Tokens {
-  // Support both naming conventions
   accessToken?: string;
   refreshToken?: string;
   access?: string;
   refresh?: string;
+  [key: string]: any;
 }
 
 export class TokenService {
-  private static ACCESS_TOKEN_KEY = "vaad_access_token";
-  private static REFRESH_TOKEN_KEY = "vaad_refresh_token";
-  private static USER_EMAIL_KEY = "vaad_user_email";
-
-  static setTokens(tokens: any): void {
+  static setTokens(tokens: any, email?: string): void {
     if (typeof window === "undefined") return;
 
     // Handle different possible formats
     const accessToken = tokens.accessToken || tokens.access;
     const refreshToken = tokens.refreshToken || tokens.refresh;
 
-    if (accessToken) {
-      localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
+    if (accessToken && refreshToken) {
+      cookieService.setAuthCookies(
+        { accessToken, refreshToken },
+        {},
+        email || cookieService.getUserEmail() || ''
+      );
     }
-
-    if (refreshToken) {
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    }
   }
 
-  static getAccessToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY);
+  static getAccessToken(context?: GetServerSidePropsContext): string | null {
+    return cookieService.getAccessToken(context);
   }
 
-  static getRefreshToken(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  static getRefreshToken(context?: GetServerSidePropsContext): string | null {
+    return cookieService.getRefreshToken(context);
   }
 
-  static setUserEmail(email: string) {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(this.USER_EMAIL_KEY, email);
+  static setUserEmail(email: string): void {
+    cookieService.setCookie('user_email', email);
   }
 
-  static getUserEmail(): string | null {
-    if (typeof window === "undefined") return null;
-    return localStorage.getItem(this.USER_EMAIL_KEY);
+  static getUserEmail(context?: GetServerSidePropsContext): string | null {
+    return cookieService.getUserEmail(context);
   }
 
-  static clearTokens() {
-    if (typeof window === "undefined") return;
-
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem(this.USER_EMAIL_KEY);
-    localStorage.removeItem("vaad_user");
+  static setUser(user: object): void {
+    cookieService.setCookie('user', JSON.stringify(user));
   }
 
-  static isAuthenticated(): boolean {
-    if (typeof window === "undefined") return false;
+  static getUser<T>(context?: GetServerSidePropsContext): T | null {
+    return cookieService.getUser<T>(context);
+  }
 
-    const token = this.getAccessToken();
-    if (!token) return false;
+  static clearTokens(): void {
+    cookieService.clearAuthCookies();
+  }
 
-    // Check if token is expired by decoding JWT
+  static isAuthenticated(context?: GetServerSidePropsContext): boolean {
+    return cookieService.isAuthenticated(context);
+  }
+
+  static isTokenExpired(token: string): boolean {
+    if (!token) return true;
     try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const isExpired = payload.exp && payload.exp * 1000 < Date.now();
-
-      // If token is expired, clear it
-      if (isExpired) {
-        this.clearTokens();
-        return false;
-      }
-
-      return true;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp && payload.exp * 1000 < Date.now();
     } catch {
-      // Invalid token format
-      this.clearTokens();
-      return false;
+      return true;
     }
   }
 }
