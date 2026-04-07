@@ -17,7 +17,7 @@ export default function AdminHomePage() {
     let path = "/admin/login";
 
     if (isAuthenticated && user?.status === "ACTIVE") {
-      path = "/dashboard";
+      path = "/admin";
     }
 
     hasRedirected.current = true;

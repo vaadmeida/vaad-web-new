@@ -271,7 +271,7 @@ export default function Sidebar() {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
+        <Link href="/admin" className="flex items-center gap-2">
           <Image
             src="/vaad.svg"
             alt="VAAD Media"
