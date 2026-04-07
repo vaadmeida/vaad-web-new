@@ -16,7 +16,7 @@ export default function AuthLayout({
   // Redirect to dashboard if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push("/dashboard");
+      router.push("/admin");
     }
   }, [isAuthenticated, isLoading, router]);
 
