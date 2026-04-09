@@ -1,7 +1,8 @@
+// app/components/SearchBox.tsx
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
 
 interface Filters {
@@ -23,7 +24,7 @@ interface AssetsData {
 interface SearchBoxProps {
   filters: Filters;
   handleFilterChange: (key: keyof Filters, value: string) => void;
-  handleSearch: (page?: number) => void;
+  handleSearch: () => void;
   isLoading: boolean;
   assets: AssetsData;
   assetsLoading: boolean;
@@ -52,8 +53,16 @@ export default function SearchBox({
     return assets.mediaAndProductsTypes[filters.mediaType] || [];
   }, [filters.mediaType, assets]);
 
-  // Handle media type change - also updates product type to first available
+  // Debug logging
+  useEffect(() => {
+    console.log("Media Types available:", mediaTypes);
+    console.log("Current mediaType:", filters.mediaType);
+    console.log("Available product types:", availableProductTypes);
+  }, [mediaTypes, filters.mediaType, availableProductTypes]);
+
+  // Handle media type change
   const handleMediaTypeChange = (value: string) => {
+    console.log("Changing media type to:", value);
     handleFilterChange("mediaType", value);
     // Set product type to first available for this media type
     const productTypes = assets?.mediaAndProductsTypes?.[value] || [];
@@ -69,7 +78,7 @@ export default function SearchBox({
     filters.productType || "Product"
   }, ${filters.location || "Location"}`;
 
-  // Desktop field configuration - reordered: Media Type, Product Type, Location
+  // Desktop field configuration
   const desktopFields = [
     {
       label: "Media Type",
@@ -77,6 +86,7 @@ export default function SearchBox({
       key: "mediaType" as const,
       options: mediaTypes,
       onChange: handleMediaTypeChange,
+      placeholder: "Select media type",
     },
     {
       label: "Product Type",
@@ -85,6 +95,7 @@ export default function SearchBox({
       options: availableProductTypes,
       onChange: (value: string) => handleFilterChange("productType", value),
       disabled: !filters.mediaType || availableProductTypes.length === 0,
+      placeholder: "Select product type",
     },
     {
       label: "Location",
@@ -92,32 +103,7 @@ export default function SearchBox({
       key: "location" as const,
       options: locations,
       onChange: (value: string) => handleFilterChange("location", value),
-    },
-  ];
-
-  // Mobile field configuration - same order
-  const mobileFields = [
-    {
-      label: "Media Type",
-      value: filters.mediaType,
-      key: "mediaType" as const,
-      options: mediaTypes,
-      onChange: handleMediaTypeChange,
-    },
-    {
-      label: "Product Type",
-      value: filters.productType,
-      key: "productType" as const,
-      options: availableProductTypes,
-      onChange: (value: string) => handleFilterChange("productType", value),
-      disabled: !filters.mediaType || availableProductTypes.length === 0,
-    },
-    {
-      label: "Location",
-      value: filters.location,
-      key: "location" as const,
-      options: locations,
-      onChange: (value: string) => handleFilterChange("location", value),
+      placeholder: "Select location",
     },
   ];
 
@@ -126,7 +112,6 @@ export default function SearchBox({
       {/* ---------------- DESKTOP ---------------- */}
       <div className="hidden md:block mt-12 bg-white rounded-2xl shadow-lg p-6 w-full">
         <div className="grid grid-cols-4 gap-4">
-          {/* Selects - Reordered: Media Type, Product Type, Location */}
           {desktopFields.map((item) => (
             <div key={item.key}>
               <label className="text-sm text-gray-600 mb-2 block">
@@ -138,10 +123,11 @@ export default function SearchBox({
                 disabled={assetsLoading || item.disabled}
                 className="w-full px-3 py-3 bg-gray-50 rounded-lg text-sm focus:ring-2 focus:ring-[#0088b5] disabled:opacity-50 disabled:cursor-not-allowed"
               >
+                <option value="">{item.placeholder}</option>
                 {assetsLoading ? (
-                  <option>Loading...</option>
+                  <option disabled>Loading...</option>
                 ) : item.options.length === 0 ? (
-                  <option>No options</option>
+                  <option disabled>No options available</option>
                 ) : (
                   item.options.map((opt: string) => (
                     <option key={opt} value={opt}>
@@ -153,9 +139,8 @@ export default function SearchBox({
             </div>
           ))}
 
-          {/* Button */}
           <button
-            onClick={() => handleSearch(1)}
+            onClick={handleSearch}
             disabled={isLoading}
             className="bg-[#0088b5] text-white rounded-xl flex items-center justify-center gap-2 font-semibold hover:scale-[1.02] transition disabled:opacity-60"
           >
@@ -171,8 +156,6 @@ export default function SearchBox({
       </div>
 
       {/* ---------------- MOBILE ---------------- */}
-
-      {/* COLLAPSED BAR */}
       <div className="md:hidden mt-6">
         <button
           onClick={() => setOpen(true)}
@@ -184,7 +167,6 @@ export default function SearchBox({
               {summary}
             </p>
           </div>
-
           <ChevronDown className="text-gray-400" />
         </button>
       </div>
@@ -193,15 +175,12 @@ export default function SearchBox({
       {open && (
         <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-end">
           <div className="w-full bg-white rounded-t-3xl p-6 space-y-6 animate-[slideUp_.3s_ease]">
-
-            {/* Header */}
             <div className="flex justify-between items-center">
               <h2 className="font-semibold text-lg">Search Filters</h2>
               <button onClick={() => setOpen(false)}>Close</button>
             </div>
 
-            {/* Fields - Reordered: Media Type, Product Type, Location */}
-            {mobileFields.map((item) => (
+            {desktopFields.map((item) => (
               <div key={item.key}>
                 <label className="text-sm text-gray-600 mb-2 block">
                   {item.label}
@@ -212,10 +191,11 @@ export default function SearchBox({
                   disabled={assetsLoading || item.disabled}
                   className="w-full px-4 py-4 bg-gray-50 rounded-xl text-sm focus:ring-2 focus:ring-[#0088b5] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
+                  <option value="">{item.placeholder}</option>
                   {assetsLoading ? (
-                    <option>Loading...</option>
+                    <option disabled>Loading...</option>
                   ) : item.options.length === 0 ? (
-                    <option>No options</option>
+                    <option disabled>No options available</option>
                   ) : (
                     item.options.map((opt: string) => (
                       <option key={opt} value={opt}>
@@ -227,10 +207,9 @@ export default function SearchBox({
               </div>
             ))}
 
-            {/* CTA */}
             <button
               onClick={() => {
-                handleSearch(1);
+                handleSearch();
                 setOpen(false);
               }}
               disabled={isLoading}

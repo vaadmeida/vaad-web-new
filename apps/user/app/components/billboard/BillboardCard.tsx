@@ -27,7 +27,7 @@ const generateBillboardSlug = (billboard: Billboard): string => {
   
   const id = billboard._id;
   
-  return `/billboard/${mediaType}/${id}`;
+  return `/${mediaType}/${id}`;
 };
 
 // Multiple fallback images for reliability

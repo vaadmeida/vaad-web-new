@@ -1,24 +1,29 @@
-type Props = {
+// app/components/billboard/Checkbox.tsx
+"use client";
+
+interface CheckboxProps {
   label: string;
   count?: number;
-};
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+}
 
-const Checkbox = ({ label, count }: Props) => {
+const Checkbox = ({ label, count, checked = false, onChange }: CheckboxProps) => {
   return (
-    <label className="flex items-center justify-between text-sm text-gray-600 cursor-pointer group">
-      
+    <label className="flex items-center justify-between cursor-pointer group">
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
-          className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          checked={checked}
+          onChange={(e) => onChange?.(e.target.checked)}
+          className="w-4 h-4 rounded border-gray-300 text-[#0088b5] focus:ring-[#0088b5]"
         />
-        <span>{label}</span>
-      </div>
-
-      {count !== undefined && (
-        <span className="text-xs text-gray-400 group-hover:text-gray-600">
-          {count}
+        <span className="text-sm text-gray-700 group-hover:text-[#0088b5] transition-colors">
+          {label}
         </span>
+      </div>
+      {count !== undefined && (
+        <span className="text-xs text-gray-400">{count}</span>
       )}
     </label>
   );

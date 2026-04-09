@@ -102,6 +102,23 @@ export function useAssets() {
     return assets.mediaAndProductsTypes[mediaType] || [];
   }, [assets.mediaAndProductsTypes]);
 
+  // Helper to get cities for a specific state
+  const getCitiesForState = useCallback((state: string) => {
+    if (!state || !assets.statesAndCites[state]) return [];
+    return assets.statesAndCites[state];
+  }, [assets.statesAndCites]);
+
+  // Helper to get print products for a media type
+  const getPrintProductsForMediaType = useCallback((mediaType: string) => {
+    if (!mediaType || !assets.mediaAndProductsTypes[mediaType]) return assets.printProductType;
+    return assets.mediaAndProductsTypes[mediaType];
+  }, [assets.mediaAndProductsTypes, assets.printProductType]);
+
+  // Helper to get all states
+  const getStates = useCallback(() => {
+    return Object.keys(assets.statesAndCites);
+  }, [assets.statesAndCites]);
+
   return {
     assets,
     locations,
@@ -110,5 +127,8 @@ export function useAssets() {
     refetch: fetchAssets,
     getMediaTypes,
     getProductTypesForMedia,
+    getCitiesForState,
+    getPrintProductsForMediaType,
+    getStates,
   };
 }

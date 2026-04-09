@@ -177,7 +177,7 @@ const handleShare = async () => {
         <section className="bg-white px-4 sm:px-18 py-10">
           <div className="text-[#EB5017] text-sm font-medium pb-10">
             <Link href="/">Home</Link> <span className="text-[#667185]">/</span>{" "}
-            <Link href="/billboard">Billboard</Link> <span className="text-[#667185]">/</span>{" "}
+            {/* <Link href="/billboard">Billboard</Link> <span className="text-[#667185]">/</span>{" "} */}
             <span className="capitalize text-[#667185]">{displayMediaType}</span>
           </div>
 
