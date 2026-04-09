@@ -16,8 +16,8 @@ export function slugify(text: string): string {
 
 export function generateBillboardSlug(billboard: any): string {
   const mediaType = slugify(billboard.mediaType || "billboard");
-  const city = slugify(billboard.city || billboard.locationAddress || "location");
+  // const city = slugify(billboard.city || billboard.locationAddress || "location");
   const id = billboard._id;
   
-  return `/billboard/${mediaType}/${city}/${id}`;
+  return `/billboard/${mediaType}/${id}`;
 }

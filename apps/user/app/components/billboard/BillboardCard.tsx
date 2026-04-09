@@ -20,14 +20,14 @@ const generateBillboardSlug = (billboard: Billboard): string => {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   
-  const city = (billboard.city || billboard.locationAddress || "location")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
+  // const city = (billboard.city || billboard.locationAddress || "location")
+  //   .toLowerCase()
+  //   .replace(/[^a-z0-9]+/g, "-")
+  //   .replace(/^-|-$/g, "");
   
   const id = billboard._id;
   
-  return `/billboard/${mediaType}/${city}/${id}`;
+  return `/billboard/${mediaType}/${id}`;
 };
 
 // Multiple fallback images for reliability

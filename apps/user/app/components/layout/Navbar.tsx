@@ -137,7 +137,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src={isTransparent ? "/vaad-white.svg" : "/vaad.svg"}
+              src={isTransparent ? "/vaad-white-full.svg" : "/vaad.svg"}
               alt="VAAD Media"
               width={150}
               height={34}
