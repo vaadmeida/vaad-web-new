@@ -3,21 +3,32 @@
 
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
-import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Star, MapPin, Heart } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import { Billboard } from "@/app/lib/billboard/billboard-service";
 import { useFavorite } from "@/app/contexts/favorite-context";
 
-// Dynamically import modal to prevent SSR issues
-const BillboardModal = dynamic(() => import("./BillboardModal"), {
-  ssr: false,
-  loading: () => null,
-});
-
 interface BillboardCardProps {
   billboard?: Billboard;
 }
+
+// Helper function to generate SEO-friendly slug
+const generateBillboardSlug = (billboard: Billboard): string => {
+  const mediaType = (billboard.mediaType || "billboard")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  
+  // const city = (billboard.city || billboard.locationAddress || "location")
+  //   .toLowerCase()
+  //   .replace(/[^a-z0-9]+/g, "-")
+  //   .replace(/^-|-$/g, "");
+  
+  const id = billboard._id;
+  
+  return `/${mediaType}/${id}`;
+};
 
 // Multiple fallback images for reliability
 const FALLBACK_IMAGES = [
@@ -25,9 +36,6 @@ const FALLBACK_IMAGES = [
   "https://images.pexels.com/photos/2104763/pexels-photo-2104763.jpeg?auto=compress&cs=tinysrgb&w=800",
   "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?q=80&w=774&auto=format&fit=crop",
 ];
-
-// Static placeholder (base64 encoded SVG for instant display)
-const SVG_PLACEHOLDER = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300' viewBox='0 0 400 300'%3E%3Crect width='400' height='300' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' font-size='14' text-anchor='middle' fill='%239ca3af' dy='.3em'%3EBillboard Image%3C/text%3E%3C/svg%3E";
 
 // INSANE HEART ANIMATION VARIANTS - Ultimate Premium
 const heartVariants: Variants = {
@@ -143,7 +151,6 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
   const [imageError, setImageError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [currentFallbackIndex, setCurrentFallbackIndex] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
   const [heartState, setHeartState] = useState<"idle" | "explode" | "shockwave" | "glitch" | "bounceCrazy">("idle");
   const [showParticles, setShowParticles] = useState(false);
@@ -152,7 +159,6 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
   const [particleColor, setParticleColor] = useState("#0088b5");
   
   const animationTimeoutRef = useRef<NodeJS.Timeout[]>([]);
-  const imgRef = useRef<HTMLImageElement | null>(null);
 
   const { isFavorite, toggleFavorite, isHydrated } = useFavorite();
 
@@ -169,6 +175,7 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
       _id: billboard._id,
       mediaType: billboard.mediaType || billboard["mediaType"],
       locationAddress: billboard.locationAddress || billboard.location || billboard["locationAddress"],
+      city: billboard.city || billboard["city"],
       state: billboard.state || billboard["state"],
       rate: billboard.rate || billboard["rate"],
       photos: billboard.photos || billboard["photos"],
@@ -222,11 +229,9 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
   // Handle image load error with fallback chain
   const handleImageError = useCallback(() => {
     if (currentFallbackIndex < FALLBACK_IMAGES.length - 1) {
-      // Try next fallback image
       setCurrentFallbackIndex(prev => prev + 1);
       setImageLoading(true);
     } else {
-      // All fallbacks failed, show SVG placeholder
       setImageError(true);
       setImageLoading(false);
     }
@@ -260,25 +265,20 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
     const heartColor = isFavorited ? "#0088b5" : "#ff6b6b";
     setParticleColor(heartColor);
     
-    // Stage 1: Show flash
     setShowFlash(true);
     
-    // Stage 2: Start heart animation
     setHeartState(randomAnim);
     
-    // Stage 3: Show ring shockwave
     const ringTimeout = setTimeout(() => {
       setShowRing(true);
     }, 50);
     animationTimeoutRef.current.push(ringTimeout);
     
-    // Stage 4: Show particles explosion
     const particleTimeout = setTimeout(() => {
       setShowParticles(true);
     }, 100);
     animationTimeoutRef.current.push(particleTimeout);
     
-    // Stage 5: Reset after animation completes
     const resetTimeout = setTimeout(() => {
       setHeartState("idle");
       setShowParticles(false);
@@ -288,17 +288,12 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
     animationTimeoutRef.current.push(resetTimeout);
   }, [getRandomAnimation, isFavorited, clearAllTimeouts]);
 
-  const handleViewDetails = useCallback(() => {
-    setIsModalOpen(true);
-  }, []);
-
   const handleFavoriteToggle = useCallback(async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     
     if (!billboardId || isPending) return;
     
-    // Trigger insane animation first
     triggerInsaneAnimation();
     
     setIsPending(true);
@@ -325,208 +320,192 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
     return null;
   }
 
+  // Generate the SEO-friendly URL
+  const billboardUrl = generateBillboardSlug(billboard);
+
   return (
-    <>
-      <div
-        className="group bg-transparent rounded-t-[7.75px] border-b border-[#C1C4D6] overflow-hidden transition-shadow duration-300 cursor-pointer"
-        onClick={handleViewDetails}
-      >
-        {/* Image Container */}
-        <div className="relative h-48 w-full overflow-hidden rounded-[7.75px] bg-gray-100">
-          {/* Loading Skeleton */}
-          {imageLoading && !imageError && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-              <div className="w-8 h-8 border-2 border-[#0088b5] border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-          
-          {/* Image */}
-          <img
-            src={getCurrentImageUrl}
-            alt={displayTitle}
-            className={`
-              w-full h-full object-cover transition-opacity duration-300
-              group-hover:scale-105 transition-transform duration-500
-              ${imageLoading ? "opacity-0" : "opacity-100"}
-            `}
-            onError={handleImageError}
-            onLoad={handleImageLoad}
-            loading="lazy"
-          />
-
-          {/* Category Badge */}
-          <div className="absolute top-3 left-3 bg-[#0177AB] backdrop-blur-sm px-[13.57px] py-[2.91px] font-medium rounded-[3.88px] text-xs text-white z-10">
-            {fields.serviceType || fields.mediaType || "Billboard"}
+    <Link
+      href={billboardUrl}
+      className="group bg-transparent rounded-t-[7.75px] border-b border-[#C1C4D6] overflow-hidden transition-shadow duration-300 cursor-pointer block"
+    >
+      {/* Image Container */}
+      <div className="relative h-48 w-full overflow-hidden rounded-[7.75px] bg-gray-100">
+        {/* Loading Skeleton */}
+        {imageLoading && !imageError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+            <div className="w-8 h-8 border-2 border-[#0088b5] border-t-transparent rounded-full animate-spin" />
           </div>
+        )}
+        
+        {/* Image */}
+        <img
+          src={getCurrentImageUrl}
+          alt={displayTitle}
+          className={`
+            w-full h-full object-cover transition-opacity duration-300
+            group-hover:scale-105 transition-transform duration-500
+            ${imageLoading ? "opacity-0" : "opacity-100"}
+          `}
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          loading="lazy"
+        />
 
-          {/* INSANE ANIMATED FAVORITE BUTTON */}
-          <div className="absolute top-3 right-3 z-20">
-            {/* Color Flash Effect */}
-            <AnimatePresence>
-              {showFlash && (
-                <motion.div
-                  variants={flashVariants}
-                  initial="hidden"
-                  animate="show"
-                  exit="hidden"
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: `radial-gradient(circle, ${particleColor}, transparent)`,
-                    filter: "blur(8px)"
-                  }}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Shockwave Ring Effect */}
-            <AnimatePresence>
-              {showRing && (
-                <motion.div
-                  variants={ringVariants}
-                  initial="hidden"
-                  animate="expand"
-                  exit="hidden"
-                  className="absolute inset-0 rounded-full border-2"
-                  style={{
-                    borderColor: particleColor,
-                    boxShadow: `0 0 20px ${particleColor}`
-                  }}
-                />
-              )}
-            </AnimatePresence>
-
-            {/* Heart Button */}
-            <motion.button
-              type="button"
-              onClick={handleFavoriteToggle}
-              disabled={isPending || !isHydrated}
-              className={`
-                relative w-8 h-8 rounded-full flex items-center justify-center transition-all
-                ${isHydrated 
-                  ? "bg-white/90 backdrop-blur-sm hover:bg-white" 
-                  : "bg-gray-100 cursor-wait"
-                }
-                ${isPending ? "opacity-70" : ""}
-                disabled:opacity-50
-                overflow-visible
-                z-10
-              `}
-              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
-              whileTap={{ scale: 0.7 }}
-              animate={heartState}
-              variants={heartVariants}
-              initial="idle"
-            >
-              <Heart
-                size={16}
-                className={`
-                  transition-colors duration-200
-                  ${isFavorited ? "fill-[#0088b5] text-[#0088b5]" : "text-gray-600 group-hover:text-[#0088b5]"}
-                  ${!isHydrated ? "opacity-50" : ""}
-                `}
-              />
-            </motion.button>
-
-            {/* Particle Explosion */}
-            <AnimatePresence>
-              {showParticles && (
-                <>
-                  {[...Array(24)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      custom={i}
-                      variants={particleVariants}
-                      initial="hidden"
-                      animate="explode"
-                      exit="exit"
-                      className="absolute top-1/2 left-1/2 pointer-events-none"
-                      style={{
-                        width: i % 3 === 0 ? 6 : i % 2 === 0 ? 4 : 3,
-                        height: i % 3 === 0 ? 6 : i % 2 === 0 ? 4 : 3,
-                        background: `radial-gradient(circle, ${particleColor}, ${particleColor}80)`,
-                        borderRadius: i % 4 === 0 ? '2px' : '50%',
-                        filter: 'blur(0.5px)',
-                        boxShadow: `0 0 4px ${particleColor}`
-                      }}
-                    />
-                  ))}
-                </>
-              )}
-            </AnimatePresence>
-          </div>
+        {/* Category Badge */}
+        <div className="absolute top-3 left-3 bg-[#0177AB] backdrop-blur-sm px-[13.57px] py-[2.91px] font-medium rounded-[3.88px] text-xs text-white z-10">
+          {fields.serviceType || fields.mediaType || "Billboard"}
         </div>
 
-        {/* Content */}
-        <div className="p-4">
-          {/* Rating */}
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex items-center">
-              <Star className="w-4 h-4 fill-[#0177AB] text-[#0177AB]" />
-              <span className="text-[15.5px] font-medium text-gray-900 ml-0.5">
-                {fields.rating || 4.5}
-              </span>
-            </div>
-            <span className="text-xs text-gray-500">
-              ({fields.reviews || 0} reviews)
-            </span>
-          </div>
+        {/* INSANE ANIMATED FAVORITE BUTTON */}
+        <div className="absolute top-3 right-3 z-20">
+          {/* Color Flash Effect */}
+          <AnimatePresence>
+            {showFlash && (
+              <motion.div
+                variants={flashVariants}
+                initial="hidden"
+                animate="show"
+                exit="hidden"
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: `radial-gradient(circle, ${particleColor}, transparent)`,
+                  filter: "blur(8px)"
+                }}
+              />
+            )}
+          </AnimatePresence>
 
-          {/* Title */}
-          <h3 className="sm:text-[21.32px] text-[6vw] font-semibold text-[#0177AB] mb-1 line-clamp-1">
-            {displayTitle}
-          </h3>
+          {/* Shockwave Ring Effect */}
+          <AnimatePresence>
+            {showRing && (
+              <motion.div
+                variants={ringVariants}
+                initial="hidden"
+                animate="expand"
+                exit="hidden"
+                className="absolute inset-0 rounded-full border-2"
+                style={{
+                  borderColor: particleColor,
+                  boxShadow: `0 0 20px ${particleColor}`
+                }}
+              />
+            )}
+          </AnimatePresence>
 
-          {/* Description */}
-          <p className="sm:text-[15.5px] text-[3.7vw] text-[#333333] mb-4 font-normal line-clamp-2">
-            {description}
-          </p>
+          {/* Heart Button */}
+          <motion.button
+            type="button"
+            onClick={handleFavoriteToggle}
+            disabled={isPending || !isHydrated}
+            className={`
+              relative w-8 h-8 rounded-full flex items-center justify-center transition-all
+              ${isHydrated 
+                ? "bg-white/90 backdrop-blur-sm hover:bg-white" 
+                : "bg-gray-100 cursor-wait"
+              }
+              ${isPending ? "opacity-70" : ""}
+              disabled:opacity-50
+              overflow-visible
+              z-10
+            `}
+            aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            whileTap={{ scale: 0.7 }}
+            animate={heartState}
+            variants={heartVariants}
+            initial="idle"
+          >
+            <Heart
+              size={16}
+              className={`
+                transition-colors duration-200
+                ${isFavorited ? "fill-[#0088b5] text-[#0088b5]" : "text-gray-600 group-hover:text-[#0088b5]"}
+                ${!isHydrated ? "opacity-50" : ""}
+              `}
+            />
+          </motion.button>
 
-          {/* Location */}
-          <div className="flex items-start gap-2 mb-4">
-            <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
-            <div>
-              <p className="sm:text-[13.57px] text-[3.5vw] font-normal text-[#696F8C]">
-                {displayLocation}, {fields.state || "Lagos"}
-              </p>
-            </div>
-          </div>
-
-         {/* Alternative: Stack vertically on very small screens, side-by-side on larger */}
-<div className="flex flex-col sm:flex-wrap gap-2 mt-auto">
-  {/* Price */}
-  <div className="flex items-baseline gap-2">
-    <span className="sm:text-[30.01px] text-[5vw] font-bold text-[#333333]">
-      ₦{fields.rate?.toLocaleString("en-US") || "0"}
-    </span>
-    {originalPrice && (
-      <span className="sm:text-[16.47px] text-[3vw] text-[#696F8C] line-through font-medium">
-        ₦{originalPrice.toLocaleString("en-US")}
-      </span>
-    )}
-  </div>
-
-  {/* Button - Full width on mobile, auto on desktop */}
-  <button
-    onClick={(e) => {
-      e.stopPropagation();
-      handleViewDetails();
-    }}
-    className="w-full sm:w-auto text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 sm:text-[13.57px] text-[2.8vw] hover:bg-[#0177AB] hover:text-white whitespace-nowrap"
-  >
-    Available in <span>{availableIn}</span> days
-  </button>
-</div>
+          {/* Particle Explosion */}
+          <AnimatePresence>
+            {showParticles && (
+              <>
+                {[...Array(24)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    custom={i}
+                    variants={particleVariants}
+                    initial="hidden"
+                    animate="explode"
+                    exit="exit"
+                    className="absolute top-1/2 left-1/2 pointer-events-none"
+                    style={{
+                      width: i % 3 === 0 ? 6 : i % 2 === 0 ? 4 : 3,
+                      height: i % 3 === 0 ? 6 : i % 2 === 0 ? 4 : 3,
+                      background: `radial-gradient(circle, ${particleColor}, ${particleColor}80)`,
+                      borderRadius: i % 4 === 0 ? '2px' : '50%',
+                      filter: 'blur(0.5px)',
+                      boxShadow: `0 0 4px ${particleColor}`
+                    }}
+                  />
+                ))}
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <BillboardModal
-          billboard={billboard}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-        />
-      )}
-    </>
+      {/* Content */}
+      <div className="p-4">
+        {/* Rating */}
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center">
+            <Star className="w-4 h-4 fill-[#0177AB] text-[#0177AB]" />
+            <span className="text-[15.5px] font-medium text-gray-900 ml-0.5">
+              {fields.rating || 4.5}
+            </span>
+          </div>
+          <span className="text-xs text-gray-500">
+            ({fields.reviews || 0} reviews)
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-[21.32px] font-semibold text-[#0177AB] mb-1 line-clamp-1">
+          {displayTitle}
+        </h3>
+
+        {/* Description */}
+        <p className="text-[15.5px] text-[#333333] mb-4 font-normal line-clamp-2">
+          {description}
+        </p>
+
+        {/* Location */}
+        <div className="flex items-start gap-2 mb-4">
+          <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-[13.57px] font-normal text-[#696F8C]">
+              {displayLocation}, {fields.state || "Lagos"}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-7 items-center">
+          {/* Price */}
+          <div className="flex items-baseline gap-2">
+            <span className="text-[31.01px] font-bold text-[#333333]">
+              ₦{fields.rate?.toLocaleString("en-US") || "0"}
+            </span>
+            {originalPrice && (
+              <span className="text-[16.47px] text-[#696F8C] line-through font-medium">
+                ₦{originalPrice.toLocaleString("en-US")}
+              </span>
+            )}
+          </div>
+
+          <div className="w-full block text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-[13.57px] hover:bg-[#0177AB] hover:text-white">
+            Available in <span>{availableIn}</span> days
+          </div>
+        </div>
+      </div>
+    </Link>
   );
 }

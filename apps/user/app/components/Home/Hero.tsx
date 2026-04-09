@@ -1,7 +1,10 @@
+/* eslint-disable react-hooks/set-state-in-effect */
+// app/components/sections/Hero.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Billboard,
   billboardService,
@@ -16,7 +19,13 @@ interface Filters {
   location: string;
 }
 
+// Helper to format URL parameters
+const formatUrlParam = (text: string) => {
+  return text.toLowerCase().replace(/\s+/g, '-').replace(/-+/g, '-');
+};
+
 export default function Hero() {
+  const router = useRouter();
   const { assets, locations, isLoading: assetsLoading } = useAssets();
 
   const [filters, setFilters] = useState<Filters>({
@@ -35,13 +44,17 @@ export default function Hero() {
     total: 0,
     totalPages: 0,
   });
+  
+  // Use ref to track if initial filters have been set
+  const filtersInitializedRef = useRef(false);
 
-  // Initialize filters when assets load
+  // Initialize filters when assets load - using ref to avoid cascade
   useEffect(() => {
-    if (!assetsLoading && assets.mediaAndProductsTypes) {
+    if (!assetsLoading && assets.mediaAndProductsTypes && !filtersInitializedRef.current) {
       const mediaTypes = Object.keys(assets.mediaAndProductsTypes);
 
       if (mediaTypes.length > 0 && !filters.mediaType) {
+        filtersInitializedRef.current = true;
         const firstMediaType = mediaTypes[0];
         const productTypesForMedia = assets.mediaAndProductsTypes[firstMediaType] || [];
 
@@ -52,7 +65,7 @@ export default function Hero() {
         });
       }
     }
-  }, [assets, assetsLoading, locations]);
+  }, [assets, assetsLoading, locations, filters.mediaType]);
 
   // Handle hydration - only run after mount
   useEffect(() => {
@@ -63,75 +76,17 @@ export default function Hero() {
     setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSearch = useCallback(
-    async (page: number = 1) => {
-      if (!isMounted) return;
+  const handleSearch = useCallback(async () => {
+    if (!isMounted) return;
 
-      setIsLoading(true);
-      setHasSearched(true);
-
-      const searchParams: SearchParams = {
-        mediaType: filters.mediaType,
-        serviceType: filters.productType,
-        location: filters.location,
-        limit: pagination.limit,
-        page: page,
-      };
-
-      try {
-        const response = await billboardService.searchBillboards(searchParams);
-
-        const fetchedResults = response.foundItems || [];
-        setResults(fetchedResults);
-
-        const totalCount = response?.count || 0;
-        const totalPagesValue =
-          response.totalPages || Math.ceil(totalCount / pagination.limit);
-
-        setPagination({
-          page: page,
-          limit: pagination.limit,
-          total: totalCount,
-          totalPages: totalPagesValue,
-        });
-      } catch (error) {
-        console.error("Search failed:", error);
-        setResults([]);
-        setPagination({
-          page: 1,
-          limit: pagination.limit,
-          total: 0,
-          totalPages: 0,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [filters, isMounted, pagination.limit],
-  );
-
-  // Auto-search on mount (client-side only)
-  useEffect(() => {
-    if (
-      isMounted &&
-      !assetsLoading &&
-      filters.mediaType &&
-      filters.productType
-    ) {
-      handleSearch(1);
-    }
-  }, [
-    isMounted,
-    handleSearch,
-    assetsLoading,
-    filters.mediaType,
-    filters.productType,
-  ]);
-
-  const handlePageChange = (newPage: number) => {
-    handleSearch(newPage);
-    window.scrollTo({ top: 600, behavior: "smooth" });
-  };
+    // Build the URL with filters
+    const mediaTypeParam = formatUrlParam(filters.mediaType || "all");
+    const stateParam = formatUrlParam(filters.location || "all");
+    
+    // Redirect to advertise page with the search parameters in URL
+    router.push(`/advertise/${mediaTypeParam}/in/nigeria/${stateParam}`);
+    
+  }, [filters, isMounted, router]);
 
   // Prevent hydration mismatch - render minimal UI on server
   if (!isMounted) {

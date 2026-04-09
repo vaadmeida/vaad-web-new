@@ -24,11 +24,10 @@ const DealCard = ({ title, image, available, location, state }: DealCardProps) =
     <div className="group cursor-pointer">
       {/* Image */}
       <div className="relative w-full h-102.25 rounded-xl overflow-hidden">
-        <Image
+        <img
           src={image}
           alt={title}
-          fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-cover transition-transform duration-500 group-hover:scale-105 w-full h-full"
         />
         
         {/* Hot Deal Badge */}
