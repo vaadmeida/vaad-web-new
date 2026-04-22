@@ -6,10 +6,11 @@ import Image from "next/image";
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/Home/Footer";
 import SimilarMedia from "@/app/components/SimilarMedia";
-import { Minus, Plus, Share2, Copy, Check } from "lucide-react";
+import { Minus, Plus, Share2, Copy } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { billboardService, Billboard } from "@/app/lib/billboard/billboard-service";
+import { useCart } from "@/app/hooks/useCart";
 
 export default function BillboardDetailsPage() {
   const params = useParams();
@@ -22,6 +23,9 @@ export default function BillboardDetailsPage() {
   const [error, setError] = useState<string | null>(null);
   const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  
+  const { addToCart, isItemInCart, getCartItemByBillboardId } = useCart();
 
   useEffect(() => {
     const fetchBillboard = async () => {
@@ -62,6 +66,10 @@ export default function BillboardDetailsPage() {
   const availableIn = calculateAvailableDays();
   const allImages = billboard?.photos?.length ? billboard.photos : (billboard?.images?.length ? billboard.images : []);
 
+  // Check if item is already in cart
+  const isInCart = billboard ? isItemInCart(billboard._id) : false;
+  const cartItem = billboard ? getCartItemByBillboardId(billboard._id) : null;
+
   // Copy to clipboard function
   const handleCopyLink = async () => {
     try {
@@ -74,33 +82,51 @@ export default function BillboardDetailsPage() {
   };
 
   // Share function
-// Replace the handleShare function with this corrected version:
-
-const handleShare = async () => {
-  try {
-    // Check if Web Share API is available (not just defined)
-    if (typeof navigator.share === 'function') {
-      await navigator.share({
-        title: billboard?.mediaType || "Billboard",
-        text: `Check out this ${billboard?.mediaType} at ${billboard?.locationAddress}`,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback to copy
-      await navigator.clipboard.writeText(window.location.href);
-      setShowShareTooltip(true);
-      setTimeout(() => setShowShareTooltip(false), 2000);
-    }
-  } catch (err) {
-    console.error("Failed to share:", err);
-    // Fallback to copy if share fails
+  const handleShare = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
-      setShowShareTooltip(true);
-      setTimeout(() => setShowShareTooltip(false), 2000);
-    } catch (copyErr) {
-      console.error("Failed to copy:", copyErr);
+      if (typeof navigator.share === 'function') {
+        await navigator.share({
+          title: billboard?.mediaType || "Billboard",
+          text: `Check out this ${billboard?.mediaType} at ${billboard?.locationAddress}`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowShareTooltip(true);
+        setTimeout(() => setShowShareTooltip(false), 2000);
+      }
+    } catch (err) {
+      console.error("Failed to share:", err);
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setShowShareTooltip(true);
+        setTimeout(() => setShowShareTooltip(false), 2000);
+      } catch (copyErr) {
+        console.error("Failed to copy:", copyErr);
+      }
     }
+  };
+
+  // Handle Add to Cart
+// Handle Add to Cart
+const handleAddToCart = async () => {
+  if (!billboard) return;
+  
+  setIsAddingToCart(true);
+  
+  // Full ISO format with time
+  const startDate = new Date().toISOString(); // "2026-04-12T10:30:00.000Z"
+  
+  try {
+    const result = await addToCart({
+      billboardId: billboard._id,
+      durationInMonths: quantity,
+      startDate: startDate,
+    });
+  } catch (error) {
+    console.error("Failed to add to cart:", error);
+  } finally {
+    setIsAddingToCart(false);
   }
 };
 
@@ -177,7 +203,6 @@ const handleShare = async () => {
         <section className="bg-white px-4 sm:px-18 py-10">
           <div className="text-[#EB5017] text-sm font-medium pb-10">
             <Link href="/">Home</Link> <span className="text-[#667185]">/</span>{" "}
-            {/* <Link href="/billboard">Billboard</Link> <span className="text-[#667185]">/</span>{" "} */}
             <span className="capitalize text-[#667185]">{displayMediaType}</span>
           </div>
 
@@ -256,11 +281,6 @@ const handleShare = async () => {
                     >
                       <Share2 size={18} className="text-gray-500 group-hover:text-[#0177AB] transition-colors" />
                     </button>
-                    {/* {showShareTooltip && (
-                      <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
-                        {await navigator.share() ? "Share dialog opened" : "Link copied!"}
-                      </div>
-                    )} */}
                   </div>
                 </div>
               </div>
@@ -291,12 +311,14 @@ const handleShare = async () => {
 
               {/* Quantity */}
               <div className="mt-4">
-                <p className="text-sm font-medium mb-2">Quantity</p>
+                <p className="text-sm font-medium mb-2">Quantity (Months)</p>
 
                 <div className="flex items-center gap-4">
                   <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
                     <button
                       onClick={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
+                      disabled={isInCart}
+                      className="disabled:opacity-50"
                     >
                       <Minus size={16} />
                     </button>
@@ -308,7 +330,7 @@ const handleShare = async () => {
                       </span>
                     </span>
 
-                    <button onClick={() => setQuantity((q) => q + 1)}>
+                    <button onClick={() => setQuantity((q) => q + 1)} disabled={isInCart} className="disabled:opacity-50">
                       <Plus size={16} />
                     </button>
                   </div>
@@ -325,10 +347,35 @@ const handleShare = async () => {
                   Buy Now
                 </button>
 
-                <button className="border border-[#0177AB] px-10 py-4 rounded-lg text-[#0177AB] hover:bg-[#0178ab0f] text-[16px] font-semibold">
-                  Add to Cart
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isInCart || isAddingToCart}
+                  className={`border border-[#0177AB] px-10 py-4 rounded-lg text-[#0177AB] hover:bg-[#0178ab0f] text-[16px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {isAddingToCart ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-[#0177AB] border-t-transparent rounded-full animate-spin" />
+                      Adding...
+                    </div>
+                  ) : isInCart ? (
+                    "Already in Cart"
+                  ) : (
+                    "Add to Cart"
+                  )}
                 </button>
               </div>
+
+              {/* Cart info message if item is in cart */}
+              {isInCart && cartItem && (
+                <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm text-green-700">
+                    ✓ Item already in cart ({cartItem.durationInMonths} month{cartItem.durationInMonths > 1 ? 's' : ''})
+                  </p>
+                  <Link href="/cart" className="text-xs text-[#0177AB] hover:underline mt-1 inline-block">
+                    View Cart →
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </section>

@@ -5,13 +5,29 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Menu, X, Bell, ShoppingCart, User, LogOut, Settings, 
-  ChevronDown, Heart, Home, TrendingUp, 
-  Radio, Printer, Monitor, LogIn, UserPlus, ChevronRight
+import {
+  Menu,
+  X,
+  Bell,
+  ShoppingCart,
+  User,
+  LogOut,
+  Settings,
+  ChevronDown,
+  Heart,
+  Home,
+  TrendingUp,
+  Radio,
+  Printer,
+  Monitor,
+  LogIn,
+  UserPlus,
+  ChevronRight,
 } from "lucide-react";
 import { useAuthContext } from "@/app/contexts/auth-context";
 import { useToast } from "@/app/contexts/toast-context";
+import CartDrawer from "../cart/CartDrawer";
+import { useCart } from "@/app/hooks/useCart";
 
 interface NavLink {
   name: string;
@@ -28,12 +44,23 @@ const NAV_LINKS: NavLink[] = [
 ];
 
 // Avatar Component
-const Avatar = ({ imageUrl, name }: { imageUrl?: string | null; name?: string }) => {
+const Avatar = ({
+  imageUrl,
+  name,
+}: {
+  imageUrl?: string | null;
+  name?: string;
+}) => {
   const [imageError, setImageError] = useState(false);
-  
+
   const initials = name
-    ? name.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2)
-    : 'U';
+    ? name
+        .split(" ")
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "U";
 
   if (imageUrl && !imageError) {
     return (
@@ -66,6 +93,8 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { totalItems, refetchCart } = useCart();
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +106,9 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   // Color helpers
   const textColor = isTransparent ? "text-white" : "text-gray-900";
   const mutedColor = isTransparent ? "text-white/70" : "text-gray-600";
-  const hoverColor = isTransparent ? "hover:text-white" : "hover:text-[#0177AB]";
+  const hoverColor = isTransparent
+    ? "hover:text-white"
+    : "hover:text-[#0177AB]";
   const activeColor = isTransparent ? "text-white" : "text-[#0177AB]";
 
   const isActiveLink = (href: string) => pathname === href;
@@ -88,10 +119,14 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const handleLogout = async () => {
     try {
       await logout();
-      showToast({ type: 'success', message: 'Logged out successfully', duration: 3000 });
+      showToast({
+        type: "success",
+        message: "Logged out successfully",
+        duration: 3000,
+      });
       setIsProfileMenuOpen(false);
     } catch (error) {
-      showToast({ type: 'error', message: 'Failed to logout', duration: 4000 });
+      showToast({ type: "error", message: "Failed to logout", duration: 4000 });
     }
   };
 
@@ -100,25 +135,30 @@ export default function Navbar({ transparent = false }: NavbarProps) {
     const handleScroll = () => {
       setScrolled(window.scrollY > 90);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Close profile menu on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+      if (
+        profileMenuRef.current &&
+        !profileMenuRef.current.contains(event.target as Node)
+      ) {
         setIsProfileMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Body scroll lock for mobile menu
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [isMobileMenuOpen]);
 
   return (
@@ -127,9 +167,10 @@ export default function Navbar({ transparent = false }: NavbarProps) {
         className={`
           fixed top-0 left-0 right-0 z-50 w-full px-4 sm:px-16 py-4 
           transition-all duration-300
-          ${isTransparent 
-            ? "bg-transparent backdrop-blur-lg" 
-            : "bg-white backdrop-blur-xl shadow-sm border-b border-gray-100"
+          ${
+            isTransparent
+              ? "bg-transparent backdrop-blur-lg"
+              : "bg-white backdrop-blur-xl shadow-sm border-b border-gray-100"
           }
         `}
       >
@@ -152,18 +193,18 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               <motion.div
                 key={link.href}
                 initial={{ opacity: 0.6 }}
-                animate={{ 
+                animate={{
                   opacity: 1,
-                  color: isTransparent 
-                    ? "#ffffff" 
-                    : isActiveLink(link.href) 
-                      ? "#0177AB" 
-                      : "#111827"
+                  color: isTransparent
+                    ? "#ffffff"
+                    : isActiveLink(link.href)
+                      ? "#0177AB"
+                      : "#111827",
                 }}
-                transition={{ 
-                  duration: 0.4, 
+                transition={{
+                  duration: 0.4,
                   ease: "easeInOut",
-                  delay: index * 0.02 
+                  delay: index * 0.02,
                 }}
               >
                 <Link
@@ -183,7 +224,9 @@ export default function Navbar({ transparent = false }: NavbarProps) {
             {isAuthenticated ? (
               <>
                 <div className="relative">
-                  <button className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}>
+                  <button
+                    className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}
+                  >
                     <Bell size={21} />
                   </button>
                   {/* <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white ring-2 ring-white">
@@ -192,12 +235,17 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                 </div>
 
                 <div className="relative">
-                  <button className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}>
+                  <button
+                    onClick={() => setIsCartOpen(true)}
+                    className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}
+                  >
                     <ShoppingCart size={21} />
+                    {totalItems > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088b5] text-[10px] font-medium text-white ring-2 ring-white">
+                        {totalItems > 9 ? "9+" : totalItems}
+                      </span>
+                    )}
                   </button>
-                  {/* <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#0088b5] text-[10px] font-medium text-white ring-2 ring-white">
-                    3
-                  </span> */}
                 </div>
 
                 <div className="relative" ref={profileMenuRef}>
@@ -205,10 +253,13 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                     onClick={toggleProfileMenu}
                     className="flex items-center gap-2.5 focus:outline-none hover:opacity-90 transition-all"
                   >
-                    <Avatar imageUrl={user?.avatar} name={user?.fullName || user?.name} />
-                    <ChevronDown 
-                      size={17} 
-                      className={`transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''} ${mutedColor}`} 
+                    <Avatar
+                      imageUrl={user?.avatar}
+                      name={user?.fullName || user?.name}
+                    />
+                    <ChevronDown
+                      size={17}
+                      className={`transition-transform duration-200 ${isProfileMenuOpen ? "rotate-180" : ""} ${mutedColor}`}
                     />
                   </button>
 
@@ -218,37 +269,63 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                         initial={{ opacity: 0, y: 15, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                        transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+                        transition={{
+                          duration: 0.25,
+                          ease: [0.32, 0.72, 0, 1],
+                        }}
                         className="absolute right-0 mt-4 w-72 bg-white rounded-3xl shadow-2xl border border-gray-100 py-2 overflow-hidden"
                       >
                         <div className="px-6 py-5 border-b border-gray-100 bg-gray-50">
                           <div className="flex items-center gap-4">
-                            <Avatar imageUrl={user?.avatar} name={user?.fullName || user?.name} />
+                            <Avatar
+                              imageUrl={user?.avatar}
+                              name={user?.fullName || user?.name}
+                            />
                             <div>
                               <p className="font-semibold text-gray-900">
-                                {user?.fullName || user?.name || 'User'}
+                                {user?.fullName || user?.name || "User"}
                               </p>
-                              <p className="text-sm text-gray-500">{user?.email}</p>
+                              <p className="text-sm text-gray-500">
+                                {user?.email}
+                              </p>
                             </div>
                           </div>
                         </div>
 
                         <div className="py-3">
-                          <Link href="/profile" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all">
-                            <User size={20} className="text-gray-400" /> Your Profile
+                          <Link
+                            href="/profile"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all"
+                          >
+                            <User size={20} className="text-gray-400" /> Your
+                            Profile
                           </Link>
-                          <Link href="/settings" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all">
-                            <Settings size={20} className="text-gray-400" /> Settings
+                          <Link
+                            href="/settings"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all"
+                          >
+                            <Settings size={20} className="text-gray-400" />{" "}
+                            Settings
                           </Link>
-                          <Link href="/favorites" onClick={() => setIsProfileMenuOpen(false)} className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all">
-                            <Heart size={20} className="text-gray-400" /> Favorites
+                          <Link
+                            href="/favorites"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="flex items-center gap-4 px-6 py-4 text-gray-700 hover:bg-gray-50 rounded-2xl mx-2 transition-all"
+                          >
+                            <Heart size={20} className="text-gray-400" />{" "}
+                            Favorites
                           </Link>
                         </div>
 
                         <div className="h-px bg-gray-100 mx-6 my-2" />
 
-                        <button 
-                          onClick={() => { handleLogout(); setIsProfileMenuOpen(false); }}
+                        <button
+                          onClick={() => {
+                            handleLogout();
+                            setIsProfileMenuOpen(false);
+                          }}
                           className="flex items-center gap-4 px-6 py-4 text-red-600 hover:bg-red-50 rounded-2xl mx-2 w-full text-left"
                         >
                           <LogOut size={20} className="text-red-400" /> Sign Out
@@ -260,10 +337,16 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <Link href="/auth/login" className="px-7 py-2.5 border border-[#0177AB] text-[#0177AB] hover:bg-gray-50 rounded-xl font-semibold text-sm transition-all">
+                <Link
+                  href="/auth/login"
+                  className="px-7 py-2.5 border border-[#0177AB] text-[#0177AB] hover:bg-gray-50 rounded-xl font-semibold text-sm transition-all"
+                >
                   Login
                 </Link>
-                <Link href="/auth/signup" className="px-7 py-2.5 bg-[#0088b5] hover:bg-[#007a9e] text-white rounded-xl font-semibold text-sm transition-all">
+                <Link
+                  href="/auth/signup"
+                  className="px-7 py-2.5 bg-[#0088b5] hover:bg-[#007a9e] text-white rounded-xl font-semibold text-sm transition-all"
+                >
                   Sign Up
                 </Link>
               </div>
@@ -282,23 +365,30 @@ export default function Navbar({ transparent = false }: NavbarProps) {
       </motion.nav>
 
       {/* ==================== FULL MOBILE SIDEBAR ==================== */}
-      <div className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${isMobileMenuOpen ? "visible" : "invisible"}`}>
+      <div
+        className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${isMobileMenuOpen ? "visible" : "invisible"}`}
+      >
         {/* Backdrop */}
-        <div 
+        <div
           className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
           onClick={toggleMobileMenu}
         />
 
         {/* Sidebar Panel */}
-        <div 
+        <div
           className={`absolute right-0 top-0 bottom-0 w-[85%] max-w-[340px] bg-white shadow-2xl overflow-y-auto transition-transform duration-300 ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}
         >
           {/* Blue Header */}
           <div className="bg-gradient-to-br from-[#0088b5] to-[#006d91] pt-10 pb-8 px-6 sticky top-0 z-10">
             <div className="flex items-center justify-between mb-8">
-              <Image src="/vaad-white-full.svg" alt="VAAD Media" width={120} height={38} />
-              <button 
-                onClick={toggleMobileMenu} 
+              <Image
+                src="/vaad-white-full.svg"
+                alt="VAAD Media"
+                width={120}
+                height={38}
+              />
+              <button
+                onClick={toggleMobileMenu}
                 className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
               >
                 <X size={24} className="text-white" />
@@ -307,9 +397,14 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
             {isAuthenticated && (
               <div className="flex items-center gap-4">
-                <Avatar imageUrl={user?.avatar} name={user?.fullName || user?.name} />
+                <Avatar
+                  imageUrl={user?.avatar}
+                  name={user?.fullName || user?.name}
+                />
                 <div className="text-white">
-                  <p className="font-semibold">{user?.fullName || user?.name}</p>
+                  <p className="font-semibold">
+                    {user?.fullName || user?.name}
+                  </p>
                   <p className="text-sm text-white/70">{user?.email}</p>
                 </div>
               </div>
@@ -324,16 +419,22 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                 href={link.href}
                 onClick={toggleMobileMenu}
                 className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all ${
-                  isActiveLink(link.href) 
-                    ? "bg-[#0088b5]/10 text-[#0088b5]" 
+                  isActiveLink(link.href)
+                    ? "bg-[#0088b5]/10 text-[#0088b5]"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                <span className={isActiveLink(link.href) ? "text-[#0088b5]" : "text-gray-500"}>
+                <span
+                  className={
+                    isActiveLink(link.href) ? "text-[#0088b5]" : "text-gray-500"
+                  }
+                >
                   {link.icon}
                 </span>
                 <span className="font-medium">{link.name}</span>
-                {isActiveLink(link.href) && <ChevronRight size={18} className="ml-auto text-[#0088b5]" />}
+                {isActiveLink(link.href) && (
+                  <ChevronRight size={18} className="ml-auto text-[#0088b5]" />
+                )}
               </Link>
             ))}
           </div>
@@ -351,7 +452,10 @@ export default function Navbar({ transparent = false }: NavbarProps) {
               </Link>
 
               <button
-                onClick={() => { handleLogout(); toggleMobileMenu(); }}
+                onClick={() => {
+                  handleLogout();
+                  toggleMobileMenu();
+                }}
                 className="flex items-center gap-4 w-full px-5 py-4 mt-6 text-red-600 hover:bg-red-50 rounded-2xl"
               >
                 <LogOut size={20} />
@@ -378,6 +482,8 @@ export default function Navbar({ transparent = false }: NavbarProps) {
           )}
         </div>
       </div>
+
+      <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );
 }
