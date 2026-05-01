@@ -3,7 +3,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { useAuthContext } from "../../contexts/auth-context";
+import { useAuthContext } from "../contexts/auth-context";
 
 export default function AuthLayout({
   children,
