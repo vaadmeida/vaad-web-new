@@ -10,11 +10,11 @@ import { Minus, Plus, Share2, Copy } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { billboardService, Billboard } from "@/app/lib/billboard/billboard-service";
-import { useCart } from "@/app/hooks/useCart";
+import { useCartContext } from "@/app/contexts/cart-context";
 
 export default function BillboardDetailsPage() {
   const params = useParams();
-  const { mediaType, city, id } = params;
+  const { id } = params;
   
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState("");
@@ -25,7 +25,7 @@ export default function BillboardDetailsPage() {
   const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   
-  const { addToCart, isItemInCart, getCartItemByBillboardId } = useCart();
+  const { addToCart, isItemInCart, getCartItemByBillboardId } = useCartContext();
 
   useEffect(() => {
     const fetchBillboard = async () => {
@@ -107,28 +107,24 @@ export default function BillboardDetailsPage() {
     }
   };
 
-  // Handle Add to Cart
-// Handle Add to Cart
-const handleAddToCart = async () => {
-  if (!billboard) return;
-  
-  setIsAddingToCart(true);
-  
-  // Full ISO format with time
-  const startDate = new Date().toISOString(); // "2026-04-12T10:30:00.000Z"
-  
-  try {
-    const result = await addToCart({
-      billboardId: billboard._id,
-      durationInMonths: quantity,
-      startDate: startDate,
-    });
-  } catch (error) {
-    console.error("Failed to add to cart:", error);
-  } finally {
-    setIsAddingToCart(false);
-  }
-};
+  const handleAddToCart = async () => {
+    if (!billboard) return;
+
+    setIsAddingToCart(true);
+    const startDate = new Date().toISOString();
+
+    try {
+      await addToCart({
+        billboardId: billboard._id,
+        durationInMonths: quantity,
+        startDate,
+      });
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -186,8 +182,6 @@ const handleAddToCart = async () => {
 
   // Format display values
   const displayMediaType = billboard.mediaType?.toLowerCase().replace(/-/g, " ") || "Billboard";
-  const displayCity = billboard.city?.toLowerCase().replace(/-/g, " ") || "location";
-
   return (
     <>
       <div className="bg-[#F7F9FC] min-h-screen">
@@ -259,6 +253,7 @@ const handleAddToCart = async () => {
                   {/* Copy Link Button */}
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={handleCopyLink}
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
                       aria-label="Copy link"
@@ -275,12 +270,18 @@ const handleAddToCart = async () => {
                   {/* Share Button */}
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={handleShare}
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
                       aria-label="Share"
                     >
                       <Share2 size={18} className="text-gray-500 group-hover:text-[#0177AB] transition-colors" />
                     </button>
+                    {showShareTooltip && (
+                      <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
+                        Link copied for sharing!
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -316,6 +317,7 @@ const handleAddToCart = async () => {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
                     <button
+                      type="button"
                       onClick={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
                       disabled={isInCart}
                       className="disabled:opacity-50"
@@ -330,7 +332,7 @@ const handleAddToCart = async () => {
                       </span>
                     </span>
 
-                    <button onClick={() => setQuantity((q) => q + 1)} disabled={isInCart} className="disabled:opacity-50">
+                    <button type="button" onClick={() => setQuantity((q) => q + 1)} disabled={isInCart} className="disabled:opacity-50">
                       <Plus size={16} />
                     </button>
                   </div>
@@ -343,11 +345,12 @@ const handleAddToCart = async () => {
 
               {/* Buttons */}
               <div className="flex gap-3 mt-6">
-                <button className="bg-[#0177AB] text-white px-10 py-4 rounded-lg text-[16px] font-semibold hover:bg-[#006d91] transition">
+                <button type="button" className="bg-[#0177AB] text-white px-10 py-4 rounded-lg text-[16px] font-semibold hover:bg-[#006d91] transition">
                   Buy Now
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleAddToCart}
                   disabled={isInCart || isAddingToCart}
                   className={`border border-[#0177AB] px-10 py-4 rounded-lg text-[#0177AB] hover:bg-[#0178ab0f] text-[16px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed`}

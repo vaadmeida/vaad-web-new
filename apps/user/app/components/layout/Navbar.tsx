@@ -20,14 +20,12 @@ import {
   Radio,
   Printer,
   Monitor,
-  LogIn,
-  UserPlus,
   ChevronRight,
 } from "lucide-react";
 import { useAuthContext } from "@/app/contexts/auth-context";
+import { useCartContext } from "@/app/contexts/cart-context";
 import { useToast } from "@/app/contexts/toast-context";
 import CartDrawer from "../cart/CartDrawer";
-import { useCart } from "@/app/hooks/useCart";
 
 interface NavLink {
   name: string;
@@ -93,7 +91,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { totalItems, refetchCart } = useCart();
+  const { totalItems } = useCartContext();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -104,7 +102,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const isTransparent = transparent && !scrolled;
 
   // Color helpers
-  const textColor = isTransparent ? "text-white" : "text-gray-900";
   const mutedColor = isTransparent ? "text-white/70" : "text-gray-600";
   const hoverColor = isTransparent
     ? "hover:text-white"
@@ -125,7 +122,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
         duration: 3000,
       });
       setIsProfileMenuOpen(false);
-    } catch (error) {
+    } catch {
       showToast({ type: "error", message: "Failed to logout", duration: 4000 });
     }
   };
