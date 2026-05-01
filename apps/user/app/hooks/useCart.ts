@@ -145,16 +145,16 @@ export function useCart(): UseCartReturn {
       
       if (!isMountedRef.current) return null;
       
-      // Update local state
-      setCartItems(prev => prev.map(item => 
-        item._id === id ? { ...item, ...updatedItem } : item
-      ));
-      
-      // Recalculate totals
-      const updatedItems = cartItems.map(item => 
+      // Calculate the updated items once
+      const newItems = cartItems.map(item => 
         item._id === id ? { ...item, ...updatedItem } : item
       );
-      calculateTotals(updatedItems);
+      
+      // Update local state
+      setCartItems(newItems);
+      
+      // Recalculate totals with the new items
+      calculateTotals(newItems);
       
       showToast?.({
         type: 'success',
@@ -184,13 +184,18 @@ export function useCart(): UseCartReturn {
     setIsLoading(true);
     setError(null);
 
+    // Store the current state for potential rollback
+    const previousItems = [...cartItems];
+    const updatedItems = cartItems.filter(item => item._id !== id);
+    
     // Optimistic update
-    const removedItem = cartItems.find(item => item._id === id);
-    setCartItems(prev => prev.filter(item => item._id !== id));
-    calculateTotals(cartItems.filter(item => item._id !== id));
+    setCartItems(updatedItems);
+    calculateTotals(updatedItems);
 
     try {
       await cartService.removeFromCart(id);
+      
+      if (!isMountedRef.current) return false;
       
       showToast?.({
         type: 'success',
@@ -202,11 +207,11 @@ export function useCart(): UseCartReturn {
     } catch (err: any) {
       console.error("Failed to remove from cart:", err);
       
-      // Rollback
-      if (removedItem) {
-        setCartItems(prev => [...prev, removedItem]);
-        calculateTotals([...cartItems, removedItem]);
-      }
+      // Rollback - restore the previous state
+      if (!isMountedRef.current) return false;
+      
+      setCartItems(previousItems);
+      calculateTotals(previousItems);
       
       const errorMsg = err.message || "Failed to remove item from cart";
       setError(errorMsg);
@@ -218,7 +223,9 @@ export function useCart(): UseCartReturn {
       
       return false;
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
   }, [cartItems, calculateTotals, showToast]);
 

@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { Drawer, IconButton, Divider } from "@mui/material";
+import { Drawer, IconButton } from "@mui/material";
 import Image from "next/image";
-import { Trash2, Minus, Plus, Calendar, X, ChevronDown } from "lucide-react";
+import { Trash2, Minus, Plus, Calendar, X, ShoppingCart } from "lucide-react";
 import { useCart } from "@/app/hooks/useCart";
+import { cartService } from "@/app/lib/cart/cart-service";
 
 type Props = {
   open: boolean;
@@ -20,8 +21,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
     subtotal, 
     totalItems,
     updateCartItem,
-    removeFromCart,
-    refetchCart 
+    removeFromCart
   } = useCart();
 
   // Handle quantity increase
@@ -40,7 +40,10 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
   // Handle remove item
   const handleRemove = async (id: string) => {
-    await removeFromCart(id);
+    const success = await removeFromCart(id);
+    if (!success) {
+      console.error("Failed to remove item from cart");
+    }
   };
 
   // Calculate item total price
@@ -157,8 +160,8 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                       <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
                         <button
                           onClick={() => handleDecrease(item)}
-                          className="text-gray-500 hover:text-black transition"
-                          disabled={item.durationInMonths <= 1}
+                          className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={item.durationInMonths <= 1 || isLoading}
                         >
                           <Minus size={14} />
                         </button>
@@ -172,7 +175,8 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
                         <button
                           onClick={() => handleIncrease(item)}
-                          className="text-gray-500 hover:text-black transition"
+                          className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          disabled={isLoading}
                         >
                           <Plus size={14} />
                         </button>
@@ -181,7 +185,8 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                       {/* Delete */}
                       <button
                         onClick={() => handleRemove(item._id)}
-                        className="text-gray-400 hover:text-red-500 transition"
+                        className="text-gray-400 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isLoading}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -231,7 +236,3 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
     </Drawer>
   );
 }
-
-// Import missing icon
-import { ShoppingCart } from "lucide-react";
-import { cartService } from "@/app/lib/cart/cart-service";

@@ -3,8 +3,9 @@
 import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Billboard } from "@/app/types/billboard";
-import { useCartDrawer } from "@/app/hooks/useCartDrawer";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useCart } from "@/app/hooks/useCart";
 
 type Props = {
   billboard: Billboard;
@@ -12,7 +13,32 @@ type Props = {
 
 export default function BillboardFullCard({ billboard }: Props) {
   const router = useRouter();
-  
+  const { addToCart, isItemInCart } = useCart();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [inCart, setInCart] = useState(false);
+
+  // Check if item is in cart on mount
+  useEffect(() => {
+    setInCart(isItemInCart(billboard._id));
+  }, [billboard._id, isItemInCart]);
+
+  const handleAddToCart = async () => {
+    setIsAddingToCart(true);
+    try {
+      const startDate = new Date().toISOString();
+      await addToCart({
+        billboardId: billboard._id,
+        durationInMonths: 1,
+        startDate,
+      });
+      setInCart(true);
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
+
   return (
     <div className="relative bg-white border border-[#F0EFFB] rounded-[9px] overflow-hidden flex flex-col md:flex-row transition-all duration-300 min-h-57.75">
       {/* Image - Full height on left */}
@@ -48,27 +74,6 @@ export default function BillboardFullCard({ billboard }: Props) {
             />
           </div>
         </div>
-        {/* {billboard.availableInDays !== undefined && (
-          <div className="absolute top-3 right-3">
-            <div className="relative">
-              {/* Speech bubble *
-              <div className="bg-[#F5FBFF] px-3 py-1.5 rounded-md shadow-sm">
-                <span className="text-[#0177AB] text-sm font-medium whitespace-nowrap">
-                  Available in {billboard.availableInDays} days
-                </span>
-              </div>
-              {/* Arrow pointer - left side of bubble pointing left toward content *
-              <div
-                className="absolute top-1/2 -left-1.5 -translate-y-1/2 w-0 h-0"
-                style={{
-                  borderTop: "6px solid transparent",
-                  borderBottom: "6px solid transparent",
-                  borderRight: "6px solid #f4f9fd",
-                }}
-              />
-            </div>
-          </div>
-        )} */}
 
         {/* Top */}
         <div className="pr-36">
@@ -94,14 +99,27 @@ export default function BillboardFullCard({ billboard }: Props) {
         {/* Buttons */}
         <div className="flex items-center gap-3 mt-4">
           <button
-            onClick={() => router.push(`/billboard/${billboard.id}`)}
+            onClick={() => router.push(`/billboard/${billboard._id}`)}
             className="px-4 py-2 text-sm border border-red-300 text-red-500 rounded-md hover:bg-red-50 transition"
           >
             View Details
           </button>
 
-          <button className="px-4 py-2 text-sm bg-[#0ea5e9] text-white rounded-md hover:bg-[#0284c7] transition">
-            Add to Cart
+          <button
+            onClick={handleAddToCart}
+            disabled={inCart || isAddingToCart}
+            className="px-4 py-2 text-sm bg-[#0ea5e9] text-white rounded-md hover:bg-[#0284c7] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isAddingToCart ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Adding...
+              </>
+            ) : inCart ? (
+              "In Cart"
+            ) : (
+              "Add to Cart"
+            )}
           </button>
         </div>
       </div>
