@@ -20,8 +20,6 @@ import {
   Radio,
   Printer,
   Monitor,
-  LogIn,
-  UserPlus,
   ChevronRight,
 } from "lucide-react";
 import { useAuthContext } from "@/app/contexts/auth-context";
@@ -104,7 +102,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const isTransparent = transparent && !scrolled;
 
   // Color helpers
-  const textColor = isTransparent ? "text-white" : "text-gray-900";
   const mutedColor = isTransparent ? "text-white/70" : "text-gray-600";
   const hoverColor = isTransparent
     ? "hover:text-white"
@@ -125,7 +122,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
         duration: 3000,
       });
       setIsProfileMenuOpen(false);
-    } catch (error) {
+    } catch {
       showToast({ type: "error", message: "Failed to logout", duration: 4000 });
     }
   };

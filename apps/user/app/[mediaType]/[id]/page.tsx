@@ -14,7 +14,7 @@ import { useCartContext } from "@/app/contexts/cart-context";
 
 export default function BillboardDetailsPage() {
   const params = useParams();
-  const { mediaType, city, id } = params;
+  const { id } = params;
   
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState("");
@@ -107,28 +107,24 @@ export default function BillboardDetailsPage() {
     }
   };
 
-  // Handle Add to Cart
-// Handle Add to Cart
-const handleAddToCart = async () => {
-  if (!billboard) return;
-  
-  setIsAddingToCart(true);
-  
-  // Full ISO format with time
-  const startDate = new Date().toISOString(); // "2026-04-12T10:30:00.000Z"
-  
-  try {
-    const result = await addToCart({
-      billboardId: billboard._id,
-      durationInMonths: quantity,
-      startDate: startDate,
-    });
-  } catch (error) {
-    console.error("Failed to add to cart:", error);
-  } finally {
-    setIsAddingToCart(false);
-  }
-};
+  const handleAddToCart = async () => {
+    if (!billboard) return;
+
+    setIsAddingToCart(true);
+    const startDate = new Date().toISOString();
+
+    try {
+      await addToCart({
+        billboardId: billboard._id,
+        durationInMonths: quantity,
+        startDate,
+      });
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+    } finally {
+      setIsAddingToCart(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -186,8 +182,6 @@ const handleAddToCart = async () => {
 
   // Format display values
   const displayMediaType = billboard.mediaType?.toLowerCase().replace(/-/g, " ") || "Billboard";
-  const displayCity = billboard.city?.toLowerCase().replace(/-/g, " ") || "location";
-
   return (
     <>
       <div className="bg-[#F7F9FC] min-h-screen">
@@ -283,6 +277,11 @@ const handleAddToCart = async () => {
                     >
                       <Share2 size={18} className="text-gray-500 group-hover:text-[#0177AB] transition-colors" />
                     </button>
+                    {showShareTooltip && (
+                      <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
+                        Link copied for sharing!
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
