@@ -35,6 +35,12 @@ export interface UpdateCartItemRequest {
   startDate?: string;
 }
 
+export interface UpdateCartItemPayload {
+  durationInMonths: number;
+  billboardId: string;
+  startDate: string;
+}
+
 export interface CartResponse {
   carts: CartItem[];
 }
@@ -42,10 +48,29 @@ export interface CartResponse {
 export class CartService {
   private readonly baseUrl = '/carts';
 
+  private normalizeCartItem(item: CartItem): CartItem {
+    const rawBillboardId = item.billboardId as unknown;
+    const normalizedBillboardId =
+      (typeof rawBillboardId === "string" && rawBillboardId) ||
+      (typeof rawBillboardId === "object" &&
+      rawBillboardId !== null &&
+      "_id" in rawBillboardId &&
+      typeof rawBillboardId._id === "string"
+        ? rawBillboardId._id
+        : "") ||
+      item.billboard?._id ||
+      "";
+
+    return {
+      ...item,
+      billboardId: normalizedBillboardId,
+    };
+  }
+
   // Get all cart items
   async getCart(): Promise<CartItem[]> {
     const response = await apiClient.get<CartResponse>(this.baseUrl);
-    return response.carts || [];
+    return (response.carts || []).map((item) => this.normalizeCartItem(item));
   }
 
   // Add item to cart
@@ -56,17 +81,26 @@ export class CartService {
       startDate: data.startDate instanceof Date ? data.startDate.toISOString() : data.startDate,
     };
     const response = await apiClient.post<CartItem>(this.baseUrl, payload);
-    return response;
+    return this.normalizeCartItem(response);
   }
 
   // Update cart item
-  async updateCartItem(id: string, data: UpdateCartItemRequest): Promise<CartItem> {
-    const response = await apiClient.patch<CartItem>(`${this.baseUrl}/${id}`, data);
-    return response;
+  async updateCartItem(
+    id: string,
+    data: UpdateCartItemPayload,
+  ): Promise<CartItem> {
+    const response = await apiClient.patch<CartItem>(`${this.baseUrl}/${id}`, {
+      durationInMonths: data.durationInMonths,
+      billboardId: data.billboardId,
+      startDate: data.startDate,
+    });
+    return this.normalizeCartItem(response);
   }
 
   // Remove item from cart
-  async removeFromCart(id: string): Promise<{ success: boolean; message: string }> {
+  async removeFromCart(
+    id: string,
+  ): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.delete<{ success: boolean; message: string }>(`${this.baseUrl}/${id}`);
     return response;
   }

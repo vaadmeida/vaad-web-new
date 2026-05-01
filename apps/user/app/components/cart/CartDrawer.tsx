@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Drawer, IconButton } from "@mui/material";
@@ -18,36 +17,42 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
   const { 
     cartItems, 
     isLoading, 
+    error,
     subtotal, 
     totalItems,
     updateCartItem,
-    removeFromCart
+    removeFromCart,
+    isCartItemPending,
   } = useCartContext();
 
   // Handle quantity increase
-  const handleIncrease = async (item: any) => {
-    const newDuration = item.durationInMonths + 1;
-    await updateCartItem(item._id, { durationInMonths: newDuration });
+  const handleIncrease = async (itemId: string, currentDuration: number) => {
+    if (isCartItemPending(itemId)) return;
+
+    const newDuration = currentDuration + 1;
+    await updateCartItem(itemId, { durationInMonths: newDuration });
   };
 
   // Handle quantity decrease
-  const handleDecrease = async (item: any) => {
-    if (item.durationInMonths > 1) {
-      const newDuration = item.durationInMonths - 1;
-      await updateCartItem(item._id, { durationInMonths: newDuration });
-    }
+  const handleDecrease = async (itemId: string, currentDuration: number) => {
+    if (currentDuration <= 1 || isCartItemPending(itemId)) return;
+
+    const newDuration = currentDuration - 1;
+    await updateCartItem(itemId, { durationInMonths: newDuration });
   };
 
   // Handle remove item
-  const handleRemove = async (id: string) => {
-    const success = await removeFromCart(id);
+  const handleRemove = async (itemId: string) => {
+    if (isCartItemPending(itemId)) return;
+
+    const success = await removeFromCart(itemId);
     if (!success) {
       console.error("Failed to remove item from cart");
     }
   };
 
   // Calculate item total price
-  const getItemTotal = (item: any) => {
+  const getItemTotal = (item: (typeof cartItems)[number]) => {
     const rate = item.billboard?.rate || 0;
     return rate * item.durationInMonths;
   };
@@ -88,6 +93,12 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
           </IconButton>
         </div>
 
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
+
         {/* Loading State */}
         {isLoading && (
           <div className="flex-1 flex items-center justify-center">
@@ -119,8 +130,11 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
         {!isLoading && cartItems.length > 0 && (
           <>
             <div className="flex-1 overflow-y-auto py-5 space-y-5 remove-scrollbar">
-              {cartItems.map((item: any) => (
-                <div key={item._id} className="flex gap-3">
+              {cartItems.map((item) => {
+                const isItemPending = isCartItemPending(item._id);
+
+                return (
+                  <div key={item._id} className="flex gap-3">
                   {/* Image */}
                   <div className="relative w-[210px] h-[190px] rounded-[10px] overflow-hidden flex-shrink-0 bg-gray-100">
                     <Image
@@ -161,9 +175,9 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                       <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
                         <button
                           type="button"
-                          onClick={() => handleDecrease(item)}
+                          onClick={() => handleDecrease(item._id, item.durationInMonths)}
                           className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={item.durationInMonths <= 1 || isLoading}
+                          disabled={item.durationInMonths <= 1 || isLoading || isItemPending}
                         >
                           <Minus size={14} />
                         </button>
@@ -177,9 +191,9 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
                         <button
                           type="button"
-                          onClick={() => handleIncrease(item)}
+                          onClick={() => handleIncrease(item._id, item.durationInMonths)}
                           className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={isLoading}
+                          disabled={isLoading || isItemPending}
                         >
                           <Plus size={14} />
                         </button>
@@ -190,7 +204,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                         type="button"
                         onClick={() => handleRemove(item._id)}
                         className="text-gray-400 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isLoading}
+                        disabled={isLoading || isItemPending}
                       >
                         <Trash2 size={16} />
                       </button>
@@ -201,9 +215,14 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                       <Calendar size={12} />
                       <span>Starts: {cartService.formatDate(item.startDate)}</span>
                     </div>
+
+                    {isItemPending && (
+                      <p className="mt-2 text-xs text-[#0177AB]">Updating cart item...</p>
+                    )}
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Footer */}
