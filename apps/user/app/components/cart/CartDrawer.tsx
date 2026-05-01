@@ -4,8 +4,8 @@
 import { Drawer, IconButton } from "@mui/material";
 import Image from "next/image";
 import { Trash2, Minus, Plus, Calendar, X, ShoppingCart } from "lucide-react";
-import { useCart } from "@/app/hooks/useCart";
 import { cartService } from "@/app/lib/cart/cart-service";
+import { useCartContext } from "@/app/contexts/cart-context";
 
 type Props = {
   open: boolean;
@@ -22,7 +22,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
     totalItems,
     updateCartItem,
     removeFromCart
-  } = useCart();
+  } = useCartContext();
 
   // Handle quantity increase
   const handleIncrease = async (item: any) => {
@@ -106,6 +106,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
               Looks like you haven&apos;t added any items to your cart yet.
             </p>
             <button
+              type="button"
               onClick={onClose}
               className="px-6 py-3 bg-[#0177AB] text-white rounded-lg hover:bg-[#006d91] transition"
             >
@@ -159,6 +160,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                       {/* Stepper */}
                       <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
                         <button
+                          type="button"
                           onClick={() => handleDecrease(item)}
                           className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={item.durationInMonths <= 1 || isLoading}
@@ -174,6 +176,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                         </span>
 
                         <button
+                          type="button"
                           onClick={() => handleIncrease(item)}
                           className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={isLoading}
@@ -184,6 +187,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
                       {/* Delete */}
                       <button
+                        type="button"
                         onClick={() => handleRemove(item._id)}
                         className="text-gray-400 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={isLoading}
@@ -218,11 +222,12 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
               <div className="w-full border border-[#F0F2F5]" />
 
               <div className="flex gap-4 mt-5">
-                <button className="flex-1 bg-[#0177AB] font-semibold text-[16px] text-white py-4 rounded-md hover:bg-[#0284c7] transition">
+                <button type="button" className="flex-1 bg-[#0177AB] font-semibold text-[16px] text-white py-4 rounded-md hover:bg-[#0284c7] transition">
                   Proceed to Pay
                 </button>
 
                 <button
+                  type="button"
                   onClick={onClose}
                   className="flex-1 border border-[#0177AB] py-2 rounded-md font-semibold text-[16px] text-[#0177AB] hover:bg-gray-100 transition"
                 >

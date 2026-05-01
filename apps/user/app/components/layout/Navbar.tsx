@@ -25,9 +25,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useAuthContext } from "@/app/contexts/auth-context";
+import { useCartContext } from "@/app/contexts/cart-context";
 import { useToast } from "@/app/contexts/toast-context";
 import CartDrawer from "../cart/CartDrawer";
-import { useCart } from "@/app/hooks/useCart";
 
 interface NavLink {
   name: string;
@@ -93,7 +93,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { totalItems, refetchCart } = useCart();
+  const { totalItems } = useCartContext();
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const profileMenuRef = useRef<HTMLDivElement>(null);

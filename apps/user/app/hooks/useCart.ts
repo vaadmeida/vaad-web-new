@@ -103,7 +103,6 @@ export function useCart(): UseCartReturn {
       return null;
     }
 
-    setIsLoading(true);
     setError(null);
 
     try {
@@ -111,13 +110,22 @@ export function useCart(): UseCartReturn {
       
       if (!isMountedRef.current) return null;
       
-      // Refetch to get updated cart
-      await fetchCart();
+      // Optimistic update - immediately add to cart state for instant UI update
+      const updatedItems = [...cartItems, newItem];
+      setCartItems(updatedItems);
+      calculateTotals(updatedItems);
       
       showToast?.({
         type: 'success',
         message: 'Item added to cart successfully',
         duration: 3000,
+      });
+      
+      // Refetch in background to ensure consistency with server
+      // Don't await this to keep the UI responsive
+      fetchCart().catch(err => {
+        console.error("Failed to refetch cart:", err);
+        // If refetch fails, keep the optimistic update
       });
       
       return newItem;
@@ -131,30 +139,42 @@ export function useCart(): UseCartReturn {
         duration: 3000,
       });
       return null;
-    } finally {
-      setIsLoading(false);
     }
-  }, [isAuthenticated, fetchCart, showToast]);
+  }, [isAuthenticated, cartItems, calculateTotals, fetchCart, showToast]);
 
   const updateCartItem = useCallback(async (id: string, data: UpdateCartItemRequest): Promise<CartItem | null> => {
-    setIsLoading(true);
     setError(null);
+
+    // Store previous state for rollback
+    const previousItems = [...cartItems];
+    const itemToUpdate = cartItems.find(item => item._id === id);
+    
+    if (!itemToUpdate) {
+      setError("Item not found in cart");
+      return null;
+    }
+
+    // Optimistic update - apply changes immediately
+    const optimisticItem = { ...itemToUpdate, ...data };
+    const optimisticItems = cartItems.map(item =>
+      item._id === id ? optimisticItem : item
+    );
+    
+    setCartItems(optimisticItems);
+    calculateTotals(optimisticItems);
 
     try {
       const updatedItem = await cartService.updateCartItem(id, data);
       
       if (!isMountedRef.current) return null;
       
-      // Calculate the updated items once
-      const newItems = cartItems.map(item => 
+      // Merge the server response with our optimistic update
+      const serverUpdatedItems = cartItems.map(item => 
         item._id === id ? { ...item, ...updatedItem } : item
       );
       
-      // Update local state
-      setCartItems(newItems);
-      
-      // Recalculate totals with the new items
-      calculateTotals(newItems);
+      setCartItems(serverUpdatedItems);
+      calculateTotals(serverUpdatedItems);
       
       showToast?.({
         type: 'success',
@@ -165,6 +185,13 @@ export function useCart(): UseCartReturn {
       return updatedItem;
     } catch (err: any) {
       console.error("Failed to update cart item:", err);
+      
+      // Rollback on error
+      if (!isMountedRef.current) return null;
+      
+      setCartItems(previousItems);
+      calculateTotals(previousItems);
+      
       const errorMsg = err.message || "Failed to update cart item";
       setError(errorMsg);
       showToast?.({
@@ -173,15 +200,11 @@ export function useCart(): UseCartReturn {
         duration: 3000,
       });
       
-      await fetchCart();
       return null;
-    } finally {
-      setIsLoading(false);
     }
-  }, [cartItems, calculateTotals, fetchCart, showToast]);
+  }, [cartItems, calculateTotals, showToast]);
 
   const removeFromCart = useCallback(async (id: string): Promise<boolean> => {
-    setIsLoading(true);
     setError(null);
 
     // Store the current state for potential rollback
@@ -195,7 +218,12 @@ export function useCart(): UseCartReturn {
     try {
       await cartService.removeFromCart(id);
       
-      if (!isMountedRef.current) return false;
+      if (!isMountedRef.current) {
+        // Component unmounted, restore state to be safe
+        setCartItems(previousItems);
+        calculateTotals(previousItems);
+        return false;
+      }
       
       showToast?.({
         type: 'success',
@@ -222,10 +250,6 @@ export function useCart(): UseCartReturn {
       });
       
       return false;
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-      }
     }
   }, [cartItems, calculateTotals, showToast]);
 

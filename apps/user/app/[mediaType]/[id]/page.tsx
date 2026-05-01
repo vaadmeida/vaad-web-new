@@ -10,7 +10,7 @@ import { Minus, Plus, Share2, Copy } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { billboardService, Billboard } from "@/app/lib/billboard/billboard-service";
-import { useCart } from "@/app/hooks/useCart";
+import { useCartContext } from "@/app/contexts/cart-context";
 
 export default function BillboardDetailsPage() {
   const params = useParams();
@@ -25,7 +25,7 @@ export default function BillboardDetailsPage() {
   const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   
-  const { addToCart, isItemInCart, getCartItemByBillboardId } = useCart();
+  const { addToCart, isItemInCart, getCartItemByBillboardId } = useCartContext();
 
   useEffect(() => {
     const fetchBillboard = async () => {
@@ -259,6 +259,7 @@ const handleAddToCart = async () => {
                   {/* Copy Link Button */}
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={handleCopyLink}
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
                       aria-label="Copy link"
@@ -275,6 +276,7 @@ const handleAddToCart = async () => {
                   {/* Share Button */}
                   <div className="relative">
                     <button
+                      type="button"
                       onClick={handleShare}
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
                       aria-label="Share"
@@ -316,6 +318,7 @@ const handleAddToCart = async () => {
                 <div className="flex items-center gap-4">
                   <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
                     <button
+                      type="button"
                       onClick={() => setQuantity((q) => (q > 1 ? q - 1 : 1))}
                       disabled={isInCart}
                       className="disabled:opacity-50"
@@ -330,7 +333,7 @@ const handleAddToCart = async () => {
                       </span>
                     </span>
 
-                    <button onClick={() => setQuantity((q) => q + 1)} disabled={isInCart} className="disabled:opacity-50">
+                    <button type="button" onClick={() => setQuantity((q) => q + 1)} disabled={isInCart} className="disabled:opacity-50">
                       <Plus size={16} />
                     </button>
                   </div>
@@ -343,11 +346,12 @@ const handleAddToCart = async () => {
 
               {/* Buttons */}
               <div className="flex gap-3 mt-6">
-                <button className="bg-[#0177AB] text-white px-10 py-4 rounded-lg text-[16px] font-semibold hover:bg-[#006d91] transition">
+                <button type="button" className="bg-[#0177AB] text-white px-10 py-4 rounded-lg text-[16px] font-semibold hover:bg-[#006d91] transition">
                   Buy Now
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleAddToCart}
                   disabled={isInCart || isAddingToCart}
                   className={`border border-[#0177AB] px-10 py-4 rounded-lg text-[#0177AB] hover:bg-[#0178ab0f] text-[16px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed`}

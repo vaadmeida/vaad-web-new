@@ -5,7 +5,7 @@ import { MapPin } from "lucide-react";
 import { Billboard } from "@/app/types/billboard";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { useCart } from "@/app/hooks/useCart";
+import { useCartContext } from "@/app/contexts/cart-context";
 
 type Props = {
   billboard: Billboard;
@@ -13,7 +13,7 @@ type Props = {
 
 export default function BillboardFullCard({ billboard }: Props) {
   const router = useRouter();
-  const { addToCart, isItemInCart } = useCart();
+  const { addToCart, isItemInCart } = useCartContext();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [inCart, setInCart] = useState(false);
 
@@ -99,6 +99,7 @@ export default function BillboardFullCard({ billboard }: Props) {
         {/* Buttons */}
         <div className="flex items-center gap-3 mt-4">
           <button
+            type="button"
             onClick={() => router.push(`/billboard/${billboard._id}`)}
             className="px-4 py-2 text-sm border border-red-300 text-red-500 rounded-md hover:bg-red-50 transition"
           >
@@ -106,6 +107,7 @@ export default function BillboardFullCard({ billboard }: Props) {
           </button>
 
           <button
+            type="button"
             onClick={handleAddToCart}
             disabled={inCart || isAddingToCart}
             className="px-4 py-2 text-sm bg-[#0ea5e9] text-white rounded-md hover:bg-[#0284c7] transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
