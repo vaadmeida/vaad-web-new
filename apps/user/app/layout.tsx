@@ -6,6 +6,7 @@ import { ToastProvider } from "./contexts/toast-context";
 import ScrollProgress from "./components/ui/scroll-progress";
 import SplashProvider from "./components/SplashProvider";
 import { FavoriteProvider } from "./contexts/favorite-context";
+import { CartProvider } from "./contexts/cart-context";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -127,7 +128,9 @@ export default function RootLayout({
           <ToastProvider>
             <ScrollProgress />
             <SplashProvider>
-              <FavoriteProvider>{children}</FavoriteProvider>
+              <FavoriteProvider>
+                <CartProvider>{children}</CartProvider>
+              </FavoriteProvider>
             </SplashProvider>
           </ToastProvider>
         </AuthProvider>

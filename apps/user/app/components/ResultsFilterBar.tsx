@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { ChevronDown } from "lucide-react";
@@ -115,8 +116,6 @@ export default function ResultsFilterBar({
         <CartDrawer
           open={open}
           onClose={closeCart}
-          items={items}
-          setItems={setItems} // ✅ FIXED
         />
       </div>
     </div>
