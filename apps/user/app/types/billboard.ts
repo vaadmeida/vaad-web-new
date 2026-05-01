@@ -1,5 +1,6 @@
 export type Billboard = {
   id: string;
+  _id: string;
   title: string;
   location: string;
   price: string;
