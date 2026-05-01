@@ -4,7 +4,7 @@ import Image from "next/image";
 import { MapPin } from "lucide-react";
 import { Billboard } from "@/app/types/billboard";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useCartContext } from "@/app/contexts/cart-context";
 
 type Props = {
@@ -15,23 +15,20 @@ export default function BillboardFullCard({ billboard }: Props) {
   const router = useRouter();
   const { addToCart, isItemInCart } = useCartContext();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  const [inCart, setInCart] = useState(false);
-
-  // Check if item is in cart on mount
-  useEffect(() => {
-    setInCart(isItemInCart(billboard._id));
-  }, [billboard._id, isItemInCart]);
+  const inCart = isItemInCart(billboard._id);
 
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
     try {
       const startDate = new Date().toISOString();
-      await addToCart({
+      const cartItem = await addToCart({
         billboardId: billboard._id,
         durationInMonths: 1,
         startDate,
       });
-      setInCart(true);
+      if (!cartItem) {
+        return;
+      }
     } catch (error) {
       console.error("Failed to add to cart:", error);
     } finally {

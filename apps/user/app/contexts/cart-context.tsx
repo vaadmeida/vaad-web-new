@@ -1,10 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/contexts/cart-context.tsx
 "use client";
 
 import React, { createContext, useContext, ReactNode } from "react";
 import { useCart } from "@/app/hooks/useCart";
-import { CartItem } from "../lib/cart/cart-service";
+import { CartItem, AddToCartRequest, UpdateCartItemRequest } from "../lib/cart/cart-service";
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -12,11 +11,12 @@ interface CartContextType {
   error: string | null;
   subtotal: number;
   totalItems: number;
-  addToCart: (data: any) => Promise<CartItem | null>;
-  updateCartItem: (id: string, data: any) => Promise<CartItem | null>;
+  addToCart: (data: AddToCartRequest) => Promise<CartItem | null>;
+  updateCartItem: (id: string, data: UpdateCartItemRequest) => Promise<CartItem | null>;
   removeFromCart: (id: string) => Promise<boolean>;
   clearCart: () => Promise<boolean>;
   refetchCart: () => Promise<void>;
+  isCartItemPending: (id: string) => boolean;
   isItemInCart: (billboardId: string) => boolean;
   getCartItemByBillboardId: (billboardId: string) => CartItem | undefined;
 }
