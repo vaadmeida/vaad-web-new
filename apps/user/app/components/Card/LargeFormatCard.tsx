@@ -18,7 +18,7 @@ const LargeFormatCard = ({
 }: LargeFormatCardProps) => {
   return (
     <div
-      className="relative w-full h-[360px] md:h-[420px] rounded-xl overflow-hidden group cursor-pointer"
+      className="relative w-full h-[360px] rounded-[24px] overflow-hidden group cursor-pointer"
       onClick={onClick}
     >
       {/* Background Image */}
@@ -26,7 +26,7 @@ const LargeFormatCard = ({
         src={image}
         alt={title}
         fill
-        className="object-cover transition-transform duration-700 group-hover:scale-105"
+        className="object-cover transition-transform duration-700 group-hover:scale-105 rounded-[24px]"
         priority
       />
 
@@ -38,21 +38,18 @@ const LargeFormatCard = ({
         <h2 className="text-white text-[6vw] sm:text-[48px] font-semibold">
           {title}
         </h2>
-
-        {subtitle && (
-          <p className="text-white/80 text-sm mt-3 max-w-md leading-relaxed">
+ <p className="text-white/80 text-sm mt-3 max-w-md leading-relaxed">
             {subtitle}
           </p>
-        )}
 
         {/* CTA */}
-        <button className="mt-6 inline-flex items-center gap-2 bg-[#FAFAFA] text-[#EB5757] sm:text-[15.82px] text-[3.5vw] font-semibold px-5 py-[11.87px] rounded-md w-fit hover:bg-gray-100 transition">
-          BOOK NOW
-          <ArrowRight size={16} />
+        <button className="mt-6 inline-flex items-center gap-2 bg-white text-[#0177AB] sm:text-[16px] text-[3.5vw] font-semibold px-5 py-[11.87px] rounded-md w-fit hover:bg-gray-100 transition">
+          Book Now
+          {/* <ArrowRight size={16} /> */}
         </button>
 
         {/* Countdown */}
-        <div className="flex items-center gap-6 mt-8 text-white">
+        {/* <div className="flex items-center gap-6 mt-8 text-white">
           {[
             { label: "Days", value: "07" },
             { label: "Hours", value: "08" },
@@ -68,7 +65,7 @@ const LargeFormatCard = ({
               </p>
             </div>
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );

@@ -13,7 +13,7 @@ interface BillboardSectionProps {
 
 export default function BillboardPromoSection({
   title = "Transit Advertising",
-  subtitle = "",
+  subtitle = "Take your brand on the move and connect with audiences throughout their daily commute.",
   showViewAll = true,
   limit = 3,
 }: BillboardSectionProps) {
@@ -25,60 +25,61 @@ export default function BillboardPromoSection({
         showViewAll={showViewAll}
       />
       
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 group">
         {/* LEFT LARGE CARD */}
-        <div className="relative rounded-2xl overflow-hidden h-[789px] group">
-          <img
-            src="/images/transit.jpg"
-            alt="Promo"
-            className="w-full h-full object-cover"
-          />
+        <div className="relative rounded-xl h-[390px] overflow-hidden">
+  <img
+    src="/images/t1.jpg"
+    alt="Promo"
+    className="w-full h-full object-cover rounded-xl"
+  />
 
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition" />
+  {/* Faded Bottom Overlay */}
+  <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
 
-          {/* Badge */}
-          <div className="absolute top-4 left-4 bg-[#0177AB] text-white text-xs px-3 py-1 rounded-full">
-            WORLD BILLBOARD DAY
-          </div>
+  {/* Content */}
+  <div className="absolute bottom-6 left-6 right-6 text-white max-w-[400px]">
+    <h3 className="text-[32px] font-semibold leading-snug">
+      Put your brand in front of commuters every day.
+    </h3>
+    <p className="text-[16px] text-white mt-2">
+      Seen by thousands of riders and pedestrians on every route.
+    </p>
 
-          {/* Content */}
-          <div className="absolute bottom-6 left-6 right-6 text-white">
-            <h3 className="text-2xl font-bold leading-snug">
-              Free Delivery on all dresses ordered until November 30
-            </h3>
-            <p className="text-sm text-gray-200 mt-2">
-              All the sleekest dress for you to twin with your girlfriends.
-            </p>
+    <button className="mt-4 bg-[#0177AB] hover:bg-[#015f8a] px-5 py-2 rounded-md text-sm font-medium">
+      Book Now
+    </button>
+  </div>
+</div>
 
-            <button className="mt-4 bg-[#0177AB] hover:bg-[#015f8a] px-5 py-2 rounded-md text-sm font-medium">
-              Book now →
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT GRID */}
-        <div className="md:grid grid-rows-2 gap-6 h-197.25 hidden">
           {/* TOP RIGHT */}
-          <div className="relative rounded-2xl overflow-hidden group">
+          <div className="relative rounded-xl h-[390px]">
             <img
-              src="/images/transit-2.png"
+              src="/images/t2.jpg"
               alt="Promo"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-xl"
             />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
+          </div>
+
+            <div className="relative rounded-xl h-[390px]">
+            <img
+              src="/images/t3.jpg"
+              alt="Promo"
+              className="w-full h-full object-cover rounded-xl"
+            />
           </div>
 
           {/* BOTTOM RIGHT */}
-          <div className="relative rounded-2xl overflow-hidden group">
+          <div className="relative rounded-xl h-[390px]">
             <img
-              src="/images/transit-3.png"
+              src="/images/t4.jpg"
               alt="Promo"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-xl"
             />
-            <div className="absolute inset-0 bg-black/30 group-hover:bg-black/40 transition" />
           </div>
-        </div>
+
+
+
       </div>
     </section>
   );

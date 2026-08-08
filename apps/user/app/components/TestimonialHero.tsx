@@ -1,11 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import bgImg from "@/public/images/ts1.jpg";
 
 interface TestimonialHeroProps {
   quote: string;
   description: string;
-  backgroundImage: string;
+  backgroundImage?: string;
   badge?: string;
 }
 
@@ -16,10 +17,10 @@ const TestimonialHero = ({
   badge = "OUR MERCHANT ONCE SAID",
 }: TestimonialHeroProps) => {
   return (
-    <section className="relative w-full py-14 md:h-125 overflow-hidden">
+    <section className="relative w-full py-14 min-h-[500px] flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <Image
-        src={backgroundImage}
+        src={backgroundImage || bgImg}
         alt="testimonial background"
         fill
         className="object-cover"
@@ -27,12 +28,12 @@ const TestimonialHero = ({
       />
 
       {/* Dark Overlay */}
-      <div className="absolute inset-0 bg-[#0b1220]/80" />
+      <div className="absolute inset-0 bg-[#0b1220]/80 z-0" />
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
+      <div className="relative z-10 w-full h-full flex flex-col items-center justify-center text-center px-6">
         {/* Badge */}
-        <span className="sm:text-[11.95px] text-[2.5vw] tracking-wide uppercase bg-white text-[#0177AB] px-3 py-1 rounded-full font-medium">
+        <span className="sm:text-[11.95px] text-[2.5vw] tracking-wide uppercase bg-black/30 text-white px-3 py-1 rounded-full font-medium">
           {badge}
         </span>
 
@@ -46,15 +47,21 @@ const TestimonialHero = ({
           {description}
         </p>
 
-        {/* Buttons */}
-        <div className="flex items-center gap-4 mt-8 flex-wrap justify-center">
-          <button className="bg-[#0177AB] hover:bg-[#0f7ae5] text-white sm:text-[17.93px] text-[3vw] font-medium px-[31.87px] py-[13.94px] rounded-lg transition">
-            Request a quote
-          </button>
-
-          <button className="border border-[#0177AB] text-[#0177AB] sm:text-[17.93px] text-[3vw] font-medium px-[31.87px] py-[13.94px] rounded-lg hover:bg-[#1d8cf8]/10 transition">
-            Partner with us
-          </button>
+        {/* User */}
+        <div className="flex items-center justify-center mt-8 gap-3">
+          <Image
+            src="/avatars/dummy-avatar.svg"
+            alt="Ngozi Henry"
+            width={55}
+            height={55}
+            className="rounded-full object-cover"
+          />
+          <p className="sm:text-[16px] font-normal flex flex-col items-start text-white text-left">
+            <span className="sm:text-[20px] font-semibold">
+              Ngozi Henry
+            </span>
+            <span>Private Equity, FMCG</span>
+          </p>
         </div>
       </div>
     </section>

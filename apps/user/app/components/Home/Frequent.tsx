@@ -6,16 +6,14 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useBillboards } from "@/app/hooks/useBillboard";
 import EmptyState from "./EmptyState/EmptyState";
-import { useMemo } from "react";
 import SectionHeader from "../SectionHeader";
 import { motion } from "framer-motion";
 
-interface BillboardSectionProps {
+interface RetailStoreSectionProps {
   title?: string;
   subtitle?: string;
   showViewAll?: boolean;
   limit?: number;
-  mediaTypeFilter?: string;
 }
 
 // Shimmer animation styles
@@ -32,6 +30,7 @@ const shimmerStyles = `
 function BillboardSkeletonCard() {
   return (
     <div className="animate-pulse">
+      {/* Image skeleton with shimmer */}
       <div className="relative h-48 w-full overflow-hidden rounded-t-[7.75px] bg-gray-200">
         <div 
           className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer" 
@@ -39,23 +38,29 @@ function BillboardSkeletonCard() {
         />
       </div>
       
+      {/* Content skeleton */}
       <div className="p-4 space-y-3">
+        {/* Rating skeleton */}
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 bg-gray-200 rounded-full" />
           <div className="h-4 bg-gray-200 rounded w-12" />
           <div className="h-3 bg-gray-200 rounded w-16" />
         </div>
         
+        {/* Title skeleton */}
         <div className="h-6 bg-gray-200 rounded w-3/4" />
         
+        {/* Description skeleton */}
         <div className="h-4 bg-gray-200 rounded w-full" />
         <div className="h-4 bg-gray-200 rounded w-2/3" />
         
+        {/* Location skeleton */}
         <div className="flex items-start gap-2">
           <div className="h-4 w-4 bg-gray-200 rounded-full shrink-0" />
           <div className="h-4 bg-gray-200 rounded w-4/5" />
         </div>
         
+        {/* Price and button skeleton */}
         <div className="flex justify-between items-center gap-3 pt-2">
           <div className="h-8 bg-gray-200 rounded w-1/3" />
           <div className="h-10 bg-gray-200 rounded w-2/5" />
@@ -87,30 +92,25 @@ function BillboardSkeletonGrid({ count }: { count: number }) {
   );
 }
 
-export default function BillboardSection({
-  title = "Static Billboards",
-  subtitle = "Reach high-traffic locations with consistent, always-on visibility that keeps your brand top of mind.",
-  showViewAll = true,
+export default function FrequentSection({
+  title = "Frequently Booked Boards",
+  subtitle = "Explore the most in-demand locations trusted by brands for consistent performance.",
+  showViewAll = false,
   limit = 3,
-  mediaTypeFilter = "Static Billboard",
-}: BillboardSectionProps) {
+}: RetailStoreSectionProps) {
   const { billboards, loading, error, refetch } = useBillboards({
-    mediaType: mediaTypeFilter,
+    mediaType: "Retail Store",
   });
 
-  const displayedBillboards = useMemo(() => {
-    return billboards.slice(0, limit);
-  }, [billboards, limit]);
+  const displayedBillboards = billboards.slice(0, limit);
 
   // Updated: Show "Explore All" only if more than 3 billboards
-  const hasMore = useMemo(() => {
-    return billboards.length > 3;
-  }, [billboards.length]);
+  const hasMore = billboards.length > 3;
 
-  // Loading skeleton
+  // Loading skeleton with shimmer animation
   if (loading) {
     return (
-      <section className="sm:p-18 px-5 py-14 bg-white">
+      <section className="bg-white py-20 px-6 md:px-18">
         <style>{shimmerStyles}</style>
         <div className="mx-auto">
           <SectionHeader
@@ -127,7 +127,7 @@ export default function BillboardSection({
   // Error state
   if (error) {
     return (
-      <section className="p-18 bg-white">
+      <section className="bg-white py-20 px-6 md:px-18">
         <div className="mx-auto text-center py-12">
           <h2 className="text-2xl font-bold text-[#0D0A19] mb-2">{title}</h2>
           <p className="text-red-500 mb-4">{error}</p>
@@ -143,21 +143,22 @@ export default function BillboardSection({
   }
 
   return (
-    <section className="sm:px-18 px-5 pt-4 bg-white">
+    <section className="bg-white pt-4 pb-20 px-6 md:px-18">
       <div className="mx-auto">
-        <SectionHeader
-          title={title}
-          subtitle={subtitle}
-          showViewAll={showViewAll && hasMore}   // Only show if > 3
-        />
+        {/* Header */}
+        <div className="text-center max-w-xl mx-auto mb-10">
+          <h2 className="text-[6vw] sm:text-3xl font-semibold text-gray-900">
+            Frequently Booked Boards
+          </h2>
+          <p className="text-[#434141] sm:text-sm text-[3.5vw] mt-3 leading-relaxed">
+            Explore the most in-demand locations trusted by brands for consistent performance.
+          </p>
+        </div>
 
         {displayedBillboards.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-6 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {displayedBillboards.map((billboard) => (
-              <BillboardCard
-                key={billboard._id}
-                billboard={billboard}
-              />
+              <BillboardCard key={billboard._id} billboard={billboard} />
             ))}
           </div>
         ) : (
@@ -168,14 +169,14 @@ export default function BillboardSection({
           />
         )}
 
-        {/* Mobile "Explore All" button - only visible if more than 3 items */}
+        {/* Mobile "Explore All" button - only shown when more than 3 and showViewAll is true */}
         {hasMore && showViewAll && (
           <div className="mt-10 text-center md:hidden">
             <Link
               href="/billboards"
               className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#F5F9FC] hover:bg-[#0177AB] text-[#0177AB] hover:text-white font-medium rounded-xl transition-all duration-200 shadow-sm"
             >
-              Explore All {billboards.length} {mediaTypeFilter}s
+              Explore All {billboards.length} Retail Store Ads
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
@@ -184,11 +185,3 @@ export default function BillboardSection({
     </section>
   );
 }
-
-// {billboards.length > 0 && (
-//           <p className="sm:text-sm text-[3vw] text-gray-500 mb-6">
-//             Showing {displayedBillboards.length} of {billboards.length}{" "}
-//             {mediaTypeFilter.toLowerCase()}s
-//             {hasMore && " (more available)"}
-//           </p>
-//         )}

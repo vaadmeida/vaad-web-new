@@ -1,6 +1,6 @@
 // DealCard.tsx
-import Image from "next/image";
-import { ArrowRight, MapPin } from "lucide-react";
+import React from "react";
+import { MapPin } from "lucide-react";
 
 interface DealCardProps {
   title: string;
@@ -10,7 +10,13 @@ interface DealCardProps {
   state?: string;
 }
 
-const DealCard = ({ title, image, available, location, state }: DealCardProps) => {
+const DealCard = ({
+  title,
+  image,
+  available,
+  location,
+  state,
+}: DealCardProps) => {
   // Format currency
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -21,50 +27,36 @@ const DealCard = ({ title, image, available, location, state }: DealCardProps) =
   };
 
   return (
-    <div className="group cursor-pointer">
-      {/* Image */}
-      <div className="relative w-full h-102.25 rounded-xl overflow-hidden">
-        <img
-          src={image}
-          alt={title}
-          className="object-cover transition-transform duration-500 group-hover:scale-105 w-full h-full"
-        />
-        
-        {/* Hot Deal Badge */}
-        <div className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-          HOT DEAL
-        </div>
-      </div>
+    <div className="relative rounded-xl overflow-hidden h-115 w-full group cursor-pointer">
+      {/* Background Image */}
+      <img
+        src={image}
+        alt={title}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
 
-      {/* Content */}
-      <div className="flex items-start justify-between mt-4 gap-2">
+      {/* Faded Bottom Overlay */}
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none" />
+
+      {/* Content at Bottom */}
+      <div className="absolute bottom-0 inset-x-0 p-5 flex justify-between text-white w-full items-center z-10 gap-4">
         <div className="min-w-0 flex-1">
-          <h3 className="sm:text-[18px] text-[5vw] font-bold text-[#2A2F2F] truncate">
+          {/* Title */}
+          <h3 className="text-[18px] font-semibold leading-snug line-clamp-2">
             {title}
           </h3>
-          
-          {/* Location if available */}
-          {(location || state) && (
-            <div className="flex items-center gap-1 mt-1">
-              <MapPin size={12} className="text-[#7F7F7F] shrink-0" />
-              <p className="sm:text-[12px] text-[3vw] text-[#7F7F7F] truncate">
-                {location}{state ? `, ${state}` : ""}
-              </p>
-            </div>
-          )}
-          
-          <p className="sm:text-[14px] text-[3.5vw] text-[#7F7F7F] font-normal mt-1">
-            {typeof available === 'number' && available > 1000 
-              ? formatPrice(available)
-              : `${available.toLocaleString()} available`
-            }
-          </p>
+
+          {/* Available Badge (Under Title) */}
+          <div className="inline-block mt-2 bg-[#E7F8F2] font-semibold text-[#0B835C] text-xs px-3 py-1 rounded-full">
+            Available
+          </div>
+
+      
         </div>
 
-        <ArrowRight
-          size={18}
-          className="text-gray-400 group-hover:translate-x-1 transition-transform duration-300 shrink-0 mt-1"
-        />
+        <button className="bg-[#0177AB] hover:bg-[#015f8a] px-3 py-2 rounded-md text-sm font-medium shrink-0 transition-colors">
+          Book Now
+        </button>
       </div>
     </div>
   );
