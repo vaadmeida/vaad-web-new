@@ -95,7 +95,8 @@ export default function Hero() {
         <div className="relative min-h-screen flex flex-col">
           <div className="absolute inset-0 h-screen">
             <Image
-              src="/video/vaad-bg.gif"
+              // src="/video/vaad-bg.gif"
+              src="/images/vaad-home.jpg"
               alt="VAAD Media Billboard"
               fill
               priority
@@ -131,7 +132,8 @@ export default function Hero() {
         {/* Background GIF */}
         <div className="absolute inset-0">
           <Image
-            src="/video/vaad-bg.gif"
+             // src="/video/vaad-bg.gif"
+              src="/images/vaad-home.jpg"
             alt="VAAD Media Billboard"
             fill
             priority

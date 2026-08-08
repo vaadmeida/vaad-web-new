@@ -94,7 +94,7 @@ function BillboardSkeletonGrid({ count }: { count: number }) {
 
 export default function LamppostSection({
   title = "Lamppost Advertising",
-  subtitle = "",
+  subtitle = "Stay visible along busy roads and key routes with repeated exposure that reinforces your message.",
   showViewAll = true,
   limit = 3,
 }: LamppostSectionProps) {
@@ -151,12 +151,6 @@ export default function LamppostSection({
           showViewAll={showViewAll && hasMore}   // Only show if > 3
         />
 
-        {billboards.length > 0 && (
-          <p className="text-sm text-gray-500 mb-6">
-            Showing {displayedBillboards.length} of {billboards.length} lamppost advertisements
-            {hasMore && " (more available)"}
-          </p>
-        )}
 
         {displayedBillboards.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

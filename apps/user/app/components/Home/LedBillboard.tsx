@@ -89,7 +89,7 @@ function BillboardSkeletonGrid({ count }: { count: number }) {
 
 export default function LedBillboardSection({
   title = "LED Billboards",
-  subtitle = "",
+  subtitle = "Capture attention with dynamic, high-impact digital displays designed for maximum visibility day and night.",
   showViewAll = true,
   limit = 4,
 }: LedBillboardSectionProps) {
@@ -159,12 +159,6 @@ export default function LedBillboardSection({
           showViewAll={showViewAll && hasMore}   // ← Key change: only show if hasMore
         />
 
-        {billboards.length > 0 && (
-          <p className="text-sm text-gray-500 mb-6">
-            Showing {displayedBillboards.length} of {billboards.length} LED billboards
-            {hasMore && " (more available)"}
-          </p>
-        )}
 
         {displayedBillboards.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

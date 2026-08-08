@@ -7,6 +7,7 @@ import BillboardSection from "./components/Home/BillboardSection";
 import BusShelterSection from "./components/Home/BusShelter";
 import FeaturedPartnersSection from "./components/Home/FeaturedPartnersSection";
 import Footer from "./components/Home/Footer";
+import FrequentSection from "./components/Home/Frequent";
 import Hero from "./components/Home/Hero";
 import HotDealsSection from "./components/Home/HotDealSection";
 import LamppostSection from "./components/Home/Lamppost";
@@ -16,6 +17,7 @@ import RetailStoreSection from "./components/Home/RetailStore";
 import StatsSection from "./components/Home/stats-section";
 import Testimonial from "./components/Home/Testimonial";
 import TestimonialSection from "./components/Home/TestimonialSection";
+import Trusted from "./components/Home/Trusted";
 import Navbar from "./components/layout/Navbar";
 import TopBar from "./components/layout/TopBar";
 
@@ -25,6 +27,7 @@ export default function HomePage() {
       <TopBar />
       <Navbar />
       <Hero />
+      <Trusted />
       <StatsSection />
       <BillboardSection />
       <LedBillboardSection />
@@ -35,9 +38,10 @@ export default function HomePage() {
       <HotDealsSection />
       <LargeFormatSection />
       <RetailStoreSection />
+      <FrequentSection />
       <TestimonialSection />
-      <FeaturedPartnersSection />
-      <Testimonial />
+      {/* <FeaturedPartnersSection /> */}
+      {/* <Testimonial /> */}
       <ConsultationCTA />
       <Footer />
     </div>

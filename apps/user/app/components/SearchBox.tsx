@@ -105,13 +105,21 @@ export default function SearchBox({
       onChange: (value: string) => handleFilterChange("location", value),
       placeholder: "Select location",
     },
+    {
+      label: "Major Markets",
+      value: filters.location,
+      key: "location" as const,
+      options: locations,
+      onChange: (value: string) => handleFilterChange("location", value),
+      placeholder: "Select Market",
+    },
   ];
 
   return (
     <>
       {/* ---------------- DESKTOP ---------------- */}
-      <div className="hidden md:block mt-12 bg-white rounded-2xl shadow-lg p-6 w-full">
-        <div className="grid grid-cols-4 gap-4">
+      <div className="hidden md:block mt-12 bg-white rounded-lg shadow-lg p-6 w-full">
+        <div className="grid grid-cols-5 gap-4">
           {desktopFields.map((item) => (
             <div key={item.key}>
               <label className="text-sm text-gray-600 mb-2 block">

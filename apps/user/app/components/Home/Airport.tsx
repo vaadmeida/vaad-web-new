@@ -94,7 +94,7 @@ function BillboardSkeletonGrid({ count }: { count: number }) {
 
 export default function AirportSection({
   title = "Airport Advertising",
-  subtitle = "From idea to installation - we make outdoor advertising easy, measurable, and unforgettable.",
+  subtitle = "Engage a premium, high-value audience in a space designed for attention and dwell time.",
   showViewAll = false,
   limit = 3,
 }: AirportSectionProps) {
@@ -151,12 +151,6 @@ export default function AirportSection({
           showViewAll={showViewAll && hasMore}   // Only show if > 3 and prop allows
         />
 
-        {billboards.length > 0 && (
-          <p className="text-sm text-gray-500 mb-6">
-            Showing {displayedBillboards.length} of {billboards.length} airport advertisements
-            {hasMore && " (more available)"}
-          </p>
-        )}
 
         {displayedBillboards.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

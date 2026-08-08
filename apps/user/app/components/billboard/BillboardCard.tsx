@@ -326,10 +326,10 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
   return (
     <Link
       href={billboardUrl}
-      className="group bg-transparent rounded-t-[7.75px] border-b border-[#C1C4D6] overflow-hidden transition-shadow duration-300 cursor-pointer block"
+      className="group bg-[#FAFAFB] rounded-[12px] p-5 overflow-hidden transition-shadow duration-300 cursor-pointer block"
     >
       {/* Image Container */}
-      <div className="relative h-48 w-full overflow-hidden rounded-[7.75px] bg-gray-100">
+      <div className="relative h-[264px] w-full overflow-hidden rounded-[8px] bg-gray-100">
         {/* Loading Skeleton */}
         {imageLoading && !imageError && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -352,12 +352,20 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
         />
 
         {/* Category Badge */}
-        <div className="absolute top-3 left-3 bg-[#0177AB] backdrop-blur-sm px-[13.57px] py-[2.91px] font-medium rounded-[3.88px] text-xs text-white z-10">
-          {fields.serviceType || fields.mediaType || "Billboard"}
+       <div className='flex justify-between items-start absolute top-3 px-3 w-full'>
+         <div className=" bg-[#55A4C7] backdrop-blur-sm px-[13.57px] py-[2.91px] font-medium rounded-[6px] text-xs text-white z-10">
+          {/* {fields.serviceType || fields.mediaType || "Billboard"} */}
+          Available
         </div>
 
+         <div className=" bg-[#E7F8F2] backdrop-blur-sm px-[13.57px] py-[2.91px] font-medium rounded-full text-xs text-[#0B835C] z-10">
+          {/* {fields.serviceType || fields.mediaType || "Billboard"} */}
+          Booked . 2d
+        </div>
+       </div>
+
         {/* INSANE ANIMATED FAVORITE BUTTON */}
-        <div className="absolute top-3 right-3 z-20">
+         <div className="absolute bottom-3 right-3 z-20">
           {/* Color Flash Effect */}
           <AnimatePresence>
             {showFlash && (
@@ -453,57 +461,63 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
         </div>
       </div>
 
+      <div className='w-full h-px border border-[#d5d4d45e] my-5'/>
+
       {/* Content */}
-      <div className="p-4">
+      <div className="">
         {/* Rating */}
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center">
-            <Star className="w-4 h-4 fill-[#0177AB] text-[#0177AB]" />
-            <span className="text-[15.5px] font-medium text-gray-900 ml-0.5">
+            <Star className="w-4 h-4 fill-[#bfa900] text-[#bfa900]" />
+            <span className="text-[16px] font-medium text-[#626060] ml-0.5">
               {fields.rating || 4.5}
             </span>
           </div>
-          <span className="text-xs text-gray-500">
+          <span className="text-medium text-[#626060] text-[16px]">
             ({fields.reviews || 0} reviews)
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="text-[21.32px] font-semibold text-[#0177AB] mb-1 line-clamp-1">
+        <h3 className="text-[24px] font-bold text-[#141212] mb-1 line-clamp-1">
           {displayTitle}
         </h3>
 
         {/* Description */}
-        <p className="text-[15.5px] text-[#333333] mb-4 font-normal line-clamp-2">
+        <p className="text-[16px] text-[#626060] mb-10 font-normal line-clamp-2">
           {description}
         </p>
 
         {/* Location */}
-        <div className="flex items-start gap-2 mb-4">
-          <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+        <div className="flex items-start gap-2 mb-2">
+          {/* <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" /> */}
           <div>
-            <p className="text-[13.57px] font-normal text-[#696F8C]">
+            <p className="text-[14px] font-normal text-[#626060]">
               {displayLocation}, {fields.state || "Lagos"}
             </p>
           </div>
         </div>
 
-        <div className="flex gap-7 items-center">
+        <div className="flex justify-between gap-2 items-end">
           {/* Price */}
           <div className="flex items-baseline gap-2">
-            <span className="text-[31.01px] font-bold text-[#333333]">
+            <span className="text-[32px] font-semibold text-black">
               ₦{fields.rate?.toLocaleString("en-US") || "0"}
             </span>
             {originalPrice && (
-              <span className="text-[16.47px] text-[#696F8C] line-through font-medium">
-                ₦{originalPrice.toLocaleString("en-US")}
+              <span className="text-[16.47px] text-[#696F8C] font-medium">
+                {/* ₦{originalPrice.toLocaleString("en-US")} */}
+                / pole
               </span>
             )}
           </div>
 
-          <div className="w-full block text-center bg-[#F5F9FC] text-[#0177AB] font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-[13.57px] hover:bg-[#0177AB] hover:text-white">
-            Available in <span>{availableIn}</span> days
-          </div>
+           <Link
+                            href=""
+                            className="px-4 py-2.5 bg-[#0088b5] hover:bg-[#007a9e] text-white rounded-xl font-semibold text-sm transition-all"
+                          >
+                            Book Now
+                          </Link>
         </div>
       </div>
     </Link>
