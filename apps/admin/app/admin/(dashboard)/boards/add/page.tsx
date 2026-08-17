@@ -10,7 +10,6 @@ import { useBillboard } from "@/app/hooks/useBillboard";
 import {
   step1Schema,
   step2Schema,
-  step3Schema,
   step4Schema,
   type BillboardFormData,
 } from "@/app/lib/validations/billboard";
@@ -38,9 +37,7 @@ const initialFormData: BillboardFormData = {
   orientation: "Landscape",
   targetAudience: [],
   features: [],
-  hotDeal: false,
   photos: [],
-  // New fields – make sure these exist in BillboardFormData + Zod schemas
   visibility: "",
   illumination: "",
   format: "",
@@ -79,7 +76,7 @@ export default function AddBoard() {
     [formData.mediaType, getProductsForMediaType]
   );
 
-  // Set default service type once
+  // Default service type
   useEffect(() => {
     if (
       !defaultsSetRef.current &&
@@ -167,11 +164,10 @@ export default function AddBoard() {
         serviceType: formData.serviceType,
         mediaType: formData.mediaType,
         orientation: formData.orientation,
-      });
-      step3Schema.parse({
-        targetAudience: formData.targetAudience,
-        features: formData.features,
-        hotDeal: formData.hotDeal,
+        visibility: formData.visibility,
+        illumination: formData.illumination,
+        format: formData.format,
+        approvalStatus: formData.approvalStatus,
       });
       setErrors({});
       return true;
@@ -219,22 +215,33 @@ export default function AddBoard() {
     if (!validateStep2()) return;
 
     const submitData = {
-      ...formData,
+      partnerId: formData.partnerId.trim(),
+      serviceType: formData.serviceType,
+      mediaType: formData.mediaType,
+      printProductType: formData.printProductType,
+      locationAddress: formData.locationAddress.trim(),
       state: formData.state.toLowerCase(),
       city: formData.city.toLowerCase(),
-      height: Number(formData.height),
-      width: Number(formData.width),
-      rate: Number(formData.rate),
-      targetAudience: formData.targetAudience.filter(
+      landmark: formData.landmark || undefined,
+      orientation: formData.orientation,
+      visibility: formData.visibility,
+      illumination: formData.illumination,
+      format: formData.format,
+      approvalStatus: formData.approvalStatus,
+      height: Number(formData.height) || 0,
+      width: Number(formData.width) || 0,
+      units: formData.units || "meters",
+      rate: Number(formData.rate) || 0,
+      description: formData.description?.trim() || "",
+      targetAudience: (formData.targetAudience || []).filter(
         (a) => typeof a === "string" && a.trim() !== ""
+      ),
+      features: (formData.features || []).filter(
+        (f) => typeof f === "string" && f.trim() !== ""
       ),
       photos: uploadedPhotoUrls.filter(
         (url) => typeof url === "string" && url.trim() !== ""
       ),
-      features:
-        formData.features?.filter(
-          (f) => typeof f === "string" && f.trim() !== ""
-        ) || [],
     };
 
     try {
@@ -278,7 +285,6 @@ export default function AddBoard() {
       </div>
 
       <div className="space-y-8">
-        {/* Row 1 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Media Partner ID"
@@ -298,7 +304,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Service Type"
@@ -324,7 +329,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 3 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Product Type"
@@ -353,7 +357,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 4 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Visibility"
@@ -382,7 +385,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 5 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Location"
@@ -406,7 +408,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 6 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Illumination"
@@ -432,7 +433,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 7 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="State"
@@ -462,7 +462,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Row 8 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Size (Height)"
@@ -493,7 +492,6 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Optional: Width + Units if you still need them */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Width"
@@ -536,7 +534,7 @@ export default function AddBoard() {
         <ImageUpload
           label="Billboard Photos"
           onUploadSuccess={handlePhotoUpload}
-          multiple={true}
+          multiple
           maxFiles={5}
           maxSize={10 * 1024 * 1024}
           acceptedTypes={[

@@ -27,7 +27,6 @@ export const billboardSchema = z.object({
     .array(z.string().url("Must be a valid URL"))
     .min(1, "At least one photo is required"),
   features: z.array(z.string()).optional(),
-  hotDeal: z.boolean().default(false),
 });
 
 // Schema for each step
@@ -58,7 +57,6 @@ export const step2Schema = billboardSchema.pick({
 export const step3Schema = billboardSchema.pick({
   targetAudience: true,
   features: true,
-  hotDeal: true,
 });
 
 export const step4Schema = billboardSchema.pick({
