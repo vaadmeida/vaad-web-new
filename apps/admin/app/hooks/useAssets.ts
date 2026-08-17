@@ -9,10 +9,14 @@ export interface AssetsData {
   services: string[];
   mediaAndProductsTypes: Record<string, string[]>;
   orientation: string[];
-  printProductType: string[];        // ← Now a flat array
+  printProductType: string[];
   landmarks: string[];
   statesAndCites: Record<string, string[]>;
   targetAudience: string[];
+  format: string[];
+  approvalStatus: string[];
+  visibility: string[];
+  illumination: string[];
 }
 
 interface UseAssetsReturn {
@@ -21,6 +25,7 @@ interface UseAssetsReturn {
   error: string | null;
   refetch: () => Promise<void>;
   getCitiesForState: (state: string) => string[];
+  getProductsForMediaType: (mediaType: string) => string[];
 }
 
 export function useAssets(): UseAssetsReturn {
@@ -32,6 +37,10 @@ export function useAssets(): UseAssetsReturn {
     landmarks: [],
     statesAndCites: {},
     targetAudience: [],
+    format: [],
+    approvalStatus: [],
+    visibility: [],
+    illumination: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +48,7 @@ export function useAssets(): UseAssetsReturn {
   const fetchAssets = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await apiClient.get<AssetsData>("/billboards/assets");
       setAssets(response);
@@ -55,10 +64,21 @@ export function useAssets(): UseAssetsReturn {
     fetchAssets();
   }, [fetchAssets]);
 
-  const getCitiesForState = useCallback((state: string): string[] => {
-    if (!state || !assets.statesAndCites[state]) return [];
-    return assets.statesAndCites[state];
-  }, [assets.statesAndCites]);
+  const getCitiesForState = useCallback(
+    (state: string): string[] => {
+      if (!state || !assets.statesAndCites[state]) return [];
+      return assets.statesAndCites[state];
+    },
+    [assets.statesAndCites]
+  );
+
+  const getProductsForMediaType = useCallback(
+    (mediaType: string): string[] => {
+      if (!mediaType || !assets.mediaAndProductsTypes[mediaType]) return [];
+      return assets.mediaAndProductsTypes[mediaType];
+    },
+    [assets.mediaAndProductsTypes]
+  );
 
   return {
     assets,
@@ -66,5 +86,6 @@ export function useAssets(): UseAssetsReturn {
     error,
     refetch: fetchAssets,
     getCitiesForState,
+    getProductsForMediaType,
   };
 }

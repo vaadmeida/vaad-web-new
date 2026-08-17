@@ -12,12 +12,20 @@ export const billboardSchema = z.object({
   width: z.number().min(1, "Width must be greater than 0"),
   units: z.string().min(1, "Units are required"),
   rate: z.number().min(1, "Rate must be greater than 0"),
-  printProductType: z.string().min(1, "Print product type is required"),
+  printProductType: z.string().min(1, "Product type is required"),
   serviceType: z.string().min(1, "Service type is required"),
   mediaType: z.string().min(1, "Media type is required"),
   orientation: z.string().min(1, "Orientation is required"),
-  targetAudience: z.array(z.string()).min(1, "At least one target audience is required"),
-  photos: z.array(z.string().url("Must be a valid URL")).min(1, "At least one photo is required"),
+  visibility: z.string().min(1, "Visibility is required"),
+  illumination: z.string().min(1, "Illumination is required"),
+  format: z.string().min(1, "Format is required"),
+  approvalStatus: z.string().min(1, "Approval status is required"),
+  targetAudience: z
+    .array(z.string())
+    .min(1, "At least one target audience is required"),
+  photos: z
+    .array(z.string().url("Must be a valid URL"))
+    .min(1, "At least one photo is required"),
   features: z.array(z.string()).optional(),
   hotDeal: z.boolean().default(false),
 });
@@ -41,6 +49,10 @@ export const step2Schema = billboardSchema.pick({
   serviceType: true,
   mediaType: true,
   orientation: true,
+  visibility: true,
+  illumination: true,
+  format: true,
+  approvalStatus: true,
 });
 
 export const step3Schema = billboardSchema.pick({
