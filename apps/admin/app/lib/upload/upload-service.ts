@@ -18,7 +18,7 @@ export class UploadService {
     formData.append('file', file);
 
     const response = await apiClient.post<SingleUploadResponse>(
-      `${this.baseUrl}/uploads`,
+      `${this.baseUrl}/files/uploads`,
       formData
     );
 
@@ -32,7 +32,7 @@ export class UploadService {
     files.forEach(file => formData.append('files', file));
 
     const response = await apiClient.post<MultipleUploadResponse>(
-      `${this.baseUrl}/uploads/many`,
+      `${this.baseUrl}/files/uploads/many`,
       formData
     );
 
