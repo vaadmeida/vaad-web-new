@@ -38,9 +38,8 @@ const initialFormData: BillboardFormData = {
   orientation: "Landscape",
   targetAudience: [],
   features: [],
-  hotDeal: false,
+  // hotDeal: false,
   photos: [],
-  // New fields – make sure these exist in BillboardFormData + Zod schemas
   visibility: "",
   illumination: "",
   format: "",
@@ -167,12 +166,16 @@ export default function AddBoard() {
         serviceType: formData.serviceType,
         mediaType: formData.mediaType,
         orientation: formData.orientation,
+        visibility: formData.visibility,
+        illumination: formData.illumination,
+        format: formData.format,
+        approvalStatus: formData.approvalStatus,
       });
-      step3Schema.parse({
-        targetAudience: formData.targetAudience,
-        features: formData.features,
-        hotDeal: formData.hotDeal,
-      });
+      // step3Schema.parse({
+      //   targetAudience: formData.targetAudience,
+      //   features: formData.features,
+      //   hotDeal: formData.hotDeal,
+      // });
       setErrors({});
       return true;
     } catch (error) {
@@ -219,22 +222,47 @@ export default function AddBoard() {
     if (!validateStep2()) return;
 
     const submitData = {
-      ...formData,
+      // Core identity
+      partnerId: formData.partnerId.trim(),
+      serviceType: formData.serviceType,
+      mediaType: formData.mediaType,
+      printProductType: formData.printProductType,
+
+      // Location
+      locationAddress: formData.locationAddress.trim(),
       state: formData.state.toLowerCase(),
       city: formData.city.toLowerCase(),
-      height: Number(formData.height),
-      width: Number(formData.width),
-      rate: Number(formData.rate),
-      targetAudience: formData.targetAudience.filter(
+      landmark: formData.landmark || undefined,
+
+      // Specs
+      orientation: formData.orientation,
+      visibility: formData.visibility,
+      illumination: formData.illumination,
+      format: formData.format,
+      approvalStatus: formData.approvalStatus,
+
+      // Dimensions & pricing
+      height: Number(formData.height) || 0,
+      width: Number(formData.width) || 0,
+      units: formData.units || "meters",
+      rate: Number(formData.rate) || 0,
+
+      // Availability / description
+      description: formData.description?.trim() || "",
+
+      // Audience & extras
+      targetAudience: (formData.targetAudience || []).filter(
         (a) => typeof a === "string" && a.trim() !== ""
       ),
+      features: (formData.features || []).filter(
+        (f) => typeof f === "string" && f.trim() !== ""
+      ),
+      // hotDeal: Boolean(formData.hotDeal),
+
+      // Media
       photos: uploadedPhotoUrls.filter(
         (url) => typeof url === "string" && url.trim() !== ""
       ),
-      features:
-        formData.features?.filter(
-          (f) => typeof f === "string" && f.trim() !== ""
-        ) || [],
     };
 
     try {
@@ -493,7 +521,7 @@ export default function AddBoard() {
           />
         </div>
 
-        {/* Optional: Width + Units if you still need them */}
+        {/* Row 9 – Width + Units */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Width"
