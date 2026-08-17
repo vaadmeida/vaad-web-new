@@ -21,39 +21,50 @@ import { useAssets } from "@/app/hooks/useAssets";
 // Set to false when you want real validation enforced again
 const SKIP_VALIDATION_FOR_TESTING = true;
 
+const initialFormData: BillboardFormData = {
+  partnerId: "",
+  locationAddress: "",
+  description: "",
+  state: "",
+  city: "",
+  landmark: "",
+  height: 0,
+  width: 0,
+  units: "meters",
+  rate: 0,
+  printProductType: "",
+  serviceType: "",
+  mediaType: "",
+  orientation: "Landscape",
+  targetAudience: [],
+  features: [],
+  hotDeal: false,
+  photos: [],
+  // New fields – make sure these exist in BillboardFormData + Zod schemas
+  visibility: "",
+  illumination: "",
+  format: "",
+  approvalStatus: "",
+};
+
 export default function AddBoard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const { createBillboard, isLoading } = useBillboard();
-  const { assets, isLoading: assetsLoading, getCitiesForState } = useAssets();
+  const {
+    assets,
+    isLoading: assetsLoading,
+    getCitiesForState,
+    getProductsForMediaType,
+  } = useAssets();
 
   const defaultsSetRef = useRef(false);
   const prevStateRef = useRef("");
   const prevMediaTypeRef = useRef("");
 
-  const [formData, setFormData] = useState<BillboardFormData>({
-    partnerId: "",
-    locationAddress: "",
-    description: "",
-    state: "",
-    city: "",
-    landmark: "",
-    height: 0,
-    width: 0,
-    units: "meters",
-    rate: 0,
-    printProductType: "",
-    serviceType: "",
-    mediaType: "",
-    orientation: "landscape",
-    targetAudience: [],
-    features: [],
-    hotDeal: false,
-    photos: [],
-  });
-
+  const [formData, setFormData] = useState<BillboardFormData>(initialFormData);
   const [uploadedPhotoUrls, setUploadedPhotoUrls] = useState<string[]>([]);
 
   const availableCities = useMemo(
@@ -62,6 +73,11 @@ export default function AddBoard() {
   );
 
   const mediaTypeOptions = Object.keys(assets.mediaAndProductsTypes || {});
+
+  const productOptions = useMemo(
+    () => getProductsForMediaType(formData.mediaType),
+    [formData.mediaType, getProductsForMediaType]
+  );
 
   // Set default service type once
   useEffect(() => {
@@ -83,7 +99,7 @@ export default function AddBoard() {
     prevStateRef.current = formData.state;
   }, [formData.state, formData.city]);
 
-  // Clear print product type when media type changes
+  // Clear product type when media type changes
   useEffect(() => {
     if (
       prevMediaTypeRef.current !== formData.mediaType &&
@@ -233,26 +249,7 @@ export default function AddBoard() {
     setIsSubmitted(false);
     setCurrentStep(1);
     defaultsSetRef.current = false;
-    setFormData({
-      partnerId: "",
-      locationAddress: "",
-      description: "",
-      state: "",
-      city: "",
-      landmark: "",
-      height: 0,
-      width: 0,
-      units: "meters",
-      rate: 0,
-      printProductType: "",
-      serviceType: "",
-      mediaType: "",
-      orientation: "landscape",
-      targetAudience: [],
-      features: [],
-      hotDeal: false,
-      photos: [],
-    });
+    setFormData(initialFormData);
     setUploadedPhotoUrls([]);
     setErrors({});
   };
@@ -281,6 +278,7 @@ export default function AddBoard() {
       </div>
 
       <div className="space-y-8">
+        {/* Row 1 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Media Partner ID"
@@ -292,21 +290,20 @@ export default function AddBoard() {
           />
           <Input
             label="Availability"
-            placeholder="Available June 12, 2026"
-            value={formData.locationAddress}
-            onChange={(e) =>
-              handleInputChange("locationAddress", e.target.value)
-            }
-            error={errors.locationAddress}
+            placeholder="e.g., Available June 12, 2026"
+            value={formData.description}
+            onChange={(e) => handleInputChange("description", e.target.value)}
+            error={errors.description}
             required
           />
         </div>
 
+        {/* Row 2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
-            label="Product Type"
+            label="Service Type"
             options={[
-              { label: "Select product type", value: "" },
+              { label: "Select service type", value: "" },
               ...assets.services.map((s) => ({ label: s, value: s })),
             ]}
             value={formData.serviceType}
@@ -327,15 +324,13 @@ export default function AddBoard() {
           />
         </div>
 
+        {/* Row 3 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
-            label="Dimensions"
+            label="Product Type"
             options={[
-              { label: "Select dimensions", value: "" },
-              ...assets.printProductType.map((option) => ({
-                label: option,
-                value: option,
-              })),
+              { label: "Select product type", value: "" },
+              ...productOptions.map((p) => ({ label: p, value: p })),
             ]}
             value={formData.printProductType}
             onChange={(e) =>
@@ -343,15 +338,13 @@ export default function AddBoard() {
             }
             error={errors.printProductType}
             required
+            disabled={!formData.mediaType}
           />
           <Select
             label="Orientation"
             options={[
               { label: "Select orientation", value: "" },
-              ...assets.orientation.map((o) => ({
-                label: o.charAt(0).toUpperCase() + o.slice(1),
-                value: o,
-              })),
+              ...assets.orientation.map((o) => ({ label: o, value: o })),
             ]}
             value={formData.orientation}
             onChange={(e) => handleInputChange("orientation", e.target.value)}
@@ -360,26 +353,23 @@ export default function AddBoard() {
           />
         </div>
 
+        {/* Row 4 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Visibility"
             options={[
               { label: "Select visibility", value: "" },
-              ...assets.printProductType.map((option) => ({
-                label: option,
-                value: option,
-              })),
+              ...assets.visibility.map((v) => ({ label: v, value: v })),
             ]}
-            value={formData.printProductType}
-            onChange={(e) =>
-              handleInputChange("printProductType", e.target.value)
-            }
-            error={errors.printProductType}
+            value={formData.visibility}
+            onChange={(e) => handleInputChange("visibility", e.target.value)}
+            error={errors.visibility}
             required
           />
           <Input
-            label="Price"
-            placeholder=""
+            label="Price (₦ per day)"
+            placeholder="e.g., 120000"
+            type="number"
             value={formData.rate || ""}
             onChange={(e) =>
               handleInputChange(
@@ -392,6 +382,7 @@ export default function AddBoard() {
           />
         </div>
 
+        {/* Row 5 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Location"
@@ -415,27 +406,33 @@ export default function AddBoard() {
           />
         </div>
 
+        {/* Row 6 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Illumination"
             options={[
               { label: "Select illumination", value: "" },
-              ...assets.landmarks.map((l) => ({ label: l, value: l })),
+              ...assets.illumination.map((i) => ({ label: i, value: i })),
             ]}
-            value={formData.landmark}
-            onChange={(e) => handleInputChange("landmark", e.target.value)}
-            error={errors.landmark}
+            value={formData.illumination}
+            onChange={(e) => handleInputChange("illumination", e.target.value)}
+            error={errors.illumination}
+            required
           />
-          <Input
+          <Select
             label="Format"
-            placeholder=""
-            value={formData.description}
-            onChange={(e) => handleInputChange("description", e.target.value)}
-            error={errors.description}
+            options={[
+              { label: "Select format", value: "" },
+              ...assets.format.map((f) => ({ label: f, value: f })),
+            ]}
+            value={formData.format}
+            onChange={(e) => handleInputChange("format", e.target.value)}
+            error={errors.format}
             required
           />
         </div>
 
+        {/* Row 7 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="State"
@@ -465,10 +462,12 @@ export default function AddBoard() {
           />
         </div>
 
+        {/* Row 8 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
-            label="Size"
-            placeholder=""
+            label="Size (Height)"
+            placeholder="e.g., 12"
+            type="number"
             value={formData.height || ""}
             onChange={(e) =>
               handleInputChange(
@@ -483,11 +482,41 @@ export default function AddBoard() {
             label="Approval Status"
             options={[
               { label: "Select status", value: "" },
-              ...assets.landmarks.map((l) => ({ label: l, value: l })),
+              ...assets.approvalStatus.map((s) => ({ label: s, value: s })),
             ]}
-            value={formData.landmark}
-            onChange={(e) => handleInputChange("landmark", e.target.value)}
-            error={errors.landmark}
+            value={formData.approvalStatus}
+            onChange={(e) =>
+              handleInputChange("approvalStatus", e.target.value)
+            }
+            error={errors.approvalStatus}
+            required
+          />
+        </div>
+
+        {/* Optional: Width + Units if you still need them */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input
+            label="Width"
+            placeholder="e.g., 24"
+            type="number"
+            value={formData.width || ""}
+            onChange={(e) =>
+              handleInputChange(
+                "width",
+                e.target.value ? Number(e.target.value) : 0
+              )
+            }
+            error={errors.width}
+          />
+          <Select
+            label="Units"
+            options={[
+              { label: "Meters", value: "meters" },
+              { label: "Feet", value: "feet" },
+            ]}
+            value={formData.units}
+            onChange={(e) => handleInputChange("units", e.target.value)}
+            error={errors.units}
           />
         </div>
       </div>
