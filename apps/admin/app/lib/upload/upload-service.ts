@@ -1,4 +1,4 @@
-// app/lib/services/upload-service.ts
+// app/lib/services/upload-service.ts  (or wherever it actually lives)
 import { apiClient } from "@/app/lib/api/client";
 
 export interface SingleUploadResponse {
@@ -10,38 +10,36 @@ export interface MultipleUploadResponse {
 }
 
 export class UploadService {
-  private readonly baseUrl = '/files';
+  // Single source of truth for the path
+  private readonly singleUploadPath = "/files/uploads";
+  private readonly multipleUploadPath = "/files/uploads/many";
 
-  // Single file upload - FIXED to return the actual URL string
   async uploadFile(file: File): Promise<string> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const response = await apiClient.post<SingleUploadResponse>(
-      `${this.baseUrl}/files/uploads`,
+      this.singleUploadPath,
       formData
     );
 
-    // Extract the URL from the object
-    return response.fileUrl || "";
+    return response?.fileUrl ?? "";
   }
 
-  // Multiple files upload
   async uploadFiles(files: File[]): Promise<string[]> {
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
+    files.forEach((file) => formData.append("files", file));
 
     const response = await apiClient.post<MultipleUploadResponse>(
-      `${this.baseUrl}/files/uploads/many`,
+      this.multipleUploadPath,
       formData
     );
 
-    return response.fileUrls || [];
+    return response?.fileUrls ?? [];
   }
 
-  // Delete file (optional)
   async deleteFile(fileKey: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.delete(`${this.baseUrl}/uploads/${fileKey}`);
+    return apiClient.delete(`/files/uploads/${fileKey}`);
   }
 }
 
