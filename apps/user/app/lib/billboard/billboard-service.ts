@@ -94,6 +94,48 @@ export interface PopularBillboard {
 export class BillboardService {
   private readonly baseUrl = '/billboards';
 
+  private normalizeBillboard(billboard: Billboard): Billboard {
+    return {
+      ...billboard,
+      rating: billboard.rating || 0,
+      reviews: billboard.reviews || 0,
+      impressions: billboard.impressions || 0,
+      features: billboard.features || [],
+      images: billboard.images && billboard.images.length > 0
+        ? billboard.images
+        : ['/billboard-placeholder.jpg'],
+    };
+  }
+
+  private flattenBillboards(response: SearchResponse | Record<string, any> | undefined): Billboard[] {
+    if (!response) return [];
+
+    const grouped = response.landingPageBillboards;
+    if (grouped && typeof grouped === 'object') {
+      const flattened = Object.values(grouped)
+        .filter(Array.isArray)
+        .flat() as Billboard[];
+
+      return flattened
+        .map((billboard) => this.normalizeBillboard(billboard))
+        .sort((a, b) => {
+          const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return bDate - aDate;
+        });
+    }
+
+    const rawBillboards = (response.data || response.foundItems || []) as Billboard[];
+
+    return (rawBillboards || [])
+      .map((billboard) => this.normalizeBillboard(billboard))
+      .sort((a, b) => {
+        const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return bDate - aDate;
+      });
+  }
+
   // Get all billboards (no filters, just pagination)
   async getAllBillboards(page: number = 1, limit: number = 12): Promise<SearchResponse> {
     return this.searchBillboards({
@@ -113,6 +155,14 @@ export class BillboardService {
       }
     });
     
+    // Sort by newest first by default if not specified
+    if (!queryParams.has('sortBy')) {
+      queryParams.append('sortBy', 'createdAt');
+    }
+    if (!queryParams.has('sortOrder')) {
+      queryParams.append('sortOrder', 'desc');
+    }
+    
     // If no params, call without query string
     const queryString = queryParams.toString();
     const url = queryString 
@@ -120,37 +170,31 @@ export class BillboardService {
       : `${this.baseUrl}/search`;
     
     const response = await apiClient.get<SearchResponse>(url);
-    
-    // Transform response to ensure data consistency
-    const billboards = (response.data || response.foundItems || []) as Billboard[];
+    const billboards = this.flattenBillboards(response);
     
     return {
       ...response,
-      foundItems: billboards.map(billboard => ({
-        ...billboard,
-        rating: billboard.rating || 0,
-        reviews: billboard.reviews || 0,
-        impressions: billboard.impressions || 0,
-        features: billboard.features || [],
-        images: billboard.images && billboard.images.length > 0 
-          ? billboard.images 
-          : ['/billboard-placeholder.jpg'],
-      })),
+      data: billboards,
+      foundItems: billboards,
     };
   }
 
   async getBillboardById(id: string): Promise<Billboard> {
-    const response = await apiClient.get<Billboard>(`${this.baseUrl}/${id}`);
-    return {
-      ...response,
-      rating: response.rating || 0,
-      reviews: response.reviews || 0,
-      impressions: response.impressions || 0,
-      features: response.features || [],
-      images: response.images && response.images.length > 0 
-        ? response.images 
-        : ['/billboard-placeholder.jpg'],
-    };
+    try {
+      const response = await apiClient.get<Billboard>(`${this.baseUrl}/${id}`);
+      return this.normalizeBillboard(response);
+    } catch (error) {
+      const searchResponse = await this.searchBillboards({ limit: 1000, page: 1 });
+      const match = (searchResponse.foundItems || []).find((item) => {
+        return item._id === id || item.id === id || item.billboardId === id;
+      });
+
+      if (match) {
+        return this.normalizeBillboard(match);
+      }
+
+      throw error;
+    }
   }
 
   async getFeaturedBillboards(limit: number = 6): Promise<PopularBillboard[]> {

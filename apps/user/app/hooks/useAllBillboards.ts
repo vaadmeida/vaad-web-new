@@ -19,6 +19,38 @@ export function useAllBillboards(): UseAllBillboardsReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const normalizeBillboards = useCallback((payload: any): Billboard[] => {
+    const candidates = [
+      payload,
+      payload?.data,
+      payload?.items,
+      payload?.results,
+      payload?.billboards,
+      payload?.foundItems,
+      payload?.landingPageBillboards,
+      payload?.data?.items,
+      payload?.data?.results,
+      payload?.data?.billboards,
+      payload?.data?.foundItems,
+    ];
+
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate)) {
+        return candidate as Billboard[];
+      }
+
+      if (candidate && typeof candidate === "object") {
+        const values = Object.values(candidate as Record<string, unknown>);
+        const flattened = values.filter(Array.isArray);
+        if (flattened.length > 0) {
+          return flattened.flat() as Billboard[];
+        }
+      }
+    }
+
+    return [];
+  }, []);
+
   const fetchBillboards = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -31,6 +63,7 @@ export function useAllBillboards(): UseAllBillboardsReturn {
     } catch (err) {
       console.error("Failed to fetch billboards:", err);
       setError(err instanceof Error ? err.message : "Failed to load billboards");
+      setAllBillboards([]);
     } finally {
       setLoading(false);
     }

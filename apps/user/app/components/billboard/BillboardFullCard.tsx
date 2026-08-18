@@ -20,7 +20,7 @@ export default function BillboardFullCard({ billboard }: Props) {
   const handleAddToCart = async () => {
     setIsAddingToCart(true);
     try {
-      const startDate = new Date().toISOString();
+      const startDate = new Date().toISOString().split("T")[0];
       const cartItem = await addToCart({
         billboardId: billboard._id,
         durationInMonths: 1,

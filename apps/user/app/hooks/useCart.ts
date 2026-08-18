@@ -20,7 +20,10 @@ interface UseCartReturn {
   subtotal: number;
   totalItems: number;
   addToCart: (data: AddToCartRequest) => Promise<CartItem | null>;
-  updateCartItem: (id: string, data: UpdateCartItemRequest) => Promise<CartItem | null>;
+  updateCartItem: (
+    id: string,
+    data: UpdateCartItemRequest
+  ) => Promise<CartItem | null>;
   removeFromCart: (id: string) => Promise<boolean>;
   clearCart: () => Promise<boolean>;
   refetchCart: () => Promise<void>;
@@ -41,7 +44,7 @@ export function useCart(): UseCartReturn {
   const [subtotal, setSubtotal] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [pendingItemIds, setPendingItemIds] = useState<string[]>([]);
-  
+
   const { isAuthenticated } = useAuthContext();
   const { showToast } = useToast();
   const isMountedRef = useRef(true);
@@ -51,25 +54,27 @@ export function useCart(): UseCartReturn {
     const itemsCount = items.length;
     const subtotalAmount = items.reduce((sum, item) => {
       const rate = item.billboard?.rate || 0;
-      return sum + (rate * item.durationInMonths);
+      return sum + rate * item.durationInMonths;
     }, 0);
-    
+
     setTotalItems(itemsCount);
     setSubtotal(subtotalAmount);
   }, []);
 
-  const syncCartState = useCallback((items: CartItem[]) => {
-    cartItemsRef.current = items;
-    setCartItems(items);
-    calculateTotals(items);
-  }, [calculateTotals]);
+  const syncCartState = useCallback(
+    (items: CartItem[]) => {
+      cartItemsRef.current = items;
+      setCartItems(items);
+      calculateTotals(items);
+    },
+    [calculateTotals]
+  );
 
   const setItemPendingState = useCallback((id: string, isPending: boolean) => {
     setPendingItemIds((current) => {
       if (isPending) {
         return current.includes(id) ? current : [...current, id];
       }
-
       return current.filter((itemId) => itemId !== id);
     });
   }, []);
@@ -78,25 +83,28 @@ export function useCart(): UseCartReturn {
     return item.billboardId || item.billboard?._id || "";
   }, []);
 
-  const upsertCartItem = useCallback((items: CartItem[], incomingItem: CartItem) => {
-    const incomingBillboardId = getCartItemBillboardId(incomingItem);
-    const existingIndex = items.findIndex(
-      (item) =>
-        item._id === incomingItem._id ||
-        getCartItemBillboardId(item) === incomingBillboardId,
-    );
+  const upsertCartItem = useCallback(
+    (items: CartItem[], incomingItem: CartItem) => {
+      const incomingBillboardId = getCartItemBillboardId(incomingItem);
+      const existingIndex = items.findIndex(
+        (item) =>
+          item._id === incomingItem._id ||
+          getCartItemBillboardId(item) === incomingBillboardId
+      );
 
-    if (existingIndex === -1) {
-      return [...items, incomingItem];
-    }
+      if (existingIndex === -1) {
+        return [...items, incomingItem];
+      }
 
-    const nextItems = [...items];
-    nextItems[existingIndex] = {
-      ...nextItems[existingIndex],
-      ...incomingItem,
-    };
-    return nextItems;
-  }, [getCartItemBillboardId]);
+      const nextItems = [...items];
+      nextItems[existingIndex] = {
+        ...nextItems[existingIndex],
+        ...incomingItem,
+      };
+      return nextItems;
+    },
+    [getCartItemBillboardId]
+  );
 
   const resolveCartErrorMessage = useCallback((err: any, fallback: string) => {
     if (err?.status === 401) {
@@ -110,53 +118,56 @@ export function useCart(): UseCartReturn {
     return fallback;
   }, []);
 
-  const loadCart = useCallback(async ({
-    showLoader = true,
-    resetOnFailure = true,
-  }: LoadCartOptions = {}): Promise<CartItem[]> => {
-    if (!isAuthenticated) {
-      if (resetOnFailure) {
-        syncCartState([]);
-      }
-      if (showLoader && isMountedRef.current) {
-        setIsLoading(false);
-      }
-      return [];
-    }
-
-    if (showLoader) {
-      setIsLoading(true);
-    }
-    setError(null);
-
-    try {
-      const items = await cartService.getCart();
-      
-      if (!isMountedRef.current) return [];
-      
-      syncCartState(items);
-      return items;
-    } catch (err: any) {
-      console.error("Failed to fetch cart:", err);
-      if (isMountedRef.current) {
-        setError(resolveCartErrorMessage(err, "Failed to load cart"));
+  const loadCart = useCallback(
+    async ({
+      showLoader = true,
+      resetOnFailure = true,
+    }: LoadCartOptions = {}): Promise<CartItem[]> => {
+      if (!isAuthenticated) {
         if (resetOnFailure) {
           syncCartState([]);
         }
+        if (showLoader && isMountedRef.current) {
+          setIsLoading(false);
+        }
+        return [];
       }
-      throw err;
-    } finally {
-      if (showLoader && isMountedRef.current) {
-        setIsLoading(false);
+
+      if (showLoader) {
+        setIsLoading(true);
       }
-    }
-  }, [isAuthenticated, resolveCartErrorMessage, syncCartState]);
+      setError(null);
+
+      try {
+        const items = await cartService.getCart();
+
+        if (!isMountedRef.current) return [];
+
+        syncCartState(items);
+        return items;
+      } catch (err: any) {
+        console.error("Failed to fetch cart:", err);
+        if (isMountedRef.current) {
+          setError(resolveCartErrorMessage(err, "Failed to load cart"));
+          if (resetOnFailure) {
+            syncCartState([]);
+          }
+        }
+        throw err;
+      } finally {
+        if (showLoader && isMountedRef.current) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [isAuthenticated, resolveCartErrorMessage, syncCartState]
+  );
 
   const fetchCart = useCallback(async () => {
     try {
       await loadCart();
     } catch {
-      // loadCart already updates cart error state
+      // loadCart already updates error state
     }
   }, [loadCart]);
 
@@ -177,218 +188,266 @@ export function useCart(): UseCartReturn {
     };
   }, [fetchCart, isAuthenticated, syncCartState]);
 
-  const addToCart = useCallback(async (data: AddToCartRequest): Promise<CartItem | null> => {
-    if (!isAuthenticated) {
-      showToast?.({
-        type: 'warning',
-        message: 'Please login to add items to cart',
-        duration: 3000,
-      });
-      return null;
-    }
+  const addToCart = useCallback(
+    async (data: AddToCartRequest): Promise<CartItem | null> => {
+      if (!isAuthenticated) {
+        showToast?.({
+          type: "warning",
+          message: "Please login to add items to cart",
+          duration: 3000,
+        });
+        return null;
+      }
 
-    setError(null);
+      setError(null);
 
-    const existingItem = cartItemsRef.current.find(
-      (item) => getCartItemBillboardId(item) === data.billboardId,
-    );
+      const existingItem = cartItemsRef.current.find(
+        (item) => getCartItemBillboardId(item) === data.billboardId
+      );
 
-    if (existingItem) {
-      showToast?.({
-        type: 'info',
-        message: 'This item is already in your cart',
-        duration: 2500,
-      });
-      return existingItem;
-    }
-
-    try {
-      const newItem = await cartService.addToCart(data);
-      
-      if (!isMountedRef.current) return null;
-
-      let resolvedItem = newItem;
+      if (existingItem) {
+        showToast?.({
+          type: "info",
+          message: "This item is already in your cart",
+          duration: 2500,
+        });
+        return existingItem;
+      }
 
       try {
-        const serverItems = await loadCart({
-          showLoader: true,
-          resetOnFailure: false,
+        const newItem = await cartService.addToCart(data);
+
+        if (!isMountedRef.current) return newItem ?? null;
+
+        let resolvedItem = newItem;
+
+        // Refresh cart from server (don't fail the whole add if this fails)
+        try {
+          const serverItems = await loadCart({
+            showLoader: false,
+            resetOnFailure: false,
+          });
+          const hydratedItem = serverItems.find(
+            (item) => getCartItemBillboardId(item) === data.billboardId
+          );
+
+          if (hydratedItem) {
+            resolvedItem = hydratedItem;
+          } else if (newItem) {
+            const updatedItems = upsertCartItem(
+              cartItemsRef.current,
+              newItem
+            );
+            syncCartState(updatedItems);
+          }
+        } catch (refreshErr) {
+          console.error("Failed to refresh cart after add:", refreshErr);
+          if (newItem) {
+            const updatedItems = upsertCartItem(
+              cartItemsRef.current,
+              newItem
+            );
+            syncCartState(updatedItems);
+          }
+        }
+
+        showToast?.({
+          type: "success",
+          message: "Item added to cart successfully",
+          duration: 3000,
         });
-        const hydratedItem = serverItems.find(
-          (item) => getCartItemBillboardId(item) === data.billboardId,
+
+        return resolvedItem ?? null;
+      } catch (err: any) {
+        console.error("Failed to add to cart:", err);
+        const errorMsg = resolveCartErrorMessage(
+          err,
+          "Failed to add item to cart"
+        );
+        setError(errorMsg);
+        showToast?.({
+          type: "error",
+          message: errorMsg,
+          duration: 3000,
+        });
+
+        // Rethrow so the page debug box can show the real error
+        throw err;
+      }
+    },
+    [
+      getCartItemBillboardId,
+      isAuthenticated,
+      loadCart,
+      resolveCartErrorMessage,
+      showToast,
+      syncCartState,
+      upsertCartItem,
+    ]
+  );
+
+  const updateCartItem = useCallback(
+    async (
+      id: string,
+      data: UpdateCartItemRequest
+    ): Promise<CartItem | null> => {
+      setError(null);
+
+      const previousItems = cartItemsRef.current;
+      const itemToUpdate = previousItems.find((item) => item._id === id);
+
+      if (!itemToUpdate) {
+        setError("Item not found in cart");
+        showToast?.({
+          type: "error",
+          message: "Item not found in cart",
+          duration: 3000,
+        });
+        return null;
+      }
+
+      const optimisticItem = { ...itemToUpdate, ...data };
+      const optimisticItems = previousItems.map((item) =>
+        item._id === id ? optimisticItem : item
+      );
+
+      const billboardId = getCartItemBillboardId(itemToUpdate);
+
+      if (!billboardId) {
+        setError("Billboard information is missing for this cart item");
+        showToast?.({
+          type: "error",
+          message: "Billboard information is missing for this cart item",
+          duration: 3000,
+        });
+        return null;
+      }
+
+      setItemPendingState(id, true);
+      syncCartState(optimisticItems);
+
+      try {
+        const payload: UpdateCartItemPayload = {
+          billboardId,
+          durationInMonths:
+            optimisticItem.durationInMonths ?? itemToUpdate.durationInMonths,
+          startDate: optimisticItem.startDate ?? itemToUpdate.startDate,
+        };
+
+        const updatedItem = await cartService.updateCartItem(id, payload);
+
+        if (!isMountedRef.current) return updatedItem;
+
+        const serverUpdatedItems = optimisticItems.map((item) =>
+          item._id === id ? { ...item, ...updatedItem } : item
         );
 
-        if (hydratedItem) {
-          resolvedItem = hydratedItem;
+        syncCartState(serverUpdatedItems);
+
+        showToast?.({
+          type: "success",
+          message: "Cart updated successfully",
+          duration: 2000,
+        });
+
+        return updatedItem;
+      } catch (err: any) {
+        console.error("Failed to update cart item:", err);
+
+        if (!isMountedRef.current) return null;
+
+        syncCartState(previousItems);
+
+        const errorMsg = resolveCartErrorMessage(
+          err,
+          "Failed to update cart item"
+        );
+        setError(errorMsg);
+        showToast?.({
+          type: "error",
+          message: errorMsg,
+          duration: 3000,
+        });
+
+        return null;
+      } finally {
+        if (isMountedRef.current) {
+          setItemPendingState(id, false);
         }
-      } catch (refreshErr) {
-        console.error("Failed to refresh cart after add:", refreshErr);
-
-        const updatedItems = upsertCartItem(cartItemsRef.current, newItem);
-        syncCartState(updatedItems);
       }
-      
-      showToast?.({
-        type: 'success',
-        message: 'Item added to cart successfully',
-        duration: 3000,
-      });
+    },
+    [
+      getCartItemBillboardId,
+      resolveCartErrorMessage,
+      setItemPendingState,
+      showToast,
+      syncCartState,
+    ]
+  );
 
-      return resolvedItem;
-    } catch (err: any) {
-      console.error("Failed to add to cart:", err);
-      const errorMsg = resolveCartErrorMessage(err, "Failed to add item to cart");
-      setError(errorMsg);
-      showToast?.({
-        type: 'error',
-        message: errorMsg,
-        duration: 3000,
-      });
-      return null;
-    }
-  }, [getCartItemBillboardId, isAuthenticated, loadCart, resolveCartErrorMessage, showToast, syncCartState, upsertCartItem]);
+  const removeFromCart = useCallback(
+    async (id: string): Promise<boolean> => {
+      setError(null);
 
-  const updateCartItem = useCallback(async (id: string, data: UpdateCartItemRequest): Promise<CartItem | null> => {
-    setError(null);
+      const previousItems = cartItemsRef.current;
+      const hasItemToRemove = previousItems.some((item) => item._id === id);
 
-    const previousItems = cartItemsRef.current;
-    const itemToUpdate = previousItems.find((item) => item._id === id);
-    
-    if (!itemToUpdate) {
-      setError("Item not found in cart");
-      showToast?.({
-        type: 'error',
-        message: 'Item not found in cart',
-        duration: 3000,
-      });
-      return null;
-    }
-
-    const optimisticItem = { ...itemToUpdate, ...data };
-    const optimisticItems = previousItems.map((item) =>
-      item._id === id ? optimisticItem : item,
-    );
-
-    const billboardId = getCartItemBillboardId(itemToUpdate);
-
-    if (!billboardId) {
-      setError("Billboard information is missing for this cart item");
-      showToast?.({
-        type: 'error',
-        message: 'Billboard information is missing for this cart item',
-        duration: 3000,
-      });
-      return null;
-    }
-
-    setItemPendingState(id, true);
-    syncCartState(optimisticItems);
-
-    try {
-      const payload: UpdateCartItemPayload = {
-        billboardId,
-        durationInMonths:
-          optimisticItem.durationInMonths ?? itemToUpdate.durationInMonths,
-        startDate: optimisticItem.startDate ?? itemToUpdate.startDate,
-      };
-
-      const updatedItem = await cartService.updateCartItem(id, payload);
-      
-      if (!isMountedRef.current) return updatedItem;
-      
-      const serverUpdatedItems = optimisticItems.map((item) => 
-        item._id === id ? { ...item, ...updatedItem } : item,
-      );
-      
-      syncCartState(serverUpdatedItems);
-      
-      showToast?.({
-        type: 'success',
-        message: 'Cart updated successfully',
-        duration: 2000,
-      });
-      
-      return updatedItem;
-    } catch (err: any) {
-      console.error("Failed to update cart item:", err);
-
-      if (!isMountedRef.current) return null;
-      
-      syncCartState(previousItems);
-      
-      const errorMsg = resolveCartErrorMessage(err, "Failed to update cart item");
-      setError(errorMsg);
-      showToast?.({
-        type: 'error',
-        message: errorMsg,
-        duration: 3000,
-      });
-      
-      return null;
-    } finally {
-      if (isMountedRef.current) {
-        setItemPendingState(id, false);
+      if (!hasItemToRemove) {
+        setError("Item not found in cart");
+        showToast?.({
+          type: "error",
+          message: "Item not found in cart",
+          duration: 3000,
+        });
+        return false;
       }
-    }
-  }, [getCartItemBillboardId, resolveCartErrorMessage, setItemPendingState, showToast, syncCartState]);
 
-  const removeFromCart = useCallback(async (id: string): Promise<boolean> => {
-    setError(null);
+      const updatedItems = previousItems.filter((item) => item._id !== id);
 
-    const previousItems = cartItemsRef.current;
-    const hasItemToRemove = previousItems.some((item) => item._id === id);
+      setItemPendingState(id, true);
+      syncCartState(updatedItems);
 
-    if (!hasItemToRemove) {
-      setError("Item not found in cart");
-      showToast?.({
-        type: 'error',
-        message: 'Item not found in cart',
-        duration: 3000,
-      });
-      return false;
-    }
+      try {
+        await cartService.removeFromCart(id);
 
-    const updatedItems = previousItems.filter((item) => item._id !== id);
+        if (!isMountedRef.current) {
+          return true;
+        }
 
-    setItemPendingState(id, true);
-    syncCartState(updatedItems);
+        showToast?.({
+          type: "success",
+          message: "Item removed from cart",
+          duration: 2000,
+        });
 
-    try {
-      await cartService.removeFromCart(id);
-      
-      if (!isMountedRef.current) {
         return true;
+      } catch (err: any) {
+        console.error("Failed to remove from cart:", err);
+
+        if (!isMountedRef.current) return false;
+
+        syncCartState(previousItems);
+
+        const errorMsg = resolveCartErrorMessage(
+          err,
+          "Failed to remove item from cart"
+        );
+        setError(errorMsg);
+        showToast?.({
+          type: "error",
+          message: errorMsg,
+          duration: 3000,
+        });
+
+        return false;
+      } finally {
+        if (isMountedRef.current) {
+          setItemPendingState(id, false);
+        }
       }
-      
-      showToast?.({
-        type: 'success',
-        message: 'Item removed from cart',
-        duration: 2000,
-      });
-      
-      return true;
-    } catch (err: any) {
-      console.error("Failed to remove from cart:", err);
-      
-      if (!isMountedRef.current) return false;
-      
-      syncCartState(previousItems);
-      
-      const errorMsg = resolveCartErrorMessage(err, "Failed to remove item from cart");
-      setError(errorMsg);
-      showToast?.({
-        type: 'error',
-        message: errorMsg,
-        duration: 3000,
-      });
-      
-      return false;
-    } finally {
-      if (isMountedRef.current) {
-        setItemPendingState(id, false);
-      }
-    }
-  }, [resolveCartErrorMessage, setItemPendingState, showToast, syncCartState]);
+    },
+    [resolveCartErrorMessage, setItemPendingState, showToast, syncCartState]
+  );
 
   const clearCart = useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
@@ -399,44 +458,57 @@ export function useCart(): UseCartReturn {
 
     try {
       await cartService.clearCart();
-      
+
       showToast?.({
-        type: 'success',
-        message: 'Cart cleared successfully',
+        type: "success",
+        message: "Cart cleared successfully",
         duration: 2000,
       });
-      
+
       return true;
     } catch (err: any) {
       console.error("Failed to clear cart:", err);
-      
+
       syncCartState(previousItems);
-      
+
       const errorMsg = resolveCartErrorMessage(err, "Failed to clear cart");
       setError(errorMsg);
       showToast?.({
-        type: 'error',
+        type: "error",
         message: errorMsg,
         duration: 3000,
       });
-      
+
       return false;
     } finally {
       setIsLoading(false);
     }
   }, [resolveCartErrorMessage, showToast, syncCartState]);
 
-  const isCartItemPending = useCallback((id: string): boolean => {
-    return pendingItemIds.includes(id);
-  }, [pendingItemIds]);
+  const isCartItemPending = useCallback(
+    (id: string): boolean => {
+      return pendingItemIds.includes(id);
+    },
+    [pendingItemIds]
+  );
 
-  const isItemInCart = useCallback((billboardId: string): boolean => {
-    return cartItems.some(item => getCartItemBillboardId(item) === billboardId);
-  }, [cartItems, getCartItemBillboardId]);
+  const isItemInCart = useCallback(
+    (billboardId: string): boolean => {
+      return cartItems.some(
+        (item) => getCartItemBillboardId(item) === billboardId
+      );
+    },
+    [cartItems, getCartItemBillboardId]
+  );
 
-  const getCartItemByBillboardId = useCallback((billboardId: string): CartItem | undefined => {
-    return cartItems.find(item => getCartItemBillboardId(item) === billboardId);
-  }, [cartItems, getCartItemBillboardId]);
+  const getCartItemByBillboardId = useCallback(
+    (billboardId: string): CartItem | undefined => {
+      return cartItems.find(
+        (item) => getCartItemBillboardId(item) === billboardId
+      );
+    },
+    [cartItems, getCartItemBillboardId]
+  );
 
   return {
     cartItems,

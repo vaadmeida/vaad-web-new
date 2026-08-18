@@ -1,10 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { Drawer, IconButton } from "@mui/material";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Trash2, Minus, Plus, Calendar, X, ShoppingCart } from "lucide-react";
 import { cartService } from "@/app/lib/cart/cart-service";
 import { useCartContext } from "@/app/contexts/cart-context";
+import { useToast } from "@/app/contexts/toast-context";
+import { paymentService } from "@/app/lib/payment/payment-service";
+import ApiErrorDisplay from "@/app/components/debug/ApiErrorDisplay";
 
 type Props = {
   open: boolean;
@@ -14,10 +19,14 @@ type Props = {
 };
 
 export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
+  const router = useRouter();
+  const { showToast } = useToast();
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
   const { 
     cartItems, 
     isLoading, 
     error,
+    errorDetails,
     subtotal, 
     totalItems,
     updateCartItem,
@@ -57,6 +66,71 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
     return rate * item.durationInMonths;
   };
 
+  const handleCheckout = async () => {
+    if (!cartItems.length || isCheckingOut) {
+      return;
+    }
+
+    setIsCheckingOut(true);
+
+    try {
+      const orderItems = cartItems.map((item) => ({
+        billboardId: item.billboardId,
+        durationInMonths: item.durationInMonths,
+        startDate: new Date(item.startDate).toISOString().split("T")[0],
+      }));
+
+      const payment = await paymentService.initializePayment({ orderItems });
+      const gatewayName = (payment.gateway || payment.provider || "unknown").toLowerCase();
+
+      if (payment.redirectUrl) {
+        window.location.href = payment.redirectUrl;
+        return;
+      }
+
+      if (gatewayName.includes("paystack")) {
+        const paystackKey = payment.key || payment.data?.key || payment.data?.publicKey || payment.data?.paystackKey;
+
+        if (!paystackKey || typeof paystackKey !== "string") {
+          throw new Error("Paystack public key is missing in the payment initialization response.");
+        }
+
+        await paymentService.openPaystackCheckout({
+          key: paystackKey,
+          email: payment.email,
+          amount: payment.amount || subtotal,
+          reference: payment.reference,
+          currency: payment.currency || "NGN",
+          callback: () => {
+            const reference = payment.reference ? `&reference=${encodeURIComponent(payment.reference)}` : "";
+            router.push(`/payment/success?gateway=paystack${reference}`);
+          },
+          onClose: () => {
+            const reference = payment.reference ? `&reference=${encodeURIComponent(payment.reference)}` : "";
+            router.push(`/payment/error?message=${encodeURIComponent("Payment was cancelled before completion.")}${reference}`);
+          },
+        });
+
+        return;
+      }
+
+      throw new Error(payment.message || "No supported payment gateway was returned by the backend.");
+    } catch (error: any) {
+      console.error("Checkout initialization failed:", error);
+      const message = error?.message || "Unable to initialize payment. Please try again.";
+      showToast({
+        type: "error",
+        title: "Payment failed",
+        message,
+        duration: 5000,
+      });
+      const encodedMessage = encodeURIComponent(message);
+      router.push(`/payment/error?message=${encodedMessage}`);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
+
   return (
     <Drawer
       anchor={anchor}
@@ -93,7 +167,18 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
           </IconButton>
         </div>
 
-        {error && (
+        {/* Development Error Display */}
+        {error && errorDetails && (
+          <ApiErrorDisplay
+            title="Cart Operation Failed"
+            error={error}
+            endpoint={errorDetails.endpoint}
+            payload={errorDetails.payload}
+            response={errorDetails.response}
+          />
+        )}
+
+        {error && !errorDetails && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
             <p className="text-sm text-red-700">{error}</p>
           </div>
@@ -241,8 +326,13 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
               <div className="w-full border border-[#F0F2F5]" />
 
               <div className="flex gap-4 mt-5">
-                <button type="button" className="flex-1 bg-[#0177AB] font-semibold text-[16px] text-white py-4 rounded-md hover:bg-[#0284c7] transition">
-                  Proceed to Pay
+                <button
+                  type="button"
+                  onClick={handleCheckout}
+                  disabled={isCheckingOut || isLoading}
+                  className="flex-1 bg-[#0177AB] font-semibold text-[16px] text-white py-4 rounded-md hover:bg-[#0284c7] transition disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isCheckingOut ? "Initializing payment..." : "Proceed to Pay"}
                 </button>
 
                 <button

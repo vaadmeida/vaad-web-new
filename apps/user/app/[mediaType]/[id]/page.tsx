@@ -15,7 +15,7 @@ import { useCartContext } from "@/app/contexts/cart-context";
 export default function BillboardDetailsPage() {
   const params = useParams();
   const { id } = params;
-  
+
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState("");
   const [billboard, setBillboard] = useState<Billboard | null>(null);
@@ -24,13 +24,17 @@ export default function BillboardDetailsPage() {
   const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
   const [showShareTooltip, setShowShareTooltip] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
-  
+
+  // Debug (remove later)
+  const [cartError, setCartError] = useState<string | null>(null);
+  const [cartDebug, setCartDebug] = useState<string | null>(null);
+
   const { addToCart, isItemInCart, getCartItemByBillboardId } = useCartContext();
 
   useEffect(() => {
     const fetchBillboard = async () => {
       if (!id) return;
-      
+
       setIsLoading(true);
       try {
         const data = await billboardService.getBillboardById(id as string);
@@ -45,11 +49,10 @@ export default function BillboardDetailsPage() {
         setIsLoading(false);
       }
     };
-    
+
     fetchBillboard();
   }, [id]);
 
-  // Calculate available days
   const calculateAvailableDays = () => {
     if (!billboard?.availableDate) return 0;
     try {
@@ -64,13 +67,15 @@ export default function BillboardDetailsPage() {
   };
 
   const availableIn = calculateAvailableDays();
-  const allImages = billboard?.photos?.length ? billboard.photos : (billboard?.images?.length ? billboard.images : []);
+  const allImages = billboard?.photos?.length
+    ? billboard.photos
+    : billboard?.images?.length
+      ? billboard.images
+      : [];
 
-  // Check if item is already in cart
   const isInCart = billboard ? isItemInCart(billboard._id) : false;
   const cartItem = billboard ? getCartItemByBillboardId(billboard._id) : null;
 
-  // Copy to clipboard function
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -81,10 +86,9 @@ export default function BillboardDetailsPage() {
     }
   };
 
-  // Share function
   const handleShare = async () => {
     try {
-      if (typeof navigator.share === 'function') {
+      if (typeof navigator.share === "function") {
         await navigator.share({
           title: billboard?.mediaType || "Billboard",
           text: `Check out this ${billboard?.mediaType} at ${billboard?.locationAddress}`,
@@ -107,20 +111,59 @@ export default function BillboardDetailsPage() {
     }
   };
 
+  // Format: 2027-04-25
+  const formatDateYYYYMMDD = (date: Date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+
   const handleAddToCart = async () => {
     if (!billboard) return;
 
     setIsAddingToCart(true);
-    const startDate = new Date().toISOString();
+    setCartError(null);
+    setCartDebug(null);
+
+    const startDate = formatDateYYYYMMDD(new Date()); // e.g. "2026-08-18"
+
+    const payload = {
+      billboardId: billboard._id,
+      durationInMonths: quantity,
+      startDate,
+    };
 
     try {
-      await addToCart({
-        billboardId: billboard._id,
-        durationInMonths: quantity,
-        startDate,
-      });
-    } catch (error) {
-      console.error("Failed to add to cart:", error);
+      const result = await addToCart(payload);
+
+      setCartDebug(
+        JSON.stringify(
+          {
+            status: "success",
+            payloadSent: payload,
+            response: result ?? null,
+          },
+          null,
+          2
+        )
+      );
+    } catch (error: any) {
+      const message =
+        error?.message ||
+        error?.data?.message ||
+        "Failed to add to cart";
+
+      const fullError = {
+        message,
+        status: error?.status,
+        data: error?.data,
+        payloadSent: payload,
+      };
+
+      setCartError(message);
+      setCartDebug(JSON.stringify(fullError, null, 2));
+      console.error("Failed to add to cart:", fullError);
     } finally {
       setIsAddingToCart(false);
     }
@@ -166,9 +209,16 @@ export default function BillboardDetailsPage() {
           <section className="bg-linear-to-r from-[#0177AB] to-[#003045] pt-24 pb-20 px-4 lg:px-16" />
           <section className="bg-white px-4 sm:px-18 py-10">
             <div className="max-w-7xl mx-auto text-center py-20">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-4">Billboard Not Found</h2>
-              <p className="text-gray-500 mb-6">{error || "The billboard you're looking for doesn't exist."}</p>
-              <Link href="/" className="bg-[#0177AB] text-white px-6 py-3 rounded-lg hover:bg-[#006d91] transition">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+                Billboard Not Found
+              </h2>
+              <p className="text-gray-500 mb-6">
+                {error || "The billboard you're looking for doesn't exist."}
+              </p>
+              <Link
+                href="/"
+                className="bg-[#0177AB] text-white px-6 py-3 rounded-lg hover:bg-[#006d91] transition"
+              >
                 Go Back Home
               </Link>
             </div>
@@ -180,33 +230,60 @@ export default function BillboardDetailsPage() {
     );
   }
 
-  // Format display values
-  const displayMediaType = billboard.mediaType?.toLowerCase().replace(/-/g, " ") || "Billboard";
+  const displayMediaType =
+    billboard.mediaType?.toLowerCase().replace(/-/g, " ") || "Billboard";
+
   return (
     <>
       <div className="bg-[#F7F9FC] min-h-screen">
-        {/* Navbar */}
         <div className="fixed top-0 left-0 right-0 z-50">
           <Navbar transparent />
         </div>
 
-        {/* Header */}
         <section className="bg-linear-to-r from-[#0177AB] to-[#003045] pt-24 pb-20 px-4 lg:px-16" />
 
-        {/* Main */}
         <section className="bg-white px-4 sm:px-18 py-10">
+          {/* ===== DEBUG BOX (remove later) ===== */}
+         {/* {(cartError || cartDebug) && (
+            <div className="max-w-7xl mx-auto mb-6 space-y-3">
+              {cartError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-sm font-medium text-red-700">
+                    Add to cart failed
+                  </p>
+                  <p className="text-sm text-red-600 mt-1">{cartError}</p>
+                </div>
+              )}
+              {cartDebug && (
+                <div className="bg-gray-100 border border-gray-300 rounded-lg p-4">
+                  <p className="text-xs font-semibold text-gray-700 mb-2">
+                    Debug response (payload + server response):
+                  </p>
+                  <pre className="text-xs text-gray-800 whitespace-pre-wrap break-all">
+                    {cartDebug}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+          {/* ===== END DEBUG BOX ===== */}
+
           <div className="text-[#EB5017] text-sm font-medium pb-10">
-            <Link href="/">Home</Link> <span className="text-[#667185]">/</span>{" "}
+            <Link href="/">Home</Link>{" "}
+            <span className="text-[#667185]">/</span>{" "}
             <span className="capitalize text-[#667185]">{displayMediaType}</span>
           </div>
 
           <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
             {/* LEFT - Images */}
             <div>
-              {/* Main Image */}
               <div className="relative w-full h-[350px] md:h-[500px] rounded-[10px] overflow-hidden">
                 <Image
-                  src={activeImage || allImages[0] || "/billboard-placeholder.jpg"}
+                  src={
+                    activeImage ||
+                    allImages[0] ||
+                    "/billboard-placeholder.jpg"
+                  }
                   alt={billboard.mediaType || "Billboard"}
                   fill
                   className="object-cover"
@@ -214,7 +291,6 @@ export default function BillboardDetailsPage() {
                 />
               </div>
 
-              {/* Thumbnails */}
               {allImages.length > 1 && (
                 <div className="flex flex-wrap gap-3 mt-4">
                   {allImages.map((img: any, i: any) => (
@@ -242,15 +318,12 @@ export default function BillboardDetailsPage() {
 
             {/* RIGHT - Details */}
             <div className="flex flex-col gap-4">
-              {/* Title with Share and Copy Icons */}
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-[22px] md:text-[26px] font-semibold text-[#101928] capitalize flex-1">
                   {billboard.mediaType} At {billboard.locationAddress}
                 </h1>
-                
-                {/* Share & Copy Buttons */}
+
                 <div className="flex gap-2">
-                  {/* Copy Link Button */}
                   <div className="relative">
                     <button
                       type="button"
@@ -258,7 +331,10 @@ export default function BillboardDetailsPage() {
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
                       aria-label="Copy link"
                     >
-                      <Copy size={18} className="text-gray-500 group-hover:text-[#0177AB] transition-colors" />
+                      <Copy
+                        size={18}
+                        className="text-gray-500 group-hover:text-[#0177AB] transition-colors"
+                      />
                     </button>
                     {showCopiedTooltip && (
                       <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
@@ -267,7 +343,6 @@ export default function BillboardDetailsPage() {
                     )}
                   </div>
 
-                  {/* Share Button */}
                   <div className="relative">
                     <button
                       type="button"
@@ -275,7 +350,10 @@ export default function BillboardDetailsPage() {
                       className="p-2 rounded-full hover:bg-gray-100 transition-colors group"
                       aria-label="Share"
                     >
-                      <Share2 size={18} className="text-gray-500 group-hover:text-[#0177AB] transition-colors" />
+                      <Share2
+                        size={18}
+                        className="text-gray-500 group-hover:text-[#0177AB] transition-colors"
+                      />
                     </button>
                     {showShareTooltip && (
                       <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
@@ -286,31 +364,38 @@ export default function BillboardDetailsPage() {
                 </div>
               </div>
 
-              {/* Description */}
               <p className="text-sm text-[#667185] leading-relaxed">
-                {billboard.description || `This premium ${billboard.mediaType} is strategically positioned at ${billboard.locationAddress}, ${billboard.city}. It offers exceptional visibility with ${billboard.height}ft x ${billboard.width}ft format.`}
+                {billboard.description ||
+                  `This premium ${billboard.mediaType} is strategically positioned at ${billboard.locationAddress}, ${billboard.city}. It offers exceptional visibility with ${billboard.height}ft x ${billboard.width}ft format.`}
               </p>
 
-              {/* Price */}
               <div className="text-[24px] font-bold text-[#101928] leading-tight">
-                ₦{billboard.rate?.toLocaleString()}/month
+                ₦{(billboard.rate ?? billboard.price)?.toLocaleString()}/month
               </div>
 
-              {/* Location */}
-              <p className="text-sm text-[#667185]">{billboard.locationAddress}, {billboard.city}, {billboard.state}</p>
+              <p className="text-sm text-[#667185]">
+                {billboard.locationAddress}, {billboard.city}, {billboard.state}
+              </p>
 
-              {/* Features */}
               <div className="mt-3">
-                <h3 className="font-semibold text-[#101928] mb-2">Media Features</h3>
+                <h3 className="font-semibold text-[#101928] mb-2">
+                  Media Features
+                </h3>
                 <ul className="text-sm text-[#101928] space-y-3">
                   <li>• Type: {billboard.mediaType}</li>
-                  <li>• Size: {billboard.height}ft x {billboard.width}ft ({billboard.units})</li>
-                  <li>• Service Type: {billboard.serviceType}</li>
-                  {billboard.printProductType && <li>• Print Material: {billboard.printProductType}</li>}
+                  <li>
+                    • Size: {billboard.height}ft x {billboard.width}ft (
+                    {billboard.units || billboard.dimension})
+                  </li>
+                  {billboard.serviceType && (
+                    <li>• Service Type: {billboard.serviceType}</li>
+                  )}
+                  {billboard.printProductType && (
+                    <li>• Print Material: {billboard.printProductType}</li>
+                  )}
                 </ul>
               </div>
 
-              {/* Quantity */}
               <div className="mt-4">
                 <p className="text-sm font-medium mb-2">Quantity (Months)</p>
 
@@ -332,20 +417,29 @@ export default function BillboardDetailsPage() {
                       </span>
                     </span>
 
-                    <button type="button" onClick={() => setQuantity((q) => q + 1)} disabled={isInCart} className="disabled:opacity-50">
+                    <button
+                      type="button"
+                      onClick={() => setQuantity((q) => q + 1)}
+                      disabled={isInCart}
+                      className="disabled:opacity-50"
+                    >
                       <Plus size={16} />
                     </button>
                   </div>
 
                   <span className="text-xs text-gray-500">
-                    Will be available in <span className='text-[#E8505B]'>{availableIn} days</span> Left!
+                    Will be available in{" "}
+                    <span className="text-[#E8505B]">{availableIn} days</span>{" "}
+                    Left!
                   </span>
                 </div>
               </div>
 
-              {/* Buttons */}
               <div className="flex gap-3 mt-6">
-                <button type="button" className="bg-[#0177AB] text-white px-10 py-4 rounded-lg text-[16px] font-semibold hover:bg-[#006d91] transition">
+                <button
+                  type="button"
+                  className="bg-[#0177AB] text-white px-10 py-4 rounded-lg text-[16px] font-semibold hover:bg-[#006d91] transition"
+                >
                   Buy Now
                 </button>
 
@@ -353,7 +447,7 @@ export default function BillboardDetailsPage() {
                   type="button"
                   onClick={handleAddToCart}
                   disabled={isInCart || isAddingToCart}
-                  className={`border border-[#0177AB] px-10 py-4 rounded-lg text-[#0177AB] hover:bg-[#0178ab0f] text-[16px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="border border-[#0177AB] px-10 py-4 rounded-lg text-[#0177AB] hover:bg-[#0178ab0f] text-[16px] font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isAddingToCart ? (
                     <div className="flex items-center gap-2">
@@ -368,13 +462,17 @@ export default function BillboardDetailsPage() {
                 </button>
               </div>
 
-              {/* Cart info message if item is in cart */}
               {isInCart && cartItem && (
                 <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-sm text-green-700">
-                    ✓ Item already in cart ({cartItem.durationInMonths} month{cartItem.durationInMonths > 1 ? 's' : ''})
+                    ✓ Item already in cart (
+                    {cartItem.durationInMonths} month
+                    {cartItem.durationInMonths > 1 ? "s" : ""})
                   </p>
-                  <Link href="/cart" className="text-xs text-[#0177AB] hover:underline mt-1 inline-block">
+                  <Link
+                    href="/cart"
+                    className="text-xs text-[#0177AB] hover:underline mt-1 inline-block"
+                  >
                     View Cart →
                   </Link>
                 </div>
