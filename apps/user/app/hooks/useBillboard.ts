@@ -1,18 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Billboard,
   billboardService,
+  ExploreParams,
 } from "../lib/billboard/billboard-service";
 
 interface UseBillboardsOptions {
   mediaType?: string;
   autoFetch?: boolean;
-  autoRefreshInterval?: number; // in milliseconds (e.g., 30000 for 30 seconds)
-}
-
-interface LandingPageResponse {
-  landingPageBillboards: Record<string, Billboard[]>;
+  autoRefreshInterval?: number;
+  page?: number;
+  limit?: number;
 }
 
 interface UseBillboardsReturn {
@@ -21,108 +22,69 @@ interface UseBillboardsReturn {
   error: string | null;
   refetch: () => Promise<void>;
   setBillboards: React.Dispatch<React.SetStateAction<Billboard[]>>;
-  // Optional: expose grouped data if needed
-  groupedBillboards: Record<string, Billboard[]>;
+  count: number;
+  totalPages: number;
+  currentPage: number;
+  nextPage: number | null;
 }
 
 export function useBillboards(
-  options: UseBillboardsOptions = {},
+  options: UseBillboardsOptions = {}
 ): UseBillboardsReturn {
-  const { mediaType, autoFetch = true, autoRefreshInterval } = options;
+  const {
+    mediaType,
+    autoFetch = true,
+    autoRefreshInterval,
+    page = 1,
+    limit = 10,
+  } = options;
 
   const [billboards, setBillboards] = useState<Billboard[]>([]);
-  const [groupedBillboards, setGroupedBillboards] = useState<Record<string, Billboard[]>>({});
+  const [count, setCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(page);
+  const [nextPage, setNextPage] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const isMounted = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const normalizeBillboards = useCallback((payload: any): Billboard[] => {
-    const candidates = [
-      payload,
-      payload?.data,
-      payload?.items,
-      payload?.results,
-      payload?.billboards,
-      payload?.foundItems,
-      payload?.landingPageBillboards,
-      payload?.data?.items,
-      payload?.data?.results,
-      payload?.data?.billboards,
-      payload?.data?.foundItems,
-    ];
-
-    for (const candidate of candidates) {
-      if (Array.isArray(candidate)) {
-        return candidate as Billboard[];
-      }
-
-      if (candidate && typeof candidate === "object") {
-        const values = Object.values(candidate as Record<string, unknown>);
-        const flattened = values.filter(Array.isArray);
-        if (flattened.length > 0) {
-          return flattened.flat() as Billboard[];
-        }
-      }
-    }
-
-    return [];
-  }, []);
 
   const fetchBillboards = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    abortControllerRef.current = new AbortController();
-
     setLoading(true);
     setError(null);
 
     try {
-      const response = await billboardService.searchBillboards();
+      const params: ExploreParams = { page, limit };
+      if (mediaType) params.mediaType = mediaType;
+
+      const response = await billboardService.exploreBillboards(params);
+      const items = response.foundItems || response.data || [];
 
       if (!isMounted.current) return;
 
-      const landingPageData = response?.landingPageBillboards as Record<string, Billboard[]> | undefined;
-      const normalized = normalizeBillboards(response);
-
-      if (landingPageData && typeof landingPageData === "object") {
-        const grouped = landingPageData;
-        setGroupedBillboards(grouped);
-
-        const allBillboards = mediaType && grouped[mediaType]
-          ? grouped[mediaType]
-          : Object.values(grouped).flat();
-
-        setBillboards(allBillboards);
-        return;
-      }
-
-      if (normalized.length > 0) {
-        setBillboards(normalized);
-        setGroupedBillboards({});
-        return;
-      }
-
-      throw new Error("No billboards were returned by the backend.");
+      setBillboards(items);
+      setCount(response.count ?? response.total ?? items.length);
+      setTotalPages(response.totalPages ?? 1);
+      setCurrentPage(response.currentPage ?? response.page ?? page);
+      setNextPage(response.nextPage ?? null);
     } catch (err: any) {
-      if (err.name === "AbortError") return;
-
       console.error("Failed to fetch billboards:", err);
       if (isMounted.current) {
         setError(
-          err instanceof Error ? err.message : "Failed to load billboards",
+          err?.message ||
+            (err instanceof Error ? err.message : "Failed to load billboards")
         );
         setBillboards([]);
-        setGroupedBillboards({});
+        setCount(0);
+        setTotalPages(1);
+        setNextPage(null);
       }
     } finally {
       if (isMounted.current) {
         setLoading(false);
       }
     }
-  }, [mediaType, normalizeBillboards]);
+  }, [mediaType, page, limit]);
 
   useEffect(() => {
     isMounted.current = true;
@@ -131,8 +93,7 @@ export function useBillboards(
       fetchBillboards();
     }
 
-    // Auto-refresh setup
-    let refreshInterval: NodeJS.Timeout | null = null;
+    let refreshInterval: ReturnType<typeof setInterval> | null = null;
     if (autoRefreshInterval && autoRefreshInterval > 0) {
       refreshInterval = setInterval(() => {
         if (isMounted.current) {
@@ -141,15 +102,9 @@ export function useBillboards(
       }, autoRefreshInterval);
     }
 
-    // Cleanup function
     return () => {
       isMounted.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      if (refreshInterval) {
-        clearInterval(refreshInterval);
-      }
+      if (refreshInterval) clearInterval(refreshInterval);
     };
   }, [fetchBillboards, autoFetch, autoRefreshInterval]);
 
@@ -159,6 +114,9 @@ export function useBillboards(
     error,
     refetch: fetchBillboards,
     setBillboards,
-    groupedBillboards,
+    count,
+    totalPages,
+    currentPage,
+    nextPage,
   };
 }

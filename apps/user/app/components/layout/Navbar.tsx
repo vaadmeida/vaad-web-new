@@ -41,7 +41,6 @@ const NAV_LINKS: NavLink[] = [
   { name: "Radio", href: "/radio", icon: <Radio size={18} /> },
 ];
 
-// Avatar Component
 const Avatar = ({
   imageUrl,
   name,
@@ -101,7 +100,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
   const isTransparent = transparent && !scrolled;
 
-  // Color helpers
   const mutedColor = isTransparent ? "text-white/70" : "text-gray-600";
   const hoverColor = isTransparent
     ? "hover:text-white"
@@ -112,6 +110,11 @@ export default function Navbar({ transparent = false }: NavbarProps) {
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
   const toggleProfileMenu = () => setIsProfileMenuOpen(!isProfileMenuOpen);
+
+  const openCart = () => {
+    setIsCartOpen(true);
+    setIsMobileMenuOpen(false); // close mobile menu if open
+  };
 
   const handleLogout = async () => {
     try {
@@ -127,7 +130,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
     }
   };
 
-  // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 90);
@@ -136,7 +138,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close profile menu on outside click
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -150,7 +151,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Body scroll lock for mobile menu
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "unset";
     return () => {
@@ -226,14 +226,11 @@ export default function Navbar({ transparent = false }: NavbarProps) {
                   >
                     <Bell size={21} />
                   </button>
-                  {/* <span className="absolute -top-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white ring-2 ring-white">
-                    0
-                  </span> */}
                 </div>
 
                 <div className="relative">
                   <button
-                    onClick={() => setIsCartOpen(true)}
+                    onClick={openCart}
                     className={`p-2.5 rounded-xl transition-all ${mutedColor} ${hoverColor}`}
                   >
                     <ShoppingCart size={21} />
@@ -350,32 +347,52 @@ export default function Navbar({ transparent = false }: NavbarProps) {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={toggleMobileMenu}
-            className={`md:hidden p-3 rounded-2xl transition-all ${mutedColor} hover:text-[#0088b5]`}
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
-          >
-            {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
-          </button>
+          {/* Mobile Right: Cart + Menu */}
+          <div className="flex md:hidden items-center gap-1">
+            {isAuthenticated && (
+              <button
+                onClick={openCart}
+                className={`relative p-3 rounded-2xl transition-all ${mutedColor} hover:text-[#0088b5]`}
+                aria-label="Open cart"
+              >
+                <ShoppingCart size={22} />
+                {totalItems > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#0088b5] text-[9px] font-medium text-white ring-2 ring-white">
+                    {totalItems > 9 ? "9+" : totalItems}
+                  </span>
+                )}
+              </button>
+            )}
+
+            <button
+              onClick={toggleMobileMenu}
+              className={`p-3 rounded-2xl transition-all ${mutedColor} hover:text-[#0088b5]`}
+              aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            >
+              {isMobileMenuOpen ? <X size={26} /> : <Menu size={26} />}
+            </button>
+          </div>
         </div>
       </motion.nav>
 
       {/* ==================== FULL MOBILE SIDEBAR ==================== */}
       <div
-        className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${isMobileMenuOpen ? "visible" : "invisible"}`}
+        className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${
+          isMobileMenuOpen ? "visible" : "invisible"
+        }`}
       >
-        {/* Backdrop */}
         <div
-          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity ${isMobileMenuOpen ? "opacity-100" : "opacity-0"}`}
+          className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity ${
+            isMobileMenuOpen ? "opacity-100" : "opacity-0"
+          }`}
           onClick={toggleMobileMenu}
         />
 
-        {/* Sidebar Panel */}
         <div
-          className={`absolute right-0 top-0 bottom-0 w-[85%] max-w-[340px] bg-white shadow-2xl overflow-y-auto transition-transform duration-300 ${isMobileMenuOpen ? "translate-x-0" : "translate-x-full"}`}
+          className={`absolute right-0 top-0 bottom-0 w-[85%] max-w-[340px] bg-white shadow-2xl overflow-y-auto transition-transform duration-300 ${
+            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
+          }`}
         >
-          {/* Blue Header */}
           <div className="bg-gradient-to-br from-[#0088b5] to-[#006d91] pt-10 pb-8 px-6 sticky top-0 z-10">
             <div className="flex items-center justify-between mb-8">
               <Image
@@ -408,7 +425,6 @@ export default function Navbar({ transparent = false }: NavbarProps) {
             )}
           </div>
 
-          {/* Navigation Links */}
           <div className="px-5 py-6 space-y-1">
             {NAV_LINKS.map((link) => (
               <Link
@@ -436,9 +452,29 @@ export default function Navbar({ transparent = false }: NavbarProps) {
             ))}
           </div>
 
-          {/* Bottom Section */}
           {isAuthenticated ? (
             <div className="px-5 pt-4 border-t border-gray-100">
+              {/* Cart in mobile sidebar */}
+              <button
+                onClick={openCart}
+                className="flex items-center gap-4 w-full px-5 py-4 rounded-2xl text-gray-700 hover:bg-gray-100"
+              >
+                <div className="relative">
+                  <ShoppingCart size={20} className="text-gray-500" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#0088b5] text-[9px] font-medium text-white">
+                      {totalItems > 9 ? "9+" : totalItems}
+                    </span>
+                  )}
+                </div>
+                <span>Cart</span>
+                {totalItems > 0 && (
+                  <span className="ml-auto text-sm text-[#0088b5] font-medium">
+                    {totalItems} item{totalItems > 1 ? "s" : ""}
+                  </span>
+                )}
+              </button>
+
               <Link
                 href="/favorites"
                 onClick={toggleMobileMenu}
@@ -480,6 +516,7 @@ export default function Navbar({ transparent = false }: NavbarProps) {
         </div>
       </div>
 
+      {/* Cart drawer works on mobile + desktop */}
       <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </>
   );

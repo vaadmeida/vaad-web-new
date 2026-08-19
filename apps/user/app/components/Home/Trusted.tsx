@@ -47,10 +47,10 @@ export default function Trusted() {
   return (
     <div className="w-full bg-white sm:py-18 sm:px-18 px-5 py-18 flex flex-col justify-center items-center">
       <div className="flex flex-col items-center gap-2">
-        <h1 className="text-[32px] text-[#141212] font-semibold">
+        <h1 className="md:text-[32px] text-[5.5vw] text-[#141212] font-semibold">
           They trust us, you too can!
         </h1>
-        <p className="font-normal text-[#434141]">
+        <p className="font-normal text-center md:px-0 px-7 md:text-[16px] text-[3.5vw] text-[#434141]">
           Trusted by top brands in finance, FMCG, fashion, and telecom.
         </p>
       </div>
@@ -61,7 +61,7 @@ export default function Trusted() {
             key={index}
             src={item.img}
             alt={item.name}
-            className="h-10 object-contain"
+            className="md:h-10 h-9 object-contain"
           />
         ))}
       </div>

@@ -12,6 +12,10 @@ import TestimonialSection from "./components/Home/TestimonialSection";
 import Trusted from "./components/Home/Trusted";
 import Navbar from "./components/layout/Navbar";
 import TopBar from "./components/layout/TopBar";
+import BillboardSection from "./components/Home/BillboardSection";
+import LedBillboardSection from "./components/Home/LedBillboard";
+import LamppostSection from "./components/Home/Lamppost";
+import AirportSection from "./components/Home/Airport";
 
 export default function HomePage() {
   return (
@@ -22,12 +26,12 @@ export default function HomePage() {
       <Trusted />
       <StatsSection />
       <AvailableBillboardsSection />
-      {/*<BillboardSection />
+      <BillboardSection />
       <LedBillboardSection />
-      <BillboardPromo />
+     {/*<BillboardPromo />*/}
       <LamppostSection />
       <AirportSection />
-      <BusShelterSection />*/}
+     {/*<BusShelterSection />*/}
       <HotDealsSection />
       <LargeFormatSection />
       {/*<RetailStoreSection />*/}
