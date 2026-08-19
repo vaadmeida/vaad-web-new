@@ -4,7 +4,7 @@
 import BillboardCard from "@/app/components/billboard/BillboardCard";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useBillboards } from "@/app/hooks/useBillboard";
+import { useAllBillboards } from "@/app/hooks/useAllBillboards";
 import EmptyState from "./EmptyState/EmptyState";
 import { useMemo } from "react";
 import SectionHeader from "../SectionHeader";
@@ -18,7 +18,6 @@ interface BillboardSectionProps {
   mediaTypeFilter?: string;
 }
 
-// Shimmer animation styles
 const shimmerStyles = `
   @keyframes shimmer {
     0% { background-position: -200% 0; }
@@ -33,29 +32,24 @@ function BillboardSkeletonCard() {
   return (
     <div className="animate-pulse">
       <div className="relative h-48 w-full overflow-hidden rounded-t-[7.75px] bg-gray-200">
-        <div 
-          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer" 
-          style={{ backgroundSize: '200% 100%' }} 
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-shimmer"
+          style={{ backgroundSize: "200% 100%" }}
         />
       </div>
-      
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 bg-gray-200 rounded-full" />
           <div className="h-4 bg-gray-200 rounded w-12" />
           <div className="h-3 bg-gray-200 rounded w-16" />
         </div>
-        
         <div className="h-6 bg-gray-200 rounded w-3/4" />
-        
         <div className="h-4 bg-gray-200 rounded w-full" />
         <div className="h-4 bg-gray-200 rounded w-2/3" />
-        
         <div className="flex items-start gap-2">
           <div className="h-4 w-4 bg-gray-200 rounded-full shrink-0" />
           <div className="h-4 bg-gray-200 rounded w-4/5" />
         </div>
-        
         <div className="flex justify-between items-center gap-3 pt-2">
           <div className="h-8 bg-gray-200 rounded w-1/3" />
           <div className="h-10 bg-gray-200 rounded w-2/5" />
@@ -67,7 +61,7 @@ function BillboardSkeletonCard() {
 
 function BillboardSkeletonGrid({ count }: { count: number }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -94,20 +88,26 @@ export default function BillboardSection({
   limit = 3,
   mediaTypeFilter = "Static Billboard",
 }: BillboardSectionProps) {
-  const { billboards, loading, error, refetch } = useBillboards({
-    mediaType: mediaTypeFilter,
-  });
+  const {
+    staticBillboards,
+    groupedBillboards,
+    loading,
+    error,
+    refetch,
+  } = useAllBillboards();
 
-  const displayedBillboards = useMemo(() => {
-    return billboards.slice(0, limit);
-  }, [billboards, limit]);
+  const billboards = useMemo(() => {
+    if (mediaTypeFilter === "Static Billboard") return staticBillboards;
+    return groupedBillboards[mediaTypeFilter] ?? [];
+  }, [mediaTypeFilter, staticBillboards, groupedBillboards]);
 
-  // Updated: Show "Explore All" only if more than 3 billboards
-  const hasMore = useMemo(() => {
-    return billboards.length > 3;
-  }, [billboards.length]);
+  const displayedBillboards = useMemo(
+    () => billboards.slice(0, limit),
+    [billboards, limit]
+  );
 
-  // Loading skeleton
+  const hasMore = billboards.length > 3;
+
   if (loading) {
     return (
       <section className="sm:p-18 px-5 py-14 bg-white">
@@ -124,7 +124,6 @@ export default function BillboardSection({
     );
   }
 
-  // Error state
   if (error) {
     return (
       <section className="p-18 bg-white">
@@ -132,6 +131,7 @@ export default function BillboardSection({
           <h2 className="text-2xl font-bold text-[#0D0A19] mb-2">{title}</h2>
           <p className="text-red-500 mb-4">{error}</p>
           <button
+            type="button"
             onClick={refetch}
             className="px-4 py-2 bg-[#0177AB] text-white rounded-lg hover:bg-[#006d91] transition-colors"
           >
@@ -148,16 +148,13 @@ export default function BillboardSection({
         <SectionHeader
           title={title}
           subtitle={subtitle}
-          showViewAll={showViewAll && hasMore}   // Only show if > 3
+          showViewAll={showViewAll && hasMore}
         />
 
         {displayedBillboards.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-6 gap-8">
             {displayedBillboards.map((billboard) => (
-              <BillboardCard
-                key={billboard._id}
-                billboard={billboard}
-              />
+              <BillboardCard key={billboard._id} billboard={billboard} />
             ))}
           </div>
         ) : (
@@ -168,7 +165,6 @@ export default function BillboardSection({
           />
         )}
 
-        {/* Mobile "Explore All" button - only visible if more than 3 items */}
         {hasMore && showViewAll && (
           <div className="mt-10 text-center md:hidden">
             <Link
@@ -184,11 +180,3 @@ export default function BillboardSection({
     </section>
   );
 }
-
-// {billboards.length > 0 && (
-//           <p className="sm:text-sm text-[3vw] text-gray-500 mb-6">
-//             Showing {displayedBillboards.length} of {billboards.length}{" "}
-//             {mediaTypeFilter.toLowerCase()}s
-//             {hasMore && " (more available)"}
-//           </p>
-//         )}

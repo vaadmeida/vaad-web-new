@@ -1,21 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/hooks/useAllBillboards.ts
-import { useState, useEffect, useCallback } from "react";
-import { Billboard, billboardService } from "../lib/billboard/billboard-service";
+"use client";
 
+import { useState, useEffect, useCallback, useMemo } from "react";
+import {
+  Billboard,
+  billboardService,
+} from "../lib/billboard/billboard-service";
 
 interface UseAllBillboardsReturn {
   allBillboards: Billboard[];
+  groupedBillboards: Record<string, Billboard[]>;
   staticBillboards: Billboard[];
   ledBillboards: Billboard[];
-  digitalBillboards: Billboard[];
+  lamppostBillboards: Billboard[];
+  airportBillboards: Billboard[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
 
 export function useAllBillboards(): UseAllBillboardsReturn {
-  const [allBillboards, setAllBillboards] = useState<Billboard[]>([]);
+  const [groupedBillboards, setGroupedBillboards] = useState<
+    Record<string, Billboard[]>
+  >({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,12 +32,15 @@ export function useAllBillboards(): UseAllBillboardsReturn {
 
     try {
       const response = await billboardService.searchBillboards();
-      const items = (response as any).foundItems || response.data || [];
-
-      setAllBillboards(items);
-    } catch (err) {
+      const groups = response.landingPageBillboards || {};
+      setGroupedBillboards(groups);
+    } catch (err: any) {
       console.error("Failed to fetch billboards:", err);
-      setError(err instanceof Error ? err.message : "Failed to load billboards");
+      setError(
+        err?.message ||
+          (err instanceof Error ? err.message : "Failed to load billboards")
+      );
+      setGroupedBillboards({});
     } finally {
       setLoading(false);
     }
@@ -40,22 +50,38 @@ export function useAllBillboards(): UseAllBillboardsReturn {
     fetchBillboards();
   }, [fetchBillboards]);
 
-  // Memoized filtered arrays
-  const staticBillboards = allBillboards.filter(
-    (b) => b.mediaType === "Static Billboard"
+  const allBillboards = useMemo(
+    () => Object.values(groupedBillboards).flat(),
+    [groupedBillboards]
   );
-  const ledBillboards = allBillboards.filter(
-    (b) => b.mediaType === "Led Billboard"
+
+  const staticBillboards = useMemo(
+    () => groupedBillboards["Static Billboard"] ?? [],
+    [groupedBillboards]
   );
-  const digitalBillboards = allBillboards.filter(
-    (b) => b.mediaType === "Digital Screen"
+
+  const ledBillboards = useMemo(
+    () => groupedBillboards["LED Billboard"] ?? [],
+    [groupedBillboards]
+  );
+
+  const lamppostBillboards = useMemo(
+    () => groupedBillboards["Lamppost Advertising"] ?? [],
+    [groupedBillboards]
+  );
+
+  const airportBillboards = useMemo(
+    () => groupedBillboards["Airport Advertising"] ?? [],
+    [groupedBillboards]
   );
 
   return {
     allBillboards,
+    groupedBillboards,
     staticBillboards,
     ledBillboards,
-    digitalBillboards,
+    lamppostBillboards,
+    airportBillboards,
     loading,
     error,
     refetch: fetchBillboards,

@@ -1,16 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import BillboardCard from "@/app/components/billboard/BillboardCard";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { useAllBillboards } from "@/app/hooks/useAllBillboards";
+import { useBillboards } from "@/app/hooks/useBillboard";
 import EmptyState from "./EmptyState/EmptyState";
 import SectionHeader from "../SectionHeader";
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 
-interface LedBillboardSectionProps {
+interface AvailableBillboardsSectionProps {
   title?: string;
   subtitle?: string;
   showViewAll?: boolean;
@@ -36,19 +35,24 @@ function BillboardSkeletonCard() {
           style={{ backgroundSize: "200% 100%" }}
         />
       </div>
+
       <div className="p-4 space-y-3">
         <div className="flex items-center gap-2">
           <div className="h-4 w-4 bg-gray-200 rounded-full" />
           <div className="h-4 bg-gray-200 rounded w-12" />
           <div className="h-3 bg-gray-200 rounded w-16" />
         </div>
+
         <div className="h-6 bg-gray-200 rounded w-3/4" />
+
         <div className="h-4 bg-gray-200 rounded w-full" />
         <div className="h-4 bg-gray-200 rounded w-2/3" />
+
         <div className="flex items-start gap-2">
           <div className="h-4 w-4 bg-gray-200 rounded-full shrink-0" />
           <div className="h-4 bg-gray-200 rounded w-4/5" />
         </div>
+
         <div className="flex justify-between items-center gap-3 pt-2">
           <div className="h-8 bg-gray-200 rounded w-1/3" />
           <div className="h-10 bg-gray-200 rounded w-2/5" />
@@ -80,19 +84,19 @@ function BillboardSkeletonGrid({ count }: { count: number }) {
   );
 }
 
-export default function LedBillboardSection({
-  title = "LED Billboards",
-  subtitle = "Capture attention with dynamic, high-impact digital displays designed for maximum visibility day and night.",
+export default function AvailableBillboardsSection({
+  title = "Available Billboards",
+  subtitle = "Explore the latest advertising opportunities across premium outdoor locations and formats.",
   showViewAll = true,
-  limit = 4,
-}: LedBillboardSectionProps) {
-  const { ledBillboards, loading, error, refetch } = useAllBillboards();
+  limit = 3,
+}: AvailableBillboardsSectionProps) {
+  const { billboards, loading, error, refetch } = useBillboards();
 
-  const displayedBillboards = useMemo(
-    () => ledBillboards.slice(0, limit),
-    [ledBillboards, limit]
-  );
-  const hasMore = ledBillboards.length > 3;
+  const displayedBillboards = useMemo(() => {
+    return billboards.slice(0, limit);
+  }, [billboards, limit]);
+
+  const hasMore = billboards.length > 3;
 
   if (loading) {
     return (
@@ -117,7 +121,6 @@ export default function LedBillboardSection({
           <h2 className="text-2xl font-bold text-[#0D0A19] mb-2">{title}</h2>
           <p className="text-red-500 mb-4">{error}</p>
           <button
-            type="button"
             onClick={refetch}
             className="px-4 py-2 bg-[#0177AB] text-white rounded-lg hover:bg-[#006d91] transition-colors"
           >
@@ -129,7 +132,7 @@ export default function LedBillboardSection({
   }
 
   return (
-    <section className="sm:px-18 px-5 pt-14 bg-white">
+    <section className="sm:px-18 px-5 pt-4 bg-white">
       <div className="mx-auto">
         <SectionHeader
           title={title}
@@ -138,7 +141,7 @@ export default function LedBillboardSection({
         />
 
         {displayedBillboards.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 sm:gap-6 gap-8">
             {displayedBillboards.map((billboard) => (
               <BillboardCard key={billboard._id} billboard={billboard} />
             ))}
@@ -157,7 +160,7 @@ export default function LedBillboardSection({
               href="/billboards"
               className="inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-[#F5F9FC] hover:bg-[#0177AB] text-[#0177AB] hover:text-white font-medium rounded-xl transition-all duration-200 shadow-sm"
             >
-              Explore All {ledBillboards.length} LED Billboards
+              Explore All {billboards.length} Billboards
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>

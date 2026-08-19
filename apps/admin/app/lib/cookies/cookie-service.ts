@@ -104,9 +104,9 @@ export class CookieService {
   }
 
   // Get refresh token
-  static getRefreshToken(context?: GetServerSidePropsContext): string | null {
-    return this.getCookie('refresh_token', context);
-  }
+  static getRefreshToken(): string | null {
+  return this.getCookie("refreshToken") || this.getCookie("refresh_token") || null;
+}
 
   // Get user from cookie
   static getUser<T>(context?: GetServerSidePropsContext): T | null {

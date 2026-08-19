@@ -5,56 +5,79 @@ import Image from "next/image";
 import { Trash2, Minus, Plus, Calendar, X, ShoppingCart } from "lucide-react";
 import { cartService } from "@/app/lib/cart/cart-service";
 import { useCartContext } from "@/app/contexts/cart-context";
+import { usePayment } from "@/app/hooks/usePayment";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   anchor?: "left" | "right";
-  
+};
+
+const toYYYYMMDD = (value?: string) => {
+  if (!value) return new Date().toISOString().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return new Date().toISOString().slice(0, 10);
+  return d.toISOString().slice(0, 10);
 };
 
 export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
-  const { 
-    cartItems, 
-    isLoading, 
+  const {
+    cartItems,
+    isLoading,
     error,
-    subtotal, 
+    subtotal,
     totalItems,
     updateCartItem,
     removeFromCart,
     isCartItemPending,
   } = useCartContext();
 
-  // Handle quantity increase
+  const { initializePayment, isPaying, error: paymentError, clearError } =
+    usePayment();
+
+  const hasItems = cartItems.length > 0;
+  // Only block while a payment request is in flight — not while cart is loading
+  const isPayDisabled = isPaying || !hasItems;
+
   const handleIncrease = async (itemId: string, currentDuration: number) => {
     if (isCartItemPending(itemId)) return;
-
-    const newDuration = currentDuration + 1;
-    await updateCartItem(itemId, { durationInMonths: newDuration });
+    await updateCartItem(itemId, { durationInMonths: currentDuration + 1 });
   };
 
-  // Handle quantity decrease
   const handleDecrease = async (itemId: string, currentDuration: number) => {
     if (currentDuration <= 1 || isCartItemPending(itemId)) return;
-
-    const newDuration = currentDuration - 1;
-    await updateCartItem(itemId, { durationInMonths: newDuration });
+    await updateCartItem(itemId, { durationInMonths: currentDuration - 1 });
   };
 
-  // Handle remove item
   const handleRemove = async (itemId: string) => {
     if (isCartItemPending(itemId)) return;
-
-    const success = await removeFromCart(itemId);
-    if (!success) {
-      console.error("Failed to remove item from cart");
-    }
+    await removeFromCart(itemId);
   };
 
-  // Calculate item total price
   const getItemTotal = (item: (typeof cartItems)[number]) => {
     const rate = item.billboard?.rate || 0;
     return rate * item.durationInMonths;
+  };
+
+  const handleProceedToPay = async () => {
+    if (isPayDisabled) return;
+
+    clearError?.();
+
+    const orderItems = cartItems
+      .map((item) => ({
+        durationInMonths: item.durationInMonths,
+        billboardId: item.billboardId || item.billboard?._id || "",
+        startDate: toYYYYMMDD(item.startDate),
+      }))
+      .filter((item) => Boolean(item.billboardId));
+
+    if (!orderItems.length) {
+      return;
+    }
+
+    await initializePayment({ orderItems });
   };
 
   return (
@@ -99,20 +122,29 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
           </div>
         )}
 
-        {/* Loading State */}
-        {isLoading && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0177AB]"></div>
+        {paymentError && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+            <p className="text-sm font-medium text-red-800">Payment error</p>
+            <p className="text-sm text-red-700 mt-1 break-words">
+              {paymentError}
+            </p>
           </div>
         )}
 
-        {/* Empty Cart State */}
+        {isLoading && (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0177AB]" />
+          </div>
+        )}
+
         {!isLoading && cartItems.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <div className="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center">
               <ShoppingCart size={64} className="text-gray-300" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-800">Your cart is empty</h3>
+            <h3 className="text-xl font-semibold text-gray-800">
+              Your cart is empty
+            </h3>
             <p className="text-gray-500 text-center">
               Looks like you haven&apos;t added any items to your cart yet.
             </p>
@@ -126,7 +158,6 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
           </div>
         )}
 
-        {/* Items List */}
         {!isLoading && cartItems.length > 0 && (
           <>
             <div className="flex-1 overflow-y-auto py-5 space-y-5 remove-scrollbar">
@@ -135,91 +166,105 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
                 return (
                   <div key={item._id} className="flex gap-3">
-                  {/* Image */}
-                  <div className="relative w-[210px] h-[190px] rounded-[10px] overflow-hidden flex-shrink-0 bg-gray-100">
-                    <Image
-                      src={item.billboard?.photos?.[0] || item.billboard?.images?.[0] || "/billboard-placeholder.jpg"}
-                      alt={item.billboard?.mediaType || "Billboard"}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex flex-col flex-1 justify-between px-2 py-4">
-                    {/* Title + Price */}
-                    <div className="flex justify-between items-start gap-5">
-                      <p className="text-[16px] font-medium text-[#101928] leading-tight line-clamp-2">
-                        {item.billboard?.mediaType} at {item.billboard?.locationAddress}
-                      </p>
-
-                      <p className="text-[18px] font-semibold text-[#101928] leading-none whitespace-nowrap">
-                        ₦{getItemTotal(item).toLocaleString()}
-                      </p>
+                    <div className="relative w-[210px] h-[190px] rounded-[10px] overflow-hidden flex-shrink-0 bg-gray-100">
+                      <Image
+                        src={
+                          item.billboard?.photos?.[0] ||
+                          item.billboard?.images?.[0] ||
+                          "/billboard-placeholder.jpg"
+                        }
+                        alt={item.billboard?.mediaType || "Billboard"}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
                     </div>
 
-                    {/* Price per month */}
-                    <p className="text-sm text-gray-500">
-                      ₦{item.billboard?.rate?.toLocaleString()} / month
-                    </p>
+                    <div className="flex flex-col flex-1 justify-between px-2 py-4">
+                      <div className="flex justify-between items-start gap-5">
+                        <p className="text-[16px] font-medium text-[#101928] leading-tight line-clamp-2">
+                          {item.billboard?.mediaType} at{" "}
+                          {item.billboard?.locationAddress}
+                        </p>
 
-                    {/* Location */}
-                    <p className="text-xs text-gray-400 mt-1">
-                      {item.billboard?.locationAddress}, {item.billboard?.city}, {item.billboard?.state}
-                    </p>
+                        <p className="text-[18px] font-semibold text-[#101928] leading-none whitespace-nowrap">
+                          ₦{getItemTotal(item).toLocaleString()}
+                        </p>
+                      </div>
 
-                    {/* Quantity + Delete */}
-                    <div className="flex items-center justify-between mt-3">
-                      {/* Stepper */}
-                      <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => handleDecrease(item._id, item.durationInMonths)}
-                          className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
-                          disabled={item.durationInMonths <= 1 || isLoading || isItemPending}
-                        >
-                          <Minus size={14} />
-                        </button>
+                      <p className="text-sm text-gray-500">
+                        ₦
+                        {(
+                          item.billboard?.rate ||
+                          0
+                        ).toLocaleString()}{" "}
+                        / month
+                      </p>
 
-                        <span className="text-[16px] font-medium text-[#E8505B]">
-                          {item.durationInMonths}{" "}
-                          <span className="text-[14px] font-light">
-                            Month{item.durationInMonths > 1 ? "s" : ""}
+                      <p className="text-xs text-gray-400 mt-1">
+                        {item.billboard?.locationAddress},{" "}
+                        {item.billboard?.city}, {item.billboard?.state}
+                      </p>
+
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="flex items-center bg-[#F9FAFB] border border-[#F0F2F5] rounded-full px-3 py-1 gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleDecrease(item._id, item.durationInMonths)
+                            }
+                            className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={
+                              item.durationInMonths <= 1 ||
+                              isLoading ||
+                              isItemPending
+                            }
+                          >
+                            <Minus size={14} />
+                          </button>
+
+                          <span className="text-[16px] font-medium text-[#E8505B]">
+                            {item.durationInMonths}{" "}
+                            <span className="text-[14px] font-light">
+                              Month{item.durationInMonths > 1 ? "s" : ""}
+                            </span>
                           </span>
-                        </span>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleIncrease(item._id, item.durationInMonths)
+                            }
+                            className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isLoading || isItemPending}
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
 
                         <button
                           type="button"
-                          onClick={() => handleIncrease(item._id, item.durationInMonths)}
-                          className="text-gray-500 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={() => handleRemove(item._id)}
+                          className="text-gray-400 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
                           disabled={isLoading || isItemPending}
                         >
-                          <Plus size={14} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
 
-                      {/* Delete */}
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(item._id)}
-                        className="text-gray-400 hover:text-red-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled={isLoading || isItemPending}
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                      <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                        <Calendar size={12} />
+                        <span>
+                          Starts: {cartService.formatDate(item.startDate)}
+                        </span>
+                      </div>
 
-                    {/* Start Date Display */}
-                    <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                      <Calendar size={12} />
-                      <span>Starts: {cartService.formatDate(item.startDate)}</span>
+                      {isItemPending && (
+                        <p className="mt-2 text-xs text-[#0177AB]">
+                          Updating cart item...
+                        </p>
+                      )}
                     </div>
-
-                    {isItemPending && (
-                      <p className="mt-2 text-xs text-[#0177AB]">Updating cart item...</p>
-                    )}
-                  </div>
                   </div>
                 );
               })}
@@ -231,7 +276,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
               <div className="flex justify-between text-sm">
                 <span className="text-[#667185] text-[16px] font-normal">
-                  Subtotal ({totalItems} item{totalItems !== 1 ? 's' : ''}):
+                  Subtotal ({totalItems} item{totalItems !== 1 ? "s" : ""}):
                 </span>
                 <span className="font-semibold text-[#101928] text-[18px]">
                   ₦{subtotal.toLocaleString()}
@@ -241,14 +286,35 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
               <div className="w-full border border-[#F0F2F5]" />
 
               <div className="flex gap-4 mt-5">
-                <button type="button" className="flex-1 bg-[#0177AB] font-semibold text-[16px] text-white py-4 rounded-md hover:bg-[#0284c7] transition">
-                  Proceed to Pay
+                <button
+                  type="button"
+                  onClick={handleProceedToPay}
+                  disabled={isPayDisabled}
+                  className={`flex-1 font-semibold text-[16px] py-4 rounded-md transition ${
+                    isPayDisabled
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-[#0177AB] text-white hover:bg-[#0284c7] cursor-pointer"
+                  }`}
+                >
+                  {isPaying ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    "Proceed to Pay"
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 border border-[#0177AB] py-2 rounded-md font-semibold text-[16px] text-[#0177AB] hover:bg-gray-100 transition"
+                  disabled={isPaying}
+                  className={`flex-1 border py-2 rounded-md font-semibold text-[16px] transition ${
+                    isPaying
+                      ? "border-gray-300 text-gray-400 cursor-not-allowed"
+                      : "border-[#0177AB] text-[#0177AB] hover:bg-gray-100"
+                  }`}
                 >
                   Continue Booking
                 </button>

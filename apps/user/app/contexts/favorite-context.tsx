@@ -11,6 +11,7 @@ import {
 } from "react";
 import { billboardService } from "@/app/lib/billboard/billboard-service";
 import { useAuthContext } from "@/app/contexts/auth-context";
+import { useToast } from "@/app/contexts/toast-context";
 
 // ==========================================
 // TYPES
@@ -90,18 +91,20 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
   
   const { isAuthenticated } = useAuthContext();
+  const { showToast } = useToast();
   
   const pendingOps = useRef<Map<string, PendingOperation>>(new Map());
   const mounted = useRef(true);
-  const isSyncing = useRef(false);
 
   // Cleanup on unmount
   useEffect(() => {
     mounted.current = true;
+    const currentPendingOps = pendingOps.current;
+
     return () => {
       mounted.current = false;
-      pendingOps.current.forEach((op) => op.abortController.abort());
-      pendingOps.current.clear();
+      currentPendingOps.forEach((op) => op.abortController.abort());
+      currentPendingOps.clear();
     };
   }, []);
 
@@ -132,7 +135,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
 
   const toggleFavorite = useCallback(
     async (billboardId: string): Promise<boolean> => {
-      if (!billboardId || !isAuthenticated) return false;
+      if (!billboardId) return false;
 
       const now = Date.now();
       const existingOp = pendingOps.current.get(billboardId);
@@ -156,6 +159,21 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
         [billboardId]: targetValue,
       }));
 
+      if (!isAuthenticated) {
+        const message = targetValue
+          ? "This billboard has been added to your favorites."
+          : "This billboard has been removed from your favorites.";
+
+        showToast({
+          type: targetValue ? "success" : "info",
+          title: targetValue ? "Favorite added" : "Favorite removed",
+          message,
+          duration: 2600,
+        });
+
+        return targetValue;
+      }
+
       const abortController = new AbortController();
 
       const operationPromise = (async (): Promise<boolean> => {
@@ -170,15 +188,36 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
             }));
           }
 
+          showToast({
+            type: "success",
+            title: serverValue ? "Added to favorites" : "Removed from favorites",
+            message: serverValue
+              ? "This billboard is now in your favorites list."
+              : "This billboard has been removed from your favorites.",
+            duration: 2600,
+          });
+
           return serverValue;
         } catch (error) {
-          // Rollback on error
           if (mounted.current) {
             setFavorites((prev) => ({
               ...prev,
               [billboardId]: currentValue,
             }));
           }
+
+          const errorMessage =
+            error instanceof Error && error.message
+              ? error.message
+              : "We could not update your favorites right now.";
+
+          showToast({
+            type: "error",
+            title: "Favorite update failed",
+            message: errorMessage,
+            duration: 3200,
+          });
+
           throw error;
         } finally {
           pendingOps.current.delete(billboardId);
@@ -193,7 +232,7 @@ export function FavoriteProvider({ children }: { children: React.ReactNode }) {
 
       return operationPromise;
     },
-    [favorites, isAuthenticated]
+    [favorites, isAuthenticated, showToast]
   );
 
   // ==========================================

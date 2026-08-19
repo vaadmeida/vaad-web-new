@@ -469,22 +469,22 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center">
             <Star className="w-4 h-4 fill-[#bfa900] text-[#bfa900]" />
-            <span className="text-[16px] font-medium text-[#626060] ml-0.5">
+            <span className="md:text-[16px] text-[3.2vw] font-medium text-[#626060] ml-0.5">
               {fields.rating || 4.5}
             </span>
           </div>
-          <span className="text-medium text-[#626060] text-[16px]">
+          <span className="text-medium text-[#626060] text-[3.2vw] md:text-[16px]">
             ({fields.reviews || 0} reviews)
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="text-[24px] font-bold text-[#141212] mb-1 line-clamp-1">
+        <h3 className="md:text-[24px] text-[5.5vw] font-bold text-[#141212] mb-1 line-clamp-1">
           {displayTitle}
         </h3>
 
         {/* Description */}
-        <p className="text-[16px] text-[#626060] mb-10 font-normal line-clamp-2">
+        <p className="md:text-[16px] text-[3.5vw] text-[#626060] mb-10 font-medium line-clamp-2">
           {description}
         </p>
 
@@ -492,7 +492,7 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
         <div className="flex items-start gap-2 mb-2">
           {/* <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" /> */}
           <div>
-            <p className="text-[14px] font-normal text-[#626060]">
+            <p className="md:text-[14px] text-[2.5vw] font-normal text-[#626060]">
               {displayLocation}, {fields.state || "Lagos"}
             </p>
           </div>
@@ -501,11 +501,11 @@ export default function BillboardCard({ billboard }: BillboardCardProps) {
         <div className="flex justify-between gap-2 items-end">
           {/* Price */}
           <div className="flex items-baseline gap-2">
-            <span className="text-[32px] font-semibold text-black">
+            <span className="md:text-[32px] text-[7vw] font-semibold text-black">
               ₦{fields.rate?.toLocaleString("en-US") || "0"}
             </span>
             {originalPrice && (
-              <span className="text-[16.47px] text-[#696F8C] font-medium">
+              <span className="md:text-[16px] text-[3.5vw] text-[#696F8C] font-medium">
                 {/* ₦{originalPrice.toLocaleString("en-US")} */}
                 / pole
               </span>

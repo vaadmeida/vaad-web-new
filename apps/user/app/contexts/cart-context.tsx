@@ -9,6 +9,13 @@ interface CartContextType {
   cartItems: CartItem[];
   isLoading: boolean;
   error: string | null;
+  errorDetails?: {
+    message: string;
+    endpoint?: string;
+    payload?: unknown;
+    response?: unknown;
+    stack?: string;
+  } | null;
   subtotal: number;
   totalItems: number;
   addToCart: (data: AddToCartRequest) => Promise<CartItem | null>;
