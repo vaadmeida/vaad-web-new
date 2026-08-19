@@ -56,7 +56,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
   };
 
   const getItemTotal = (item: (typeof cartItems)[number]) => {
-    const rate = item.billboard?.rate || item.billboard?.price || 0;
+    const rate = item.billboard?.rate || 0;
     return rate * item.durationInMonths;
   };
 
@@ -196,7 +196,6 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                         ₦
                         {(
                           item.billboard?.rate ||
-                          item.billboard?.price ||
                           0
                         ).toLocaleString()}{" "}
                         / month
