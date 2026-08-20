@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/app/contexts/toast-context";
 import { useAuthContext } from "@/app/contexts/auth-context";
+import { useCartContext } from "@/app/contexts/cart-context";
 import {
   paymentService,
   InitializePaymentRequest,
@@ -28,6 +29,7 @@ export function usePayment(): UsePaymentReturn {
     useState<InitializePaymentResponse | null>(null);
 
   const { isAuthenticated } = useAuthContext();
+  const { clearCart } = useCartContext();
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -59,6 +61,14 @@ export function usePayment(): UsePaymentReturn {
       try {
         const order = await paymentService.initializePayment(data);
         setLastOrder(order);
+
+        // Clear cart after successful payment init
+        try {
+          await clearCart();
+        } catch (clearErr) {
+          console.error("Failed to clear cart after payment:", clearErr);
+          // Don't fail payment UX if clear fails — order already created
+        }
 
         const payUrl = order.authorizationUrl || order.paymentUrl;
         if (payUrl) {
@@ -99,7 +109,7 @@ export function usePayment(): UsePaymentReturn {
         setIsPaying(false);
       }
     },
-    [isAuthenticated, router, showToast]
+    [isAuthenticated, clearCart, router, showToast]
   );
 
   return {

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// app/hooks/useCart.ts
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -50,16 +49,26 @@ export function useCart(): UseCartReturn {
   const isMountedRef = useRef(true);
   const cartItemsRef = useRef<CartItem[]>([]);
 
-  const calculateTotals = useCallback((items: CartItem[]) => {
-    const itemsCount = items.length;
-    const subtotalAmount = items.reduce((sum, item) => {
-      const rate = item.billboard?.rate || 0;
-      return sum + rate * item.durationInMonths;
-    }, 0);
-
-    setTotalItems(itemsCount);
-    setSubtotal(subtotalAmount);
+  const getItemRate = useCallback((item: CartItem) => {
+    const rate =
+      item.billboard?.rate ??
+      (item as any).rate ??
+      0;
+    return Number(rate) || 0;
   }, []);
+
+  const calculateTotals = useCallback(
+    (items: CartItem[]) => {
+      const itemsCount = items.length;
+      const subtotalAmount = items.reduce((sum, item) => {
+        return sum + getItemRate(item) * (item.durationInMonths || 1);
+      }, 0);
+
+      setTotalItems(itemsCount);
+      setSubtotal(subtotalAmount);
+    },
+    [getItemRate]
+  );
 
   const syncCartState = useCallback(
     (items: CartItem[]) => {
@@ -113,6 +122,10 @@ export function useCart(): UseCartReturn {
 
     if (typeof err?.message === "string" && err.message.trim()) {
       return err.message;
+    }
+
+    if (Array.isArray(err?.message)) {
+      return err.message.join(", ");
     }
 
     return fallback;
@@ -221,7 +234,6 @@ export function useCart(): UseCartReturn {
 
         let resolvedItem = newItem;
 
-        // Refresh cart from server (don't fail the whole add if this fails)
         try {
           const serverItems = await loadCart({
             showLoader: false,
@@ -270,8 +282,6 @@ export function useCart(): UseCartReturn {
           message: errorMsg,
           duration: 3000,
         });
-
-        // Rethrow so the page debug box can show the real error
         throw err;
       }
     },
@@ -454,6 +464,7 @@ export function useCart(): UseCartReturn {
     setError(null);
 
     const previousItems = cartItemsRef.current;
+    // Optimistic clear so UI empties immediately
     syncCartState([]);
 
     try {
@@ -468,6 +479,14 @@ export function useCart(): UseCartReturn {
       return true;
     } catch (err: any) {
       console.error("Failed to clear cart:", err);
+
+      // If backend has no clear endpoint or fails, keep local empty
+      // after successful payment we still want cart empty in UI
+      const status = err?.status;
+      if (status === 404 || status === 405) {
+        syncCartState([]);
+        return true;
+      }
 
       syncCartState(previousItems);
 
@@ -486,27 +505,23 @@ export function useCart(): UseCartReturn {
   }, [resolveCartErrorMessage, showToast, syncCartState]);
 
   const isCartItemPending = useCallback(
-    (id: string): boolean => {
-      return pendingItemIds.includes(id);
-    },
+    (id: string): boolean => pendingItemIds.includes(id),
     [pendingItemIds]
   );
 
   const isItemInCart = useCallback(
-    (billboardId: string): boolean => {
-      return cartItems.some(
+    (billboardId: string): boolean =>
+      cartItems.some(
         (item) => getCartItemBillboardId(item) === billboardId
-      );
-    },
+      ),
     [cartItems, getCartItemBillboardId]
   );
 
   const getCartItemByBillboardId = useCallback(
-    (billboardId: string): CartItem | undefined => {
-      return cartItems.find(
+    (billboardId: string): CartItem | undefined =>
+      cartItems.find(
         (item) => getCartItemBillboardId(item) === billboardId
-      );
-    },
+      ),
     [cartItems, getCartItemBillboardId]
   );
 

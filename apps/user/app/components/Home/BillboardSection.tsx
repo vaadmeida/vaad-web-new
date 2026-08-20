@@ -143,7 +143,7 @@ export default function BillboardSection({
   }
 
   return (
-    <section className="sm:px-18 px-5 pt-4 bg-white">
+    <section className="sm:px-18 px-5 pt-20 bg-white">
       <div className="mx-auto">
         <SectionHeader
           title={title}
