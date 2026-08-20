@@ -21,14 +21,33 @@ const toYYYYMMDD = (value?: string) => {
   return d.toISOString().slice(0, 10);
 };
 
-/** Prefer .rate only (as requested) */
+/** Resolve monthly rate from common cart payload shapes */
 const getItemRate = (item: any): number => {
-  const rate =
-    item?.billboard?.rate ??
-    item?.rate ??
-    item?.billboardId?.rate ?? // if billboard is populated oddly
-    0;
-  return Number(rate) || 0;
+  const candidates = [
+    item?.billboard?.rate,
+    item?.billboard?.price,
+    item?.rate,
+    item?.price,
+    item?.amount,
+    item?.unitPrice,
+    item?.monthlyRate,
+    item?.cost,
+    item?.billboardId?.rate,
+    item?.billboardId?.price,
+    item?.media?.rate,
+    item?.media?.price,
+  ];
+
+  for (const value of candidates) {
+    const n = Number(value);
+    if (!Number.isNaN(n) && n > 0) return n;
+  }
+  return 0;
+};
+
+const getItemTotal = (item: any): number => {
+  const months = Number(item?.durationInMonths) || 1;
+  return getItemRate(item) * months;
 };
 
 export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
@@ -48,10 +67,10 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
   const hasItems = cartItems.length > 0;
   const isPayDisabled = isPaying || !hasItems;
 
-  // Compute subtotal from .rate so UI matches what you pay
-  const computedSubtotal = cartItems.reduce((sum, item) => {
-    return sum + getItemRate(item) * (item.durationInMonths || 1);
-  }, 0);
+  const computedSubtotal = cartItems.reduce(
+    (sum, item) => sum + getItemTotal(item),
+    0
+  );
 
   const handleIncrease = async (itemId: string, currentDuration: number) => {
     if (isCartItemPending(itemId)) return;
@@ -66,10 +85,6 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
   const handleRemove = async (itemId: string) => {
     if (isCartItemPending(itemId)) return;
     await removeFromCart(itemId);
-  };
-
-  const getItemTotal = (item: (typeof cartItems)[number]) => {
-    return getItemRate(item) * (item.durationInMonths || 1);
   };
 
   const handleProceedToPay = async () => {
@@ -173,6 +188,12 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
 
           {!isLoading && cartItems.length > 0 && (
             <div className="py-5 space-y-4 sm:space-y-5">
+              {/* TEMP: uncomment to inspect cart item shape on phone
+              <pre className="text-[10px] bg-gray-100 p-2 rounded overflow-auto max-h-40">
+                {JSON.stringify(cartItems[0], null, 2)}
+              </pre>
+              */}
+
               {cartItems.map((item) => {
                 const isItemPending = isCartItemPending(item._id);
                 const rate = getItemRate(item);
@@ -184,13 +205,11 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                   item.billboard?.locationAddress ||
                   "";
 
-                  
                 return (
                   <div
                     key={item._id}
                     className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-0 rounded-xl sm:rounded-none bg-gray-50 sm:bg-transparent border border-gray-100 sm:border-0"
                   >
-                    {/* Image — fixed size, no horizontal overflow */}
                     <div className="relative w-full sm:w-[140px] md:w-[180px] h-[160px] sm:h-[140px] md:h-[160px] rounded-[10px] overflow-hidden shrink-0 bg-gray-100">
                       <Image
                         src={
@@ -205,7 +224,6 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
                       />
                     </div>
 
-                    {/* Content */}
                     <div className="flex flex-col flex-1 min-w-0 justify-between gap-2">
                       <div className="flex justify-between items-start gap-3">
                         <p className="text-sm sm:text-base font-medium text-[#101928] leading-snug line-clamp-2 min-w-0">
@@ -296,7 +314,7 @@ export default function CartDrawer({ open, onClose, anchor = "right" }: Props) {
           )}
         </div>
 
-        {/* Footer — fixed bottom */}
+        {/* Footer */}
         {!isLoading && cartItems.length > 0 && (
           <div className="shrink-0 border-t border-gray-100 px-4 sm:px-6 py-4 sm:py-6 space-y-3 bg-white">
             <div className="flex justify-between items-center gap-3">
