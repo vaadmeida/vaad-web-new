@@ -11,7 +11,14 @@ import { useBillboard } from "@/app/hooks/useBillboard";
 import { useAssets } from "@/app/hooks/useAssets";
 import ImageUpload from "@/app/components/ImageUpload";
 
-const SKIP_VALIDATION_FOR_TESTING = true;
+const MEDIA_PARTNER_OPTIONS = [
+  { label: "Select media partner", value: "" },
+  { label: "Nestle Company Ltd", value: "NESTLE-001" },
+  { label: "Coca-Cola Nigeria", value: "COCA-002" },
+  { label: "MTN Outdoor Media", value: "MTN-003" },
+  { label: "Dangote Media Partners", value: "DANGOTE-004" },
+  { label: "Airtel Billboard Group", value: "AIRTEL-005" },
+];
 
 type BillboardFormData = {
   partnerId: string;
@@ -73,7 +80,6 @@ export default function AddBoard() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitDebug, setSubmitDebug] = useState<string | null>(null);
   const [featuresList, setFeaturesList] = useState<string[]>([""]);
 
   const { createBillboard, isLoading } = useBillboard() as any;
@@ -171,9 +177,63 @@ export default function AddBoard() {
     );
   };
 
+  const validateStep1 = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.partnerId?.trim()) {
+      newErrors.partnerId = "Media Partner ID is required";
+    }
+    if (!formData.availableDate) {
+      newErrors.availableDate = "Availability date is required";
+    }
+    if (!formData.printProductType) {
+      newErrors.printProductType = "Product Type is required";
+    }
+    if (!formData.mediaType) {
+      newErrors.mediaType = "Media Type is required";
+    }
+    if (!formData.orientation) {
+      newErrors.orientation = "Orientation is required";
+    }
+    if (!formData.illumination) {
+      newErrors.illumination = "Illumination is required";
+    }
+    if (!formData.format) {
+      newErrors.format = "Format is required";
+    }
+    if (!formData.state) {
+      newErrors.state = "State is required";
+    }
+    if (!formData.city) {
+      newErrors.city = "City is required";
+    }
+    if (!formData.approvalStatus) {
+      newErrors.approvalStatus = "Approval status is required";
+    }
+    if (!formData.price || Number(formData.price) <= 0) {
+      newErrors.price = "Price must be greater than 0";
+    }
+    if (!formData.locationAddress?.trim()) {
+      newErrors.locationAddress = "Location address is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!uploadedPhotoUrls.length) {
+      newErrors.photos = "At least one photo is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleNext = () => {
-    if (!SKIP_VALIDATION_FOR_TESTING) {
-      // add real validation later if needed
+    if (!validateStep1()) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
     setCurrentStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -189,18 +249,22 @@ export default function AddBoard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
-    setSubmitDebug(null);
 
     if (currentStep === 1) {
       handleNext();
       return;
     }
 
+    if (!validateStep2()) return;
+
+    // Date-only → ISO at start of day (UTC)
+    const availableDateISO = formData.availableDate
+      ? new Date(`${formData.availableDate}T00:00:00.000Z`).toISOString()
+      : new Date().toISOString();
+
     const submitData: Record<string, any> = {
       partnerId: String(formData.partnerId || "").trim(),
-      availableDate: formData.availableDate
-        ? new Date(formData.availableDate as string).toISOString()
-        : new Date().toISOString(),
+      availableDate: availableDateISO,
       printProductType: formData.printProductType || "",
       mediaType: formData.mediaType || "",
       dimension: formData.dimension || "meters",
@@ -240,20 +304,7 @@ export default function AddBoard() {
         error?.data?.message ||
         "Failed to create billboard";
       const msg = Array.isArray(message) ? message.join(", ") : String(message);
-
       setSubmitError(msg);
-      setSubmitDebug(
-        JSON.stringify(
-          {
-            message: msg,
-            status: error?.status,
-            data: error?.data,
-            payloadSent: submitData,
-          },
-          null,
-          2
-        )
-      );
     }
   };
 
@@ -265,7 +316,6 @@ export default function AddBoard() {
     setFeaturesList([""]);
     setErrors({});
     setSubmitError(null);
-    setSubmitDebug(null);
   };
 
   if (assetsLoading) {
@@ -291,18 +341,21 @@ export default function AddBoard() {
         </h3>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
+        {/* Row 1: Media Partner ID | Availability */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input
-            label="Partner ID"
-            placeholder="e.g., PARTNER12345"
+          <Select
+            label="Media Partner ID"
+            options={MEDIA_PARTNER_OPTIONS}
             value={formData.partnerId}
-            onChange={(e: any) => handleInputChange("partnerId", e.target.value)}
+            onChange={(e: any) =>
+              handleInputChange("partnerId", e.target.value)
+            }
             error={errors.partnerId}
           />
           <Input
-            label="Available Date"
-            type="datetime-local"
+            label="Availability"
+            type="date"
             value={formData.availableDate}
             onChange={(e: any) =>
               handleInputChange("availableDate", e.target.value)
@@ -311,19 +364,10 @@ export default function AddBoard() {
           />
         </div>
 
+        {/* Row 2: Product Type | Media Type */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
-            label="Media Type"
-            options={[
-              { label: "Select media type", value: "" },
-              ...mediaTypeOptions.map((t: string) => ({ label: t, value: t })),
-            ]}
-            value={formData.mediaType}
-            onChange={(e: any) => handleInputChange("mediaType", e.target.value)}
-            error={errors.mediaType}
-          />
-          <Select
-            label="Print Product Type"
+            label="Product Type"
             options={[
               { label: "Select product type", value: "" },
               ...productOptions.map((p: string) => ({ label: p, value: p })),
@@ -335,8 +379,21 @@ export default function AddBoard() {
             error={errors.printProductType}
             disabled={!formData.mediaType}
           />
+          <Select
+            label="Media Type"
+            options={[
+              { label: "Select media type", value: "" },
+              ...mediaTypeOptions.map((t: string) => ({ label: t, value: t })),
+            ]}
+            value={formData.mediaType}
+            onChange={(e: any) =>
+              handleInputChange("mediaType", e.target.value)
+            }
+            error={errors.mediaType}
+          />
         </div>
 
+        {/* Row 3: Orientation | Price */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Orientation"
@@ -353,20 +410,172 @@ export default function AddBoard() {
             }
             error={errors.orientation}
           />
-          <Select
-            label="Dimension (units)"
-            options={[
-              { label: "Meters", value: "meters" },
-              { label: "Feet", value: "feet" },
-            ]}
-            value={formData.dimension}
+          <Input
+            label="Price"
+            placeholder="e.g., 1900000"
+            type="number"
+            value={formData.price || ""}
             onChange={(e: any) =>
-              handleInputChange("dimension", e.target.value)
+              handleInputChange(
+                "price",
+                e.target.value ? Number(e.target.value) : 0
+              )
             }
-            error={errors.dimension}
+            error={errors.price}
           />
         </div>
 
+        {/* Row 4: Location Address | Landmark */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Input
+            label="Location Address"
+            placeholder="e.g., https://www.google.com/maps/..."
+            value={formData.locationAddress}
+            onChange={(e: any) =>
+              handleInputChange("locationAddress", e.target.value)
+            }
+            error={errors.locationAddress}
+          />
+          <Select
+            label="Landmark"
+            options={[
+              { label: "Select landmark (Optional)", value: "" },
+              ...(assets?.landmarks || []).map((l: string) => ({
+                label: l,
+                value: l,
+              })),
+            ]}
+            value={formData.landmark}
+            onChange={(e: any) =>
+              handleInputChange("landmark", e.target.value)
+            }
+            error={errors.landmark}
+          />
+        </div>
+
+        {/* Row 5: Illumination | Format */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Select
+            label="Illumination"
+            options={[
+              { label: "Select illumination", value: "" },
+              ...(assets?.illumination || []).map((i: string) => ({
+                label: i,
+                value: i,
+              })),
+            ]}
+            value={formData.illumination}
+            onChange={(e: any) =>
+              handleInputChange("illumination", e.target.value)
+            }
+            error={errors.illumination}
+          />
+          <Select
+            label="Format"
+            options={[
+              { label: "Select format", value: "" },
+              ...(assets?.format || []).map((f: string) => ({
+                label: f,
+                value: f,
+              })),
+            ]}
+            value={formData.format}
+            onChange={(e: any) => handleInputChange("format", e.target.value)}
+            error={errors.format}
+          />
+        </div>
+
+        {/* Row 6: City | State */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Select
+            label="City"
+            options={[
+              { label: "Select city", value: "" },
+              ...availableCities.map((c: string) => ({ label: c, value: c })),
+            ]}
+            value={formData.city}
+            onChange={(e: any) => handleInputChange("city", e.target.value)}
+            error={errors.city}
+            disabled={!formData.state}
+          />
+          <Select
+            label="State"
+            options={[
+              { label: "Select state", value: "" },
+              ...Object.keys(assets?.statesAndCites || {}).map((s: string) => ({
+                label: s,
+                value: s,
+              })),
+            ]}
+            value={formData.state}
+            onChange={(e: any) => handleInputChange("state", e.target.value)}
+            error={errors.state}
+          />
+        </div>
+
+        {/* Row 7: Size (Orientation already above) / Height & Width | Approval status */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <Select
+              label="Size"
+              options={[
+                { label: "Select size / orientation", value: "" },
+                { label: "Portrait", value: "PORTRAIT" },
+                { label: "Landscape", value: "LANDSCAPE" },
+              ]}
+              value={formData.orientation}
+              onChange={(e: any) =>
+                handleInputChange("orientation", e.target.value)
+              }
+              error={errors.orientation}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Height"
+                placeholder="e.g., 15"
+                type="number"
+                value={formData.height || ""}
+                onChange={(e: any) =>
+                  handleInputChange(
+                    "height",
+                    e.target.value ? Number(e.target.value) : 0
+                  )
+                }
+                error={errors.height}
+              />
+              <Input
+                label="Width"
+                placeholder="e.g., 48"
+                type="number"
+                value={formData.width || ""}
+                onChange={(e: any) =>
+                  handleInputChange(
+                    "width",
+                    e.target.value ? Number(e.target.value) : 0
+                  )
+                }
+                error={errors.width}
+              />
+            </div>
+          </div>
+          <Select
+            label="Approval status"
+            options={[
+              { label: "Select status", value: "" },
+              ...(assets?.approvalStatus || []).map((s: string) => ({
+                label: s,
+                value: s,
+              })),
+            ]}
+            value={formData.approvalStatus}
+            onChange={(e: any) =>
+              handleInputChange("approvalStatus", e.target.value)
+            }
+            error={errors.approvalStatus}
+          />
+        </div>
+
+        {/* Optional / remaining fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Select
             label="Visibility"
@@ -384,131 +593,16 @@ export default function AddBoard() {
             error={errors.visibility}
           />
           <Select
-            label="Illumination"
+            label="Dimension (units)"
             options={[
-              { label: "Select illumination", value: "" },
-              ...(assets?.illumination || []).map((i: string) => ({
-                label: i,
-                value: i,
-              })),
+              { label: "Meters", value: "meters" },
+              { label: "Feet", value: "feet" },
             ]}
-            value={formData.illumination}
+            value={formData.dimension}
             onChange={(e: any) =>
-              handleInputChange("illumination", e.target.value)
+              handleInputChange("dimension", e.target.value)
             }
-            error={errors.illumination}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Select
-            label="Format"
-            options={[
-              { label: "Select format", value: "" },
-              ...(assets?.format || []).map((f: string) => ({
-                label: f,
-                value: f,
-              })),
-            ]}
-            value={formData.format}
-            onChange={(e: any) => handleInputChange("format", e.target.value)}
-            error={errors.format}
-          />
-          <Select
-            label="Approval Status"
-            options={[
-              { label: "Select status", value: "" },
-              ...(assets?.approvalStatus || []).map((s: string) => ({
-                label: s,
-                value: s,
-              })),
-            ]}
-            value={formData.approvalStatus}
-            onChange={(e: any) =>
-              handleInputChange("approvalStatus", e.target.value)
-            }
-            error={errors.approvalStatus}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input
-            label="Location Address"
-            placeholder="e.g., 123 Main Street..."
-            value={formData.locationAddress}
-            onChange={(e: any) =>
-              handleInputChange("locationAddress", e.target.value)
-            }
-            error={errors.locationAddress}
-          />
-          <Select
-            label="Landmark"
-            options={[
-              { label: "Select landmark (Optional)", value: "" },
-              ...(assets?.landmarks || []).map((l: string) => ({
-                label: l,
-                value: l,
-              })),
-            ]}
-            value={formData.landmark}
-            onChange={(e: any) => handleInputChange("landmark", e.target.value)}
-            error={errors.landmark}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Select
-            label="State"
-            options={[
-              { label: "Select state", value: "" },
-              ...Object.keys(assets?.statesAndCites || {}).map((s: string) => ({
-                label: s,
-                value: s,
-              })),
-            ]}
-            value={formData.state}
-            onChange={(e: any) => handleInputChange("state", e.target.value)}
-            error={errors.state}
-          />
-          <Select
-            label="City"
-            options={[
-              { label: "Select city", value: "" },
-              ...availableCities.map((c: string) => ({ label: c, value: c })),
-            ]}
-            value={formData.city}
-            onChange={(e: any) => handleInputChange("city", e.target.value)}
-            error={errors.city}
-            disabled={!formData.state}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Input
-            label="Height"
-            placeholder="e.g., 15"
-            type="number"
-            value={formData.height || ""}
-            onChange={(e: any) =>
-              handleInputChange(
-                "height",
-                e.target.value ? Number(e.target.value) : 0
-              )
-            }
-            error={errors.height}
-          />
-          <Input
-            label="Width"
-            placeholder="e.g., 48"
-            type="number"
-            value={formData.width || ""}
-            onChange={(e: any) =>
-              handleInputChange(
-                "width",
-                e.target.value ? Number(e.target.value) : 0
-              )
-            }
-            error={errors.width}
+            error={errors.dimension}
           />
         </div>
 
@@ -520,22 +614,6 @@ export default function AddBoard() {
             onChange={(e: any) => handleInputChange("size", e.target.value)}
             error={errors.size}
           />
-          <Input
-            label="Price"
-            placeholder="e.g., 2500"
-            type="number"
-            value={formData.price || ""}
-            onChange={(e: any) =>
-              handleInputChange(
-                "price",
-                e.target.value ? Number(e.target.value) : 0
-              )
-            }
-            error={errors.price}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Input
             label="Rating"
             placeholder="e.g., 4.5"
@@ -549,26 +627,27 @@ export default function AddBoard() {
             }
             error={errors.rating}
           />
-          <div className="flex items-center gap-6 pt-8">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={Boolean(formData.hotDeal)}
-                onChange={(e) => handleInputChange("hotDeal", e.target.checked)}
-              />
-              Hot Deal
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={Boolean(formData.favorite)}
-                onChange={(e) =>
-                  handleInputChange("favorite", e.target.checked)
-                }
-              />
-              Favorite
-            </label>
-          </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(formData.hotDeal)}
+              onChange={(e) => handleInputChange("hotDeal", e.target.checked)}
+            />
+            Hot Deal
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={Boolean(formData.favorite)}
+              onChange={(e) =>
+                handleInputChange("favorite", e.target.checked)
+              }
+            />
+            Favorite
+          </label>
         </div>
 
         <div>
@@ -683,7 +762,7 @@ export default function AddBoard() {
           <form onSubmit={handleSubmit}>
             {currentStep === 1 ? renderStep1() : renderStep2()}
 
-            <div className="flex gap-4 mt-8">
+            <div className="flex gap-4 mt-8 justify-end">
               <button
                 type="button"
                 className="h-[52px] px-8 rounded-lg border border-[#0177AB] text-[#0177AB] text-sm hover:bg-[#F5FAFD] transition font-medium"
@@ -714,7 +793,7 @@ export default function AddBoard() {
                 ) : currentStep === 2 ? (
                   "Finish"
                 ) : (
-                  "Next →"
+                  "Next"
                 )}
               </button>
             </div>
@@ -723,17 +802,6 @@ export default function AddBoard() {
               <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-sm font-medium text-red-700">Create failed</p>
                 <p className="text-sm text-red-600 mt-1">{submitError}</p>
-              </div>
-            )}
-
-            {submitDebug && (
-              <div className="mt-4 bg-gray-100 border border-gray-300 rounded-lg p-4">
-                <p className="text-xs font-semibold text-gray-700 mb-2">
-                  Debug response (includes payload sent):
-                </p>
-                <pre className="text-xs text-gray-800 whitespace-pre-wrap break-all">
-                  {submitDebug}
-                </pre>
               </div>
             )}
           </form>
