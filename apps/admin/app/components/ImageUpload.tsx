@@ -273,7 +273,7 @@ export default function ImageUpload({
         </div>
       )}
 
-      {/* DEBUG / FULL RESPONSE (very useful on phone) */}
+      {/* DEBUG / FULL RESPONSE (very useful on phone) 
       {debugInfo && (
         <div className="bg-gray-100 border border-gray-300 rounded-lg p-3">
           <p className="text-xs font-semibold text-gray-700 mb-1">
@@ -283,7 +283,7 @@ export default function ImageUpload({
             {debugInfo}
           </pre>
         </div>
-      )}
+      )} */}
 
       {(existingImages.length > 0 || uploadingFiles.length > 0) && (
         <div>
